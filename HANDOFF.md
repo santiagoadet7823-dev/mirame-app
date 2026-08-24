@@ -6,7 +6,7 @@
 
 **Última actualización:** 2026-08-23
 **Estado general:** APK 1.0.2 andando en teléfono real · login OK · panel de plataforma real
-**Fase actual:** 3 — motor de sync. Bloqueado por decisión del usuario: crear el repo `mirame-app`
+**Fase actual:** 3 — motor de sync. Pendiente: correr `scripts/setup-github.sh` (crea el repo y publica)
 
 ---
 
@@ -103,6 +103,7 @@ tuyo y del revendedor. Requiere que cada uno entre a la app una vez para que exi
 | # | Plan | Estado | En una línea |
 |---|---|---|---|
 | 01 | `01-migracion-flutter-supabase.md` | aprobado | Plan maestro de la migración HTML → Flutter + Supabase multi-tenant |
+| 03 | `03-distribucion-pwa-y-apk.md` | implementado | PWA en Pages, releases por tag, invitación por QR y la diferencia real con la OTA de DisT-At |
 | 02 | `02-empaquetado-apk.md` | implementado | Rama anticipada de la Fase 8: keystore, firma, iconos y deep link para probar en un teléfono real |
 
 > El contenido de `planes/` es local. Este índice es lo único que se versiona.
