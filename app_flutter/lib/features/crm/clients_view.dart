@@ -39,6 +39,7 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
   // La búsqueda es estado de ESTA pantalla, no del programa: guardarla en un
   // provider global la dejaría escrita al volver desde otra sección.
   String _busqueda = '';
+  String _filtro = 'all';
 
   @override
   Widget build(BuildContext context) {
@@ -51,13 +52,22 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
     // El filtro corre en memoria y no en SQL: son decenas o cientos de
     // clientas, no millones, y así la búsqueda responde sin ir al disco en
     // cada tecla.
-    final lista = busqueda.isEmpty
+    var lista = busqueda.isEmpty
         ? todas
         : todas.where((c) {
             final t = (c.telefono ?? '').toLowerCase();
             return c.nombre.toLowerCase().contains(busqueda) ||
                 t.contains(busqueda);
           }).toList();
+
+    // `renderClients` del original: 'vip' filtra, 'recent' ordena por alta y
+    // se queda con 20.
+    if (_filtro == 'vip') {
+      lista = lista.where((c) => c.vip).toList();
+    } else if (_filtro == 'recent') {
+      lista = [...lista]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      lista = lista.take(20).toList();
+    }
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -98,6 +108,18 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
                   borderSide: const BorderSide(color: MColors.brand),
                 ),
               ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: FilaFiltros(
+              opciones: const [
+                ('all', 'Todas'),
+                ('vip', 'VIP'),
+                ('recent', 'Recientes'),
+              ],
+              activo: _filtro,
+              onElegir: (f) => setState(() => _filtro = f),
             ),
           ),
           Expanded(

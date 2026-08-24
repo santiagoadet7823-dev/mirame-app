@@ -385,3 +385,63 @@ class BadgeEstado extends StatelessWidget {
     );
   }
 }
+
+/// `.chip` / `.pill` del original — la fila de filtros.
+///
+/// El activo usa el fondo lavanda de la marca; el resto, bg2 con borde. Es el
+/// mismo control que en el original y por eso comparte medidas: `padding
+/// 8px 15px`, `border-radius: full`, `font-size 12/500`.
+class FilaFiltros extends StatelessWidget {
+  const FilaFiltros({
+    super.key,
+    required this.opciones,
+    required this.activo,
+    required this.onElegir,
+  });
+
+  /// `(clave, etiqueta)`. La clave es la que viaja al filtro; la etiqueta es
+  /// lo que se lee.
+  final List<(String, String)> opciones;
+  final String activo;
+  final ValueChanged<String> onElegir;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 34,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.zero,
+          itemCount: opciones.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 7),
+          itemBuilder: (_, i) {
+            final (clave, etiqueta) = opciones[i];
+            final esActivo = clave == activo;
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => onElegir(clave),
+              child: AnimatedContainer(
+                duration: MMotion.t1,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                decoration: BoxDecoration(
+                  color: esActivo ? MColors.brandBg : MColors.bg2,
+                  border: Border.all(
+                    color: esActivo ? MColors.borderLav : MColors.border,
+                  ),
+                  borderRadius: BorderRadius.circular(MRadius.full),
+                ),
+                child: Text(
+                  etiqueta,
+                  style: sans(
+                    size: 12,
+                    weight: esActivo ? 600 : 500,
+                    color:
+                        esActivo ? MColors.brandDark : MColors.tSecondary,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+}

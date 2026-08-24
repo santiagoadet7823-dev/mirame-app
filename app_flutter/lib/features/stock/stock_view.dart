@@ -26,14 +26,28 @@ final stockProvider = StreamProvider.autoDispose<List<db.StockItem>>((ref) {
   return repo.verStock();
 });
 
-class StockView extends ConsumerWidget {
+class StockView extends ConsumerStatefulWidget {
   const StockView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StockView> createState() => _StockViewState();
+}
+
+class _StockViewState extends ConsumerState<StockView> {
+  String _filtro = 'all';
+
+  @override
+  Widget build(BuildContext context) {
     final filas = ref.watch(stockProvider).value ?? const <db.StockItem>[];
-    final items = filas.map(aStockItem).toList();
-    final alertas = stockAlerts(items, limit: 99);
+    final todos = filas.map(aStockItem).toList();
+    // Las alertas se cuentan sobre TODO el stock, no sobre lo filtrado: si no,
+    // filtrar por "sin stock" haría desaparecer el aviso de los que están bajos.
+    final alertas = stockAlerts(todos, limit: 99);
+    final items = switch (_filtro) {
+      'low' => todos.where((i) => stockStatus(i) == StockStatus.low).toList(),
+      'out' => todos.where((i) => stockStatus(i) == StockStatus.out).toList(),
+      _ => todos,
+    };
     final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirDatos));
 
     return Scaffold(
@@ -79,11 +93,27 @@ class StockView extends ConsumerWidget {
             ),
             const SizedBox(height: 14),
           ],
+          if (todos.isNotEmpty) ...[
+            FadeSlideIn(
+              child: FilaFiltros(
+                opciones: const [
+                  ('all', 'Todos'),
+                  ('low', 'Bajo stock'),
+                  ('out', 'Sin stock'),
+                ],
+                activo: _filtro,
+                onElegir: (f) => setState(() => _filtro = f),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           if (items.isEmpty)
-            const EstadoVacio(
+            EstadoVacio(
               emoji: '📦',
-              titulo: 'Sin productos',
-              detalle: 'Agregá productos al inventario',
+              titulo: _filtro == 'all' ? 'Sin productos' : 'Nada por acá',
+              detalle: _filtro == 'all'
+                  ? 'Agregá productos al inventario'
+                  : 'Ningún producto en este estado',
             )
           else
             for (var i = 0; i < items.length; i++)

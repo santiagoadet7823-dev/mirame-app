@@ -20,20 +20,101 @@ import '../../domain/rules/finance.dart';
 import '../../domain/rules/formatting.dart';
 import '../../domain/rules/period.dart';
 import '../auth/session_controller.dart';
-import '../dashboard/dashboard_view.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
 
-class CajaView extends ConsumerWidget {
+/// Mes que se está mirando. `0` es el actual, `-1` el anterior.
+///
+/// Es estado de la pantalla y no un provider global: volver a Caja desde otra
+/// sección debe mostrar el mes actual, no el que se miró hace media hora.
+/// Movimientos de un mes, con `offset` relativo al actual.
+///
+/// La clave del `family` es el offset (un int) y no un DateTime: dos DateTime
+/// del mismo mes con distinta hora son objetos distintos y crearían un
+/// provider nuevo en cada rebuild.
+final movimientosDeMesProvider =
+    StreamProvider.autoDispose.family<List<db.Transaction>, int>((ref, offset) {
+  final repo = ref.watch(businessRepoProvider);
+  if (repo == null) return const Stream.empty();
+  final hoy = DateTime.now();
+  return repo.verMovimientosEntre(
+    DateTime(hoy.year, hoy.month + offset, 1),
+    // Día 0 del mes siguiente es el último del actual, sin tener que saber
+    // cuántos días tiene ni acordarse de los bisiestos.
+    DateTime(hoy.year, hoy.month + offset + 1, 0),
+  );
+});
+
+/// `.cal-hdr` — el mes con las flechas a los costados.
+class _SelectorMes extends StatelessWidget {
+  const _SelectorMes({
+    required this.mes,
+    required this.onAnterior,
+    this.onSiguiente,
+  });
+
+  final DateTime mes;
+  final VoidCallback onAnterior;
+  final VoidCallback? onSiguiente;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            onPressed: onAnterior,
+            icon: const Icon(Icons.chevron_left_rounded,
+                color: MColors.tSecondary),
+          ),
+          Text(nombreMes(mes), style: sans(size: 15, weight: 600)),
+          IconButton(
+            onPressed: onSiguiente,
+            icon: Icon(
+              Icons.chevron_right_rounded,
+              color: onSiguiente == null
+                  ? MColors.tLight
+                  : MColors.tSecondary,
+            ),
+          ),
+        ],
+      );
+}
+
+String nombreMes(DateTime d) => '${monthName(d.month)} ${d.year}';
+
+class CajaView extends ConsumerStatefulWidget {
   const CajaView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final filas =
-        ref.watch(movimientosDelMesProvider).value ?? const <db.Transaction>[];
-    final movimientos = filas.map(aTransaction).toList();
-    final resumen = summarize(movimientos, monthRange(DateTime.now()));
+  ConsumerState<CajaView> createState() => _CajaViewState();
+}
+
+class _CajaViewState extends ConsumerState<CajaView> {
+  int _offsetMes = 0;
+  String _filtro = 'all';
+
+  DateTime get _mes {
+    final hoy = DateTime.now();
+    return DateTime(hoy.year, hoy.month + _offsetMes, 1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filas = ref.watch(movimientosDeMesProvider(_offsetMes)).value ??
+        const <db.Transaction>[];
+    final todos = filas.map(aTransaction).toList();
+    final resumen = summarize(todos, monthRange(_mes));
     final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirDatos));
+
+    // El filtro se aplica DESPUÉS de calcular los totales: los números de
+    // arriba son del mes completo, no de lo que quedó filtrado. Es lo que
+    // hace el original y es lo correcto — si no, filtrar por gastos mostraría
+    // "ingresos $0".
+    final movimientos = switch (_filtro) {
+      'income' => todos.where((m) => m.tipo == TxTipo.income).toList(),
+      'expense' => todos.where((m) => m.tipo == TxTipo.expense).toList(),
+      _ => todos,
+    };
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -49,6 +130,15 @@ class CajaView extends ConsumerWidget {
       body: ListView(
         padding: padVistaMovil,
         children: [
+          FadeSlideIn(child: _SelectorMes(
+            mes: _mes,
+            onAnterior: () => setState(() => _offsetMes--),
+            // No se puede ir al futuro: no hay movimientos que ver ahí y el
+            // botón habilitado invita a un callejón sin salida.
+            onSiguiente:
+                _offsetMes < 0 ? () => setState(() => _offsetMes++) : null,
+          )),
+          const SizedBox(height: 12),
           FadeSlideIn(
             child: Row(
               children: [
@@ -108,14 +198,25 @@ class CajaView extends ConsumerWidget {
           const SizedBox(height: 22),
           FadeSlideIn(
             delay: const Duration(milliseconds: 90),
-            child: Text('Movimientos', style: sans(size: 15, weight: 600)),
+            child: FilaFiltros(
+              opciones: const [
+                ('all', 'Todos'),
+                ('income', 'Ingresos'),
+                ('expense', 'Gastos'),
+              ],
+              activo: _filtro,
+              onElegir: (f) => setState(() => _filtro = f),
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           if (movimientos.isEmpty)
-            const EstadoVacio(
+            EstadoVacio(
               emoji: '💸',
               titulo: 'Sin movimientos',
-              detalle: 'No hay movimientos este mes',
+              detalle: _filtro == 'all'
+                  ? 'No hay movimientos en ${nombreMes(_mes)}'
+                  : 'No hay ${_filtro == "income" ? "ingresos" : "gastos"} '
+                      'en ${nombreMes(_mes)}',
             )
           else
             for (var i = 0; i < movimientos.length; i++)
