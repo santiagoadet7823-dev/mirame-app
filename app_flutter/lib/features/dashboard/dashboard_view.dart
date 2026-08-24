@@ -80,15 +80,16 @@ class DashboardView extends ConsumerWidget {
     final semana = ref.watch(movimientosDeLaSemanaProvider).value ?? const [];
     final clientes = ref.watch(clientesProvider).value ?? const [];
 
+    // 'income' es el valor del enum `tx_tipo` de Postgres.
     num ingresosDe(List<Transaction> txs) => txs
-        .where((m) => m.tipo == 'ingreso')
+        .where((m) => m.tipo == 'income')
         .fold<num>(0, (a, m) => a + m.monto);
 
     final delMes = ingresosDe(mes);
     final deLaSemana = ingresosDe(semana);
     final deHoy = turnos.fold<num>(0, (a, t) => a + t.precio);
     final pendientes =
-        turnos.where((t) => t.estado != 'done' && t.estado != 'hecho').length;
+        turnos.where((t) => t.estado != 'done' && t.estado != 'cancelled').length;
 
     return ListView(
       padding: padVistaMovil,

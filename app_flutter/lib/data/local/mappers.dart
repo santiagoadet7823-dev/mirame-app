@@ -38,10 +38,13 @@ TurnoEstado estadoDesdeTexto(String? s) => switch (s) {
 
 String textoDesdeEstado(TurnoEstado e) => e.name;
 
+/// Acepta 'ingreso' además de 'income' solo por compatibilidad con filas que
+/// una versión anterior de la app pudo haber escrito localmente.
 TxTipo tipoDesdeTexto(String? s) =>
-    s == 'ingreso' || s == 'income' ? TxTipo.income : TxTipo.expense;
+    s == 'income' || s == 'ingreso' ? TxTipo.income : TxTipo.expense;
 
-String textoDesdeTipo(TxTipo t) => t == TxTipo.income ? 'ingreso' : 'gasto';
+/// Los valores del enum `tx_tipo` de Postgres, tal cual.
+String textoDesdeTipo(TxTipo t) => t.name;
 
 TxMetodo metodoDesdeTexto(String? s) => switch (s) {
       'transferencia' => TxMetodo.transferencia,

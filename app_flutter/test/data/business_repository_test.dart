@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mirame/data/local/database.dart';
@@ -117,36 +116,50 @@ void main() {
   });
 
   group('resumen del CRM', () {
-    test('cuenta turnos y suma solo los ingresos de esa clienta', () async {
+    test('el gasto sale de los turnos, no de las transacciones', () async {
       final ana = await repo.guardarCliente(nombre: 'Ana');
       final bea = await repo.guardarCliente(nombre: 'Bea');
       await repo.guardarTurno(
-          clientId: ana, fecha: DateTime(2026, 8, 1), hora: '10:00');
+          clientId: ana, fecha: DateTime(2026, 8, 1), hora: '10:00',
+          precio: 5000);
       await repo.guardarTurno(
-          clientId: ana, fecha: DateTime(2026, 8, 2), hora: '11:00');
+          clientId: ana, fecha: DateTime(2026, 8, 2), hora: '11:00',
+          precio: 5000);
       await repo.guardarTurno(
-          clientId: bea, fecha: DateTime(2026, 8, 3), hora: '12:00');
+          clientId: bea, fecha: DateTime(2026, 8, 3), hora: '12:00',
+          precio: 7000);
+      // Una transacción con la misma clienta NO cuenta: en los datos reales
+      // ese campo nunca se escribió y por eso el total daba siempre 0.
       await repo.guardarMovimiento(
-          tipo: 'ingreso', monto: 5000, fecha: DateTime(2026, 8, 1),
-          clientId: ana);
-      // Un gasto con la misma clienta NO debe sumar a lo que gastó.
-      await repo.guardarMovimiento(
-          tipo: 'gasto', monto: 900, fecha: DateTime(2026, 8, 1),
+          tipo: 'ingreso', monto: 99999, fecha: DateTime(2026, 8, 1),
           clientId: ana);
 
       final r = await repo.verResumenClientes().first;
       expect(r[ana]?.turnos, 2);
-      expect(r[ana]?.gastado, 5000);
+      // 2 turnos de 5000 cargados abajo.
+      expect(r[ana]?.gastado, 10000);
       expect(r[bea]?.turnos, 1);
-      expect(r[bea]?.gastado, 0);
+      expect(r[bea]?.gastado, 7000);
     });
 
     test('un turno borrado deja de contar', () async {
       final ana = await repo.guardarCliente(nombre: 'Ana');
       final t = await repo.guardarTurno(
-          clientId: ana, fecha: DateTime(2026, 8, 1), hora: '10:00');
+          clientId: ana, fecha: DateTime(2026, 8, 1), hora: '10:00',
+          precio: 5000);
       await repo.borrar('appointments', t);
-      expect((await repo.verResumenClientes().first)[ana]?.turnos, 0);
+      final r = await repo.verResumenClientes().first;
+      expect(r[ana]?.turnos, 0);
+      expect(r[ana]?.gastado, 0);
+    });
+
+    test('un turno cancelado no suma plata', () async {
+      final ana = await repo.guardarCliente(nombre: 'Ana');
+      await repo.guardarTurno(
+          clientId: ana, fecha: DateTime(2026, 8, 1), hora: '10:00',
+          precio: 5000, estado: 'cancelled');
+      // Sigue contando como turno agendado, pero no como plata que entró.
+      expect((await repo.verResumenClientes().first)[ana]?.gastado, 0);
     });
   });
 }

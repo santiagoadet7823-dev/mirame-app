@@ -67,22 +67,34 @@ class Appointments extends Table with _Sincronizable {
   /// Hora local `HH:MM`.
   TextColumn get hora => text()();
   RealColumn get precio => real().withDefault(const Constant(0))();
+  /// `confirmed` | `pending` | `done` | `cancelled` — enum `turno_estado`
+  /// del servidor. El default del original tambien es 'confirmed'.
   TextColumn get estado =>
-      text().withDefault(const Constant('pendiente'))();
+      text().withDefault(const Constant('confirmed'))();
   TextColumn get notas => text().nullable()();
 }
 
-/// Servicios de un turno. Tabla puente y vínculo por **id**: el legacy
-/// guardaba el nombre del servicio, así que renombrar uno rompía en silencio
-/// los recordatorios de retoque.
-class AppointmentServices extends Table with _Sincronizable {
+/// Servicios de un turno. Vínculo por **id**: el legacy guardaba el nombre, y
+/// por eso renombrar un servicio rompía en silencio los recordatorios.
+///
+/// A diferencia del resto, NO lleva `id`, `tenant_id` ni `deleted_at`: en
+/// Postgres es una tabla puente pura con clave compuesta, y el esquema local
+/// tiene que coincidir o el sync empuja columnas que el servidor no conoce.
+class AppointmentServices extends Table {
   TextColumn get appointmentId => text()();
   TextColumn get serviceId => text()();
   RealColumn get precio => real().withDefault(const Constant(0))();
+
+  @override
+  Set<Column> get primaryKey => {appointmentId, serviceId};
 }
 
 class Transactions extends Table with _Sincronizable {
-  TextColumn get tipo => text()(); // ingreso | gasto
+  /// `income` | `expense` — los valores EXACTOS del enum `tx_tipo` de
+  /// Postgres. No 'ingreso'/'gasto': el servidor rechaza cualquier otra cosa
+  /// y la fila se queda dando vueltas en el outbox hasta agotar reintentos,
+  /// sin que nadie se entere.
+  TextColumn get tipo => text()();
   RealColumn get monto => real().withDefault(const Constant(0))();
   TextColumn get descripcion => text().nullable()();
   TextColumn get categoria => text().nullable()();
@@ -205,7 +217,7 @@ class MirameDb extends _$MirameDb {
           );
           await customStatement(
             'create index if not exists ix_appt_srv_appt '
-            'on appointment_services (appointment_id) where deleted_at is null',
+            'on appointment_services (appointment_id)',
           );
           await customStatement(
             'create index if not exists ix_outbox_pendiente '

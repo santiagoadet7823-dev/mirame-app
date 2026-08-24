@@ -117,17 +117,16 @@ void main() {
       // Subir un appointment_services antes que su turno viola la foreign key
       // del servidor y la fila se rechaza.
       expect(
-        tablasSync.indexOf('appointments'),
-        lessThan(tablasSync.indexOf('appointment_services')),
-      );
-      expect(
         tablasSync.indexOf('clients'),
         lessThan(tablasSync.indexOf('appointments')),
       );
       expect(
-        tablasSync.indexOf('services'),
-        lessThan(tablasSync.indexOf('appointment_services')),
+        tablasSync.indexOf('professionals'),
+        lessThan(tablasSync.indexOf('appointments')),
       );
+      // La tabla puente no sincroniza por cursor: en Postgres no tiene
+      // tenant_id ni updated_at.
+      expect(tablasSync, isNot(contains('appointment_services')));
     });
   });
 }

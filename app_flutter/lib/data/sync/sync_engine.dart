@@ -19,12 +19,15 @@ import '../remote/supabase_client.dart';
 /// El orden importa al subir: un `appointment_services` que llega antes que su
 /// turno viola la foreign key del servidor y se rechaza. Al bajar da igual,
 /// pero se mantiene el mismo orden para no tener dos listas.
+/// `appointment_services` NO está: en Postgres es una tabla puente pura, sin
+/// `tenant_id` ni `updated_at`, así que no se puede paginar por cursor ni
+/// filtrar por salón como las demás. Se sincroniza junto con su turno cuando
+/// se implemente la edición de servicios (pendiente).
 const tablasSync = <String>[
   'professionals',
   'services',
   'clients',
   'appointments',
-  'appointment_services',
   'transactions',
   'stock_items',
 ];

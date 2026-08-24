@@ -301,7 +301,8 @@ class _FormMovState extends ConsumerState<_FormularioMovimiento> {
     try {
       await repo.guardarMovimiento(
         id: widget.mov?.id,
-        tipo: _esIngreso ? 'ingreso' : 'gasto',
+        // Los valores del enum del servidor, no traducciones.
+        tipo: _esIngreso ? 'income' : 'expense',
         monto: monto,
         fecha: widget.mov?.fecha ?? DateTime.now(),
         descripcion:

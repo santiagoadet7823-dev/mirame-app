@@ -1548,7 +1548,7 @@ class $AppointmentsTable extends Appointments
       'estado', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
-      defaultValue: const Constant('pendiente'));
+      defaultValue: const Constant('confirmed'));
   static const VerificationMeta _notasMeta = const VerificationMeta('notas');
   @override
   late final GeneratedColumn<String> notas = GeneratedColumn<String>(
@@ -1695,6 +1695,9 @@ class Appointment extends DataClass implements Insertable<Appointment> {
   /// Hora local `HH:MM`.
   final String hora;
   final double precio;
+
+  /// `confirmed` | `pending` | `done` | `cancelled` — enum `turno_estado`
+  /// del servidor. El default del original tambien es 'confirmed'.
   final String estado;
   final String? notas;
   const Appointment(
@@ -2066,39 +2069,6 @@ class $AppointmentServicesTable extends AppointmentServices
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $AppointmentServicesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-      'id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _tenantIdMeta =
-      const VerificationMeta('tenantId');
-  @override
-  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
-      'tenant_id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
-  static const VerificationMeta _updatedAtMeta =
-      const VerificationMeta('updatedAt');
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-      'updated_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
-  static const VerificationMeta _deletedAtMeta =
-      const VerificationMeta('deletedAt');
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-      'deleted_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _appointmentIdMeta =
       const VerificationMeta('appointmentId');
   @override
@@ -2119,16 +2089,7 @@ class $AppointmentServicesTable extends AppointmentServices
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
   @override
-  List<GeneratedColumn> get $columns => [
-        id,
-        tenantId,
-        createdAt,
-        updatedAt,
-        deletedAt,
-        appointmentId,
-        serviceId,
-        precio
-      ];
+  List<GeneratedColumn> get $columns => [appointmentId, serviceId, precio];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2139,29 +2100,6 @@ class $AppointmentServicesTable extends AppointmentServices
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('tenant_id')) {
-      context.handle(_tenantIdMeta,
-          tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta));
-    } else if (isInserting) {
-      context.missing(_tenantIdMeta);
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(_updatedAtMeta,
-          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(_deletedAtMeta,
-          deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta));
-    }
     if (data.containsKey('appointment_id')) {
       context.handle(
           _appointmentIdMeta,
@@ -2184,21 +2122,11 @@ class $AppointmentServicesTable extends AppointmentServices
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {id};
+  Set<GeneratedColumn> get $primaryKey => {appointmentId, serviceId};
   @override
   AppointmentService map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return AppointmentService(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      tenantId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}tenant_id'])!,
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
-      updatedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
-      deletedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted_at']),
       appointmentId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}appointment_id'])!,
       serviceId: attachedDatabase.typeMapping
@@ -2216,33 +2144,16 @@ class $AppointmentServicesTable extends AppointmentServices
 
 class AppointmentService extends DataClass
     implements Insertable<AppointmentService> {
-  final String id;
-  final String tenantId;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final DateTime? deletedAt;
   final String appointmentId;
   final String serviceId;
   final double precio;
   const AppointmentService(
-      {required this.id,
-      required this.tenantId,
-      required this.createdAt,
-      required this.updatedAt,
-      this.deletedAt,
-      required this.appointmentId,
+      {required this.appointmentId,
       required this.serviceId,
       required this.precio});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['tenant_id'] = Variable<String>(tenantId);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
     map['appointment_id'] = Variable<String>(appointmentId);
     map['service_id'] = Variable<String>(serviceId);
     map['precio'] = Variable<double>(precio);
@@ -2251,13 +2162,6 @@ class AppointmentService extends DataClass
 
   AppointmentServicesCompanion toCompanion(bool nullToAbsent) {
     return AppointmentServicesCompanion(
-      id: Value(id),
-      tenantId: Value(tenantId),
-      createdAt: Value(createdAt),
-      updatedAt: Value(updatedAt),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
       appointmentId: Value(appointmentId),
       serviceId: Value(serviceId),
       precio: Value(precio),
@@ -2268,11 +2172,6 @@ class AppointmentService extends DataClass
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return AppointmentService(
-      id: serializer.fromJson<String>(json['id']),
-      tenantId: serializer.fromJson<String>(json['tenantId']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       appointmentId: serializer.fromJson<String>(json['appointmentId']),
       serviceId: serializer.fromJson<String>(json['serviceId']),
       precio: serializer.fromJson<double>(json['precio']),
@@ -2282,11 +2181,6 @@ class AppointmentService extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'tenantId': serializer.toJson<String>(tenantId),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'appointmentId': serializer.toJson<String>(appointmentId),
       'serviceId': serializer.toJson<String>(serviceId),
       'precio': serializer.toJson<double>(precio),
@@ -2294,31 +2188,14 @@ class AppointmentService extends DataClass
   }
 
   AppointmentService copyWith(
-          {String? id,
-          String? tenantId,
-          DateTime? createdAt,
-          DateTime? updatedAt,
-          Value<DateTime?> deletedAt = const Value.absent(),
-          String? appointmentId,
-          String? serviceId,
-          double? precio}) =>
+          {String? appointmentId, String? serviceId, double? precio}) =>
       AppointmentService(
-        id: id ?? this.id,
-        tenantId: tenantId ?? this.tenantId,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
         appointmentId: appointmentId ?? this.appointmentId,
         serviceId: serviceId ?? this.serviceId,
         precio: precio ?? this.precio,
       );
   AppointmentService copyWithCompanion(AppointmentServicesCompanion data) {
     return AppointmentService(
-      id: data.id.present ? data.id.value : this.id,
-      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       appointmentId: data.appointmentId.present
           ? data.appointmentId.value
           : this.appointmentId,
@@ -2330,11 +2207,6 @@ class AppointmentService extends DataClass
   @override
   String toString() {
     return (StringBuffer('AppointmentService(')
-          ..write('id: $id, ')
-          ..write('tenantId: $tenantId, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('deletedAt: $deletedAt, ')
           ..write('appointmentId: $appointmentId, ')
           ..write('serviceId: $serviceId, ')
           ..write('precio: $precio')
@@ -2343,74 +2215,41 @@ class AppointmentService extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(id, tenantId, createdAt, updatedAt, deletedAt,
-      appointmentId, serviceId, precio);
+  int get hashCode => Object.hash(appointmentId, serviceId, precio);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is AppointmentService &&
-          other.id == this.id &&
-          other.tenantId == this.tenantId &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt &&
-          other.deletedAt == this.deletedAt &&
           other.appointmentId == this.appointmentId &&
           other.serviceId == this.serviceId &&
           other.precio == this.precio);
 }
 
 class AppointmentServicesCompanion extends UpdateCompanion<AppointmentService> {
-  final Value<String> id;
-  final Value<String> tenantId;
-  final Value<DateTime> createdAt;
-  final Value<DateTime> updatedAt;
-  final Value<DateTime?> deletedAt;
   final Value<String> appointmentId;
   final Value<String> serviceId;
   final Value<double> precio;
   final Value<int> rowid;
   const AppointmentServicesCompanion({
-    this.id = const Value.absent(),
-    this.tenantId = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.deletedAt = const Value.absent(),
     this.appointmentId = const Value.absent(),
     this.serviceId = const Value.absent(),
     this.precio = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AppointmentServicesCompanion.insert({
-    required String id,
-    required String tenantId,
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.deletedAt = const Value.absent(),
     required String appointmentId,
     required String serviceId,
     this.precio = const Value.absent(),
     this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        tenantId = Value(tenantId),
-        appointmentId = Value(appointmentId),
+  })  : appointmentId = Value(appointmentId),
         serviceId = Value(serviceId);
   static Insertable<AppointmentService> custom({
-    Expression<String>? id,
-    Expression<String>? tenantId,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
-    Expression<DateTime>? deletedAt,
     Expression<String>? appointmentId,
     Expression<String>? serviceId,
     Expression<double>? precio,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (tenantId != null) 'tenant_id': tenantId,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (deletedAt != null) 'deleted_at': deletedAt,
       if (appointmentId != null) 'appointment_id': appointmentId,
       if (serviceId != null) 'service_id': serviceId,
       if (precio != null) 'precio': precio,
@@ -2419,21 +2258,11 @@ class AppointmentServicesCompanion extends UpdateCompanion<AppointmentService> {
   }
 
   AppointmentServicesCompanion copyWith(
-      {Value<String>? id,
-      Value<String>? tenantId,
-      Value<DateTime>? createdAt,
-      Value<DateTime>? updatedAt,
-      Value<DateTime?>? deletedAt,
-      Value<String>? appointmentId,
+      {Value<String>? appointmentId,
       Value<String>? serviceId,
       Value<double>? precio,
       Value<int>? rowid}) {
     return AppointmentServicesCompanion(
-      id: id ?? this.id,
-      tenantId: tenantId ?? this.tenantId,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      deletedAt: deletedAt ?? this.deletedAt,
       appointmentId: appointmentId ?? this.appointmentId,
       serviceId: serviceId ?? this.serviceId,
       precio: precio ?? this.precio,
@@ -2444,21 +2273,6 @@ class AppointmentServicesCompanion extends UpdateCompanion<AppointmentService> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (tenantId.present) {
-      map['tenant_id'] = Variable<String>(tenantId.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
     if (appointmentId.present) {
       map['appointment_id'] = Variable<String>(appointmentId.value);
     }
@@ -2477,11 +2291,6 @@ class AppointmentServicesCompanion extends UpdateCompanion<AppointmentService> {
   @override
   String toString() {
     return (StringBuffer('AppointmentServicesCompanion(')
-          ..write('id: $id, ')
-          ..write('tenantId: $tenantId, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('deletedAt: $deletedAt, ')
           ..write('appointmentId: $appointmentId, ')
           ..write('serviceId: $serviceId, ')
           ..write('precio: $precio, ')
@@ -2715,6 +2524,11 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
+
+  /// `income` | `expense` — los valores EXACTOS del enum `tx_tipo` de
+  /// Postgres. No 'ingreso'/'gasto': el servidor rechaza cualquier otra cosa
+  /// y la fila se queda dando vueltas en el outbox hasta agotar reintentos,
+  /// sin que nadie se entere.
   final String tipo;
   final double monto;
   final String? descripcion;
@@ -5937,11 +5751,6 @@ typedef $$AppointmentsTableProcessedTableManager = ProcessedTableManager<
     PrefetchHooks Function()>;
 typedef $$AppointmentServicesTableCreateCompanionBuilder
     = AppointmentServicesCompanion Function({
-  required String id,
-  required String tenantId,
-  Value<DateTime> createdAt,
-  Value<DateTime> updatedAt,
-  Value<DateTime?> deletedAt,
   required String appointmentId,
   required String serviceId,
   Value<double> precio,
@@ -5949,11 +5758,6 @@ typedef $$AppointmentServicesTableCreateCompanionBuilder
 });
 typedef $$AppointmentServicesTableUpdateCompanionBuilder
     = AppointmentServicesCompanion Function({
-  Value<String> id,
-  Value<String> tenantId,
-  Value<DateTime> createdAt,
-  Value<DateTime> updatedAt,
-  Value<DateTime?> deletedAt,
   Value<String> appointmentId,
   Value<String> serviceId,
   Value<double> precio,
@@ -5969,21 +5773,6 @@ class $$AppointmentServicesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get tenantId => $composableBuilder(
-      column: $table.tenantId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-      column: $table.deletedAt, builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get appointmentId => $composableBuilder(
       column: $table.appointmentId, builder: (column) => ColumnFilters(column));
 
@@ -6003,21 +5792,6 @@ class $$AppointmentServicesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get tenantId => $composableBuilder(
-      column: $table.tenantId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-      column: $table.deletedAt, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get appointmentId => $composableBuilder(
       column: $table.appointmentId,
       builder: (column) => ColumnOrderings(column));
@@ -6038,21 +5812,6 @@ class $$AppointmentServicesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get tenantId =>
-      $composableBuilder(column: $table.tenantId, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
   GeneratedColumn<String> get appointmentId => $composableBuilder(
       column: $table.appointmentId, builder: (column) => column);
 
@@ -6092,44 +5851,24 @@ class $$AppointmentServicesTableTableManager extends RootTableManager<
               $$AppointmentServicesTableAnnotationComposer(
                   $db: db, $table: table),
           updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
-            Value<String> tenantId = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime> updatedAt = const Value.absent(),
-            Value<DateTime?> deletedAt = const Value.absent(),
             Value<String> appointmentId = const Value.absent(),
             Value<String> serviceId = const Value.absent(),
             Value<double> precio = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               AppointmentServicesCompanion(
-            id: id,
-            tenantId: tenantId,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            deletedAt: deletedAt,
             appointmentId: appointmentId,
             serviceId: serviceId,
             precio: precio,
             rowid: rowid,
           ),
           createCompanionCallback: ({
-            required String id,
-            required String tenantId,
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime> updatedAt = const Value.absent(),
-            Value<DateTime?> deletedAt = const Value.absent(),
             required String appointmentId,
             required String serviceId,
             Value<double> precio = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               AppointmentServicesCompanion.insert(
-            id: id,
-            tenantId: tenantId,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            deletedAt: deletedAt,
             appointmentId: appointmentId,
             serviceId: serviceId,
             precio: precio,

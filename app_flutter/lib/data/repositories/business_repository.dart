@@ -113,16 +113,21 @@ class BusinessRepository {
   /// movimientos a memoria: la lista de clientas se abre seguido y el
   /// historial solo crece.
   ///
-  /// El gasto sale de las TRANSACCIONES de tipo ingreso con `client_id`, igual
-  /// que `renderClients` del original.
+  /// El gasto se suma de los **turnos**, no de las transacciones.
+  ///
+  /// `renderClients` del original lo sacaba de las transacciones con
+  /// `client_id`, pero ese campo NUNCA se escribía: el total daba siempre \$0.
+  /// Los turnos sí tienen clienta y precio — es lo que hace `topClients`, con
+  /// esta misma nota en el original. Se descartan los cancelados: un turno que
+  /// no ocurrió no es plata que entró.
   Stream<Map<String, ({int turnos, double gastado})>> verResumenClientes() {
     final consulta = '''
       select c.id as cid,
              (select count(*) from appointments a
                where a.client_id = c.id and a.deleted_at is null) as turnos,
-             (select coalesce(sum(t.monto), 0) from transactions t
-               where t.client_id = c.id and t.tipo = 'ingreso'
-                 and t.deleted_at is null) as gastado
+             (select coalesce(sum(a.precio), 0) from appointments a
+               where a.client_id = c.id and a.deleted_at is null
+                 and a.estado <> 'cancelled') as gastado
       from clients c
       where c.tenant_id = ? and c.deleted_at is null
     ''';
@@ -130,7 +135,7 @@ class BusinessRepository {
         .customSelect(
           consulta,
           variables: [Variable.withString(_tenantId)],
-          readsFrom: {_db.clients, _db.appointments, _db.transactions},
+          readsFrom: {_db.clients, _db.appointments},
         )
         .watch()
         .map((filas) => {
@@ -198,7 +203,7 @@ class BusinessRepository {
     required DateTime fecha,
     required String hora,
     double precio = 0,
-    String estado = 'pendiente',
+    String estado = 'confirmed',
     String? notas,
   }) async {
     final filaId = id ?? nuevoId();
