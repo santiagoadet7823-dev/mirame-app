@@ -6,7 +6,7 @@
 
 **Última actualización:** 2026-08-23
 **Estado general:** PWA publicada y APK distribuyéndose solo. Repo `mirame-app` vivo.
-**Fase actual:** 3 — motor de sync
+**Fase actual:** 5 — pantallas de negocio (agenda, CRM, caja, stock, stats, ajustes)
 
 ## Links en producción
 
@@ -49,9 +49,9 @@ flota sin arreglo remoto.
 | 0 | Toolchain | ✅ **completo**. Flutter 3.47 + Dart 3.13 en `C:\src\flutter` (fuera del PATH), Android SDK 36.1, JDK 21 el que trae Android Studio. No hizo falta instalar nada |
 | 1 | Backend: esquema SQL + RLS + roles | ✅ **desplegado y verificado** · superadmin 1 sembrado · primer tenant creado · falta el superadmin 2 (revendedor) |
 | 2 | Auth + tenancy + roles | ✅ **login end-to-end funcionando** con Google real |
-| 3 | Capa de datos local + motor de sync | ⬜ pendiente |
+| 3 | Capa de datos local + motor de sync | ✅ Drift + outbox + deltas + cache de acceso offline |
 | 4 | Design system en Dart | 🟨 tokens, tipografía, sombras, motion y tema listos · faltan los componentes de negocio |
-| 5 | Pantallas de negocio | 🟨 **`domain/` completo y testeado** · falta la UI |
+| 5 | Pantallas de negocio | 🟨 shell + inicio ✅ · faltan agenda, CRM, caja, stock, stats y ajustes |
 | 6 | Panel superadmin / revendedor | 🟨 lista de salones + entrar a un salón ✅ · faltan alta de tenant, licencias, usuarios y auditoría |
 | 7 | Notificaciones | ⬜ pendiente |
 | 8 | Build PWA + APK, auto-update, distribución | 🟨 **APK 1.0.0 firmado y compilando OK** (62 MB) · falta el auto-updater y el pipeline de GitHub |
