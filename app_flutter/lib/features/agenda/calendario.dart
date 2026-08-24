@@ -19,7 +19,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
-import '../../data/repositories/business_repository.dart';
+import '../../domain/rules/period.dart';
 import '../../domain/rules/formatting.dart';
 import '../shell/vistas_comunes.dart';
 

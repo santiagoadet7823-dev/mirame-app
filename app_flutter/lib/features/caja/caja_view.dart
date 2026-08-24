@@ -20,6 +20,7 @@ import '../../domain/rules/finance.dart';
 import '../../domain/rules/formatting.dart';
 import '../../domain/rules/period.dart';
 import '../auth/session_controller.dart';
+import 'cierre_sheet.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
 
@@ -208,7 +209,22 @@ class _CajaViewState extends ConsumerState<CajaView> {
               onElegir: (f) => setState(() => _filtro = f),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
+          // `.sec-row` del original: el título de la lista con el cierre a la
+          // derecha, no un botón suelto.
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 110),
+            child: FilaSeccion(
+              titulo: 'MOVIMIENTOS',
+              accion: 'Cierre 📋',
+              onAccion: () => mostrarCierre(
+                context,
+                movimientos: todos,
+                rango: monthRange(_mes),
+                titulo: nombreMes(_mes),
+              ),
+            ),
+          ),
           if (movimientos.isEmpty)
             EstadoVacio(
               emoji: '💸',

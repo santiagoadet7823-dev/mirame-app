@@ -16,8 +16,9 @@ import '../../core/notificaciones/servicio_avisos.dart';
 import '../../data/local/database.dart' as db;
 import '../../data/local/mappers.dart';
 import '../../data/repositories/business_repository.dart';
-import '../../domain/rules/avisos.dart';
 import '../../domain/rules/access.dart';
+import '../../domain/rules/avisos.dart';
+import '../../domain/rules/period.dart';
 import '../auth/session_controller.dart';
 import '../dashboard/dashboard_view.dart';
 import '../stock/stock_view.dart';
@@ -115,7 +116,7 @@ class _ProgramadorAvisosState extends ConsumerState<ProgramadorAvisos> {
 
     final prefs = await SharedPreferences.getInstance();
     const clave = 'aviso_stock_ultimo_dia';
-    final hoy = claveDia(DateTime.now());
+    final hoy = claveFecha(DateTime.now());
     if (prefs.getString(clave) == hoy) return;
     await prefs.setString(clave, hoy);
     await ServicioAvisos.instancia.mostrarYa(aviso);

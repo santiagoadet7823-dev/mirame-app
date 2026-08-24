@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mirame/data/local/database.dart';
 import 'package:mirame/data/repositories/business_repository.dart';
+import 'package:mirame/domain/rules/period.dart';
 import 'package:mirame/data/sync/sync_engine.dart';
 
 void main() {

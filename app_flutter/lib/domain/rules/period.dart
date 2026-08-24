@@ -64,3 +64,13 @@ DateRange weekRange(DateTime d) {
 /// El mes desplazado [offset] meses respecto de [d]. `-1` es el mes anterior.
 DateRange monthOffset(DateTime d, int offset) =>
     monthRange(DateTime(d.year, d.month + offset, 1));
+
+/// `YYYY-MM-DD` en hora LOCAL.
+///
+/// Nunca `toIso8601String()`: en Salta (UTC−3) eso corre el día después de las
+/// 21:00, que es exactamente cuando se cierra la caja. Era el bug del `td()`
+/// del legacy.
+String claveFecha(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-'
+    '${d.month.toString().padLeft(2, '0')}-'
+    '${d.day.toString().padLeft(2, '0')}';

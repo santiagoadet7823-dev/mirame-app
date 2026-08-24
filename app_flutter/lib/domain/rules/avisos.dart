@@ -91,7 +91,7 @@ List<AvisoProgramado> avisosDelDia({
   final cumples = birthdaysToday(clients, hoy);
   if (cumples.isNotEmpty) {
     agregar(AvisoProgramado(
-      id: idEstable('cumple-${claveDia(hoy)}'),
+      id: idEstable('cumple-${claveFecha(hoy)}'),
       titulo: cumples.length == 1
           ? '🎂 Hoy cumple ${cumples.first.nombre}'
           : '🎂 Hoy cumplen ${cumples.length} clientas',
@@ -115,7 +115,7 @@ List<AvisoProgramado> avisosDelDia({
   ).where((r) => r.diasRestantes <= 0).toList();
   if (retoques.isNotEmpty) {
     agregar(AvisoProgramado(
-      id: idEstable('retoque-${claveDia(hoy)}'),
+      id: idEstable('retoque-${claveFecha(hoy)}'),
       titulo: '✂️ ${retoques.length} clienta${retoques.length == 1 ? '' : 's'} '
           'para retoque',
       cuerpo: retoques.take(3).map((r) => r.client.nombre).join(', ') +
@@ -137,7 +137,7 @@ List<AvisoProgramado> avisosDelDia({
   if (deManana.isNotEmpty) {
     final primero = deManana.first.hora?.toString();
     agregar(AvisoProgramado(
-      id: idEstable('manana-${claveDia(hoy)}'),
+      id: idEstable('manana-${claveFecha(hoy)}'),
       titulo: deManana.length == 1
           ? '📅 Mañana tenés 1 turno'
           : '📅 Mañana tenés ${deManana.length} turnos',
@@ -163,7 +163,7 @@ List<AvisoProgramado> avisosDelDia({
       }
     }
     agregar(AvisoProgramado(
-      id: idEstable('caja-${claveDia(hoy)}'),
+      id: idEstable('caja-${claveFecha(hoy)}'),
       titulo: '💰 Cierre del día',
       cuerpo: 'Ingresos ${_plata(ingresos)} · Gastos ${_plata(gastos)} · '
           'Neto ${_plata(ingresos - gastos)}',
@@ -187,7 +187,7 @@ AvisoProgramado? avisoDeStock(Iterable<StockItem> stock, DateTime ahora) {
 
   final agotados = criticos.where((s) => s.cantidad <= 0).length;
   return AvisoProgramado(
-    id: idEstable('stock-${claveDia(dateOnly(ahora))}'),
+    id: idEstable('stock-${claveFecha(dateOnly(ahora))}'),
     titulo: agotados > 0
         ? '🔴 $agotados producto${agotados == 1 ? '' : 's'} sin stock'
         : '⚠️ ${criticos.length} producto${criticos.length == 1 ? '' : 's'} '
@@ -201,9 +201,3 @@ AvisoProgramado? avisoDeStock(Iterable<StockItem> stock, DateTime ahora) {
 }
 
 String _plata(double n) => '\$${n.round()}';
-
-/// `YYYY-MM-DD` en hora local. Nunca `toIso8601String()`: en Salta (UTC−3) eso
-/// corre el día después de las 21:00, que es justo cuando se cierra la caja.
-String claveDia(DateTime d) =>
-    '${d.year}-${d.month.toString().padLeft(2, '0')}-'
-    '${d.day.toString().padLeft(2, '0')}';

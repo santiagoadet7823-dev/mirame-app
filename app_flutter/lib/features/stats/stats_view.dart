@@ -31,10 +31,12 @@ import '../../core/theme/typography.dart';
 import '../../data/local/database.dart' as db;
 import '../../data/local/mappers.dart';
 import '../../data/repositories/business_repository.dart';
+import '../../domain/rules/csv.dart';
 import '../../domain/rules/finance.dart';
 import '../../domain/rules/formatting.dart';
 import '../../domain/rules/period.dart';
 import '../crm/clients_view.dart';
+import 'exportar_csv.dart';
 import '../dashboard/dashboard_view.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
@@ -303,6 +305,26 @@ class StatsView extends ConsumerWidget {
                   color: MColors.nude300,
                 ),
               ],
+            ),
+          ),
+        ),
+
+        // Pie del original: las dos tarjetas de export.
+        const SizedBox(height: 14),
+        FadeSlideIn(
+          delay: const Duration(milliseconds: 260),
+          child: Builder(
+            builder: (ctx) => FilaExports(
+              onCaja: () => compartirCsv(
+                ctx,
+                contenido: csvDeCaja(movimientos),
+                nombre: nombreCsvCaja(DateTime.now()),
+              ),
+              onClientas: () => compartirCsv(
+                ctx,
+                contenido: csvDeClientas(clientes.map(aClient)),
+                nombre: nombreCsvClientas(DateTime.now()),
+              ),
             ),
           ),
         ),

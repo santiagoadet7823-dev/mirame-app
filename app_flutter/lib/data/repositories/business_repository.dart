@@ -13,6 +13,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../features/auth/session_controller.dart';
 import '../local/database.dart';
+import '../../domain/rules/period.dart';
 import '../sync/sync_engine.dart';
 
 /// uuid **v7**: lleva el tiempo adelante, así que ordena por creación y los
@@ -33,11 +34,6 @@ String nuevoId() => _uuid.v7();
 /// encontró un test, después de que un `borrar()` dejara la lista de clientas
 /// sin poder abrirse.
 int aEpoch(DateTime d) => d.millisecondsSinceEpoch ~/ 1000;
-
-String claveFecha(DateTime d) =>
-    '${d.year.toString().padLeft(4, '0')}-'
-    '${d.month.toString().padLeft(2, '0')}-'
-    '${d.day.toString().padLeft(2, '0')}';
 
 class BusinessRepository {
   const BusinessRepository(this._db, this._sync, this._tenantId);

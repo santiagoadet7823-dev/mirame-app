@@ -51,7 +51,7 @@ flota sin arreglo remoto.
 | 2 | Auth + tenancy + roles | ✅ **login end-to-end funcionando** con Google real |
 | 3 | Capa de datos local + motor de sync | ✅ Drift + outbox + deltas + cache de acceso offline |
 | 4 | Design system en Dart | 🟨 tokens, tipografía, sombras, motion y tema listos · faltan los componentes de negocio |
-| 5 | Pantallas de negocio | 🟨 shell, inicio, agenda, clientas, caja, stock y ajustes ✅ · falta **stats** |
+| 5 | Pantallas de negocio | 🟨 shell, inicio, agenda, clientas, caja, stock, stats, cierre de caja y exports CSV ✅ · falta **ajustes de verdad** (servicios, profesionales, datos del salón, importar/exportar backup) |
 | 6 | Panel superadmin / revendedor | 🟨 lista de salones + entrar a un salón ✅ · faltan alta de tenant, licencias, usuarios y auditoría |
 | 7 | Notificaciones | 🟨 **locales completas** (retoque, turnos de mañana, cierre de caja, stock, cumpleaños) con permiso pedido en contexto · `device_tokens` + `enviar-push` escritos · el push queda inerte hasta cargar `google-services.json` y la service account — ver `06-NOTIFICACIONES.md` §6 |
 | 8 | Build PWA + APK, auto-update, distribución | 🟨 **APK 1.0.0 firmado y compilando OK** (62 MB) · falta el auto-updater y el pipeline de GitHub |
