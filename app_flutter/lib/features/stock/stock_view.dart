@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/motion.dart';
-import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
 import '../../data/local/database.dart' as db;
@@ -83,8 +82,8 @@ class StockView extends ConsumerWidget {
           if (items.isEmpty)
             const EstadoVacio(
               emoji: '📦',
-              titulo: 'Sin productos cargados',
-              detalle: 'Tocá + para agregar el primero.',
+              titulo: 'Sin productos',
+              detalle: 'Agregá productos al inventario',
             )
           else
             for (var i = 0; i < items.length; i++)
@@ -98,6 +97,11 @@ class StockView extends ConsumerWidget {
   }
 }
 
+/// `.stk-item` — ícono de categoría, nombre, categoría, chip de alerta,
+/// barra de nivel, y a la derecha la cantidad grande con los botones ± .
+///
+/// La columna derecha es la diferencia con una lista cualquiera: el número en
+/// 20px y en negrita es lo que se mira de reojo para saber si falta algo.
 class _FilaStock extends ConsumerWidget {
   const _FilaStock({required this.item, required this.puedeEscribir});
 
@@ -107,112 +111,189 @@ class _FilaStock extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final estado = stockStatus(item);
-    final (color, fondo) = switch (estado) {
-      StockStatus.out => (MColors.dangerText, MColors.dangerBg),
-      StockStatus.low => (MColors.warningText, MColors.warningBg),
-      StockStatus.ok => (MColors.successText, MColors.successBg),
+    final colorBarra = switch (estado) {
+      StockStatus.out => MColors.stockOut,
+      StockStatus.low => MColors.stockLow,
+      StockStatus.ok => MColors.stockOk,
+    };
+    final colorNumero = switch (estado) {
+      StockStatus.out => MColors.dangerText,
+      StockStatus.low => MColors.warningText,
+      StockStatus.ok => MColors.tPrimary,
     };
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-      decoration: BoxDecoration(
-        color: MColors.surface,
-        borderRadius: BorderRadius.circular(MRadius.md),
-        border: Border.all(color: MColors.border),
-        boxShadow: MShadow.xs,
-      ),
-      child: Row(
+    return TarjetaMirame(
+      margenInferior: 8,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      onTap: () => _mostrarFormulario(context, ref, item: item),
+      hijo: Row(
         children: [
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => _mostrarFormulario(context, ref, item: item),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.nombre,
-                    style: sans(size: 14, weight: 600),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: fondo,
-                          borderRadius:
-                              BorderRadius.circular(MRadius.full),
-                        ),
-                        child: Text(
-                          '${item.cantidad} ${item.unidad}',
-                          style: sans(
-                              size: 11.5, weight: 600, color: color),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text('mín. ${item.minimo}', style: MText.menor),
-                    ],
-                  ),
-                  const SizedBox(height: 7),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(MRadius.full),
-                    child: LinearProgressIndicator(
-                      value: stockBarPct(item) / 100,
-                      minHeight: 4,
-                      backgroundColor: MColors.bg3,
-                      color: color,
-                    ),
-                  ),
-                ],
-              ),
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: MColors.bg2,
+              border: Border.all(color: MColors.border),
+              borderRadius: BorderRadius.circular(MRadius.sm),
+            ),
+            child: Text(
+              _iconoCategoria(item.categoria),
+              style: const TextStyle(fontSize: 19),
             ),
           ),
-          if (puedeEscribir) ...[
-            _BotonAjuste(
-              icono: Icons.remove_rounded,
-              // No baja de cero: `adjustQuantity` ya lo garantiza, pero
-              // deshabilitar el botón evita encolar un delta que no cambia nada.
-              activo: item.cantidad > 0,
-              onTap: () => ref
-                  .read(businessRepoProvider)
-                  ?.ajustarStock(item.id, -1),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.nombre,
+                  style: sans(size: 14, weight: 600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.categoria?.isNotEmpty ?? false
+                      ? item.categoria!
+                      : 'General',
+                  style: sans(size: 11, color: MColors.tMuted),
+                ),
+                if (estado != StockStatus.ok) ...[
+                  const SizedBox(height: 4),
+                  _ChipAlerta(sinStock: estado == StockStatus.out),
+                ],
+                const SizedBox(height: 8),
+                // `.stk-bar-w { height:3px }` — una línea fina, no una barra
+                // gruesa: acompaña, no grita.
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: stockBarPct(item) / 100,
+                    minHeight: 3,
+                    backgroundColor: MColors.bg3,
+                    color: colorBarra,
+                  ),
+                ),
+              ],
             ),
-            _BotonAjuste(
-              icono: Icons.add_rounded,
-              activo: true,
-              onTap: () =>
-                  ref.read(businessRepoProvider)?.ajustarStock(item.id, 1),
-            ),
-          ],
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${item.cantidad}',
+                style: sans(size: 20, weight: 700, color: colorNumero),
+              ),
+              const SizedBox(height: 1),
+              Text(item.unidad, style: sans(size: 9, color: MColors.tMuted)),
+              if (puedeEscribir) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    _BotonAjuste(
+                      simbolo: '\u2212',
+                      // `adjustQuantity` ya impide bajar de cero; deshabilitar
+                      // el botón evita encolar un delta que no cambia nada.
+                      activo: item.cantidad > 0,
+                      onTap: () => ref
+                          .read(businessRepoProvider)
+                          ?.ajustarStock(item.id, -1),
+                    ),
+                    const SizedBox(width: 4),
+                    _BotonAjuste(
+                      simbolo: '+',
+                      activo: true,
+                      onTap: () => ref
+                          .read(businessRepoProvider)
+                          ?.ajustarStock(item.id, 1),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
   }
+
+  /// `catI()` del original: un emoji por familia de producto.
+  static String _iconoCategoria(String? c) {
+    final s = (c ?? '').toLowerCase();
+    if (s.contains('adhesiv') || s.contains('pegamento')) return '🧴';
+    if (s.contains('remov')) return '🧪';
+    if (s.contains('pesta')) return '👁️';
+    if (s.contains('ceja')) return '✏️';
+    if (s.contains('depil') || s.contains('cera')) return '🕯️';
+    if (s.contains('descart')) return '🧻';
+    return '📦';
+  }
 }
 
+/// `.stk-alert` — chip chico, radio 5 (no píldora), 9px en negrita.
+class _ChipAlerta extends StatelessWidget {
+  const _ChipAlerta({required this.sinStock});
+
+  final bool sinStock;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+        decoration: BoxDecoration(
+          color: sinStock ? MColors.dangerBg : MColors.warningBg,
+          border: Border.all(
+            color: sinStock ? MColors.dangerBorder : MColors.warningBorder,
+          ),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Text(
+          sinStock ? 'Sin stock' : 'Bajo stock',
+          style: sans(
+            size: 9,
+            weight: 600,
+            color: sinStock ? MColors.dangerText : MColors.warningText,
+          ),
+        ),
+      );
+}
+
+/// `.adj-btn` — 26×26, radio 7, fondo bg2. No es un `IconButton`: el de
+/// Material trae 48 px de área táctil y rompe el alto de la fila.
 class _BotonAjuste extends StatelessWidget {
   const _BotonAjuste({
-    required this.icono,
+    required this.simbolo,
     required this.activo,
     required this.onTap,
   });
 
-  final IconData icono;
+  final String simbolo;
   final bool activo;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => IconButton(
-        onPressed: activo ? onTap : null,
-        visualDensity: VisualDensity.compact,
-        icon: Icon(
-          icono,
-          size: 19,
-          color: activo ? MColors.brand : MColors.tLight,
+  Widget build(BuildContext context) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: activo ? onTap : null,
+        child: Container(
+          width: 26,
+          height: 26,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: MColors.bg2,
+            border: Border.all(color: MColors.border),
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Text(
+            simbolo,
+            style: sans(
+              size: 15,
+              weight: 600,
+              color: activo ? MColors.tSecondary : MColors.tLight,
+            ),
+          ),
         ),
       );
 }

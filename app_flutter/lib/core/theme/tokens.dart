@@ -80,6 +80,12 @@ abstract final class MColors {
   static const dangerText = Color(0xFF9F1239);
   static const dangerBgActive = Color(0xFFFFE4E6);
 
+  /// `.tx-amt.inc` / `.tx-amt.exp` — los montos de la caja usan un verde y un
+  /// rojo PROPIOS, más oscuros que los semánticos, para leerse en negrita
+  /// sobre blanco.
+  static const ingreso = Color(0xFF1A7A4A);
+  static const gasto = Color(0xFFA83232);
+
   static const skyBg = Color(0xFFF0F9FF);
   static const skyBorder = Color(0xFFBAE6FD);
 

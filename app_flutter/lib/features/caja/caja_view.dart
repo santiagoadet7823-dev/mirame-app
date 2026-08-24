@@ -113,9 +113,9 @@ class CajaView extends ConsumerWidget {
           const SizedBox(height: 10),
           if (movimientos.isEmpty)
             const EstadoVacio(
-              emoji: '🧾',
-              titulo: 'Sin movimientos este mes',
-              detalle: 'Tocá + para cargar un ingreso o un gasto.',
+              emoji: '💸',
+              titulo: 'Sin movimientos',
+              detalle: 'No hay movimientos este mes',
             )
           else
             for (var i = 0; i < movimientos.length; i++)
@@ -163,6 +163,11 @@ class _Total extends StatelessWidget {
       );
 }
 
+/// `.tx-item` — ícono de 40 con el fondo del tipo, descripción, la meta
+/// "fecha · método" y el monto con signo.
+///
+/// El original usa emoji (✅ / 🔴) y no íconos de línea: es lo que le da el
+/// aire de la app, y a 17px se leen mejor que un trazo fino.
 class _FilaMovimiento extends ConsumerWidget {
   const _FilaMovimiento({required this.mov});
 
@@ -171,68 +176,79 @@ class _FilaMovimiento extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final esIngreso = mov.tipo == TxTipo.income;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: PressableScale(
-        onTap: () => _mostrarFormulario(context, ref, mov: mov),
-        child: Container(
-          padding: const EdgeInsets.all(13),
-          decoration: BoxDecoration(
-            color: MColors.surface,
-            borderRadius: BorderRadius.circular(MRadius.lg),
-            border: Border.all(color: MColors.border),
-            boxShadow: MShadow.xs,
+    return TarjetaMirame(
+      margenInferior: 7,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      onTap: () => _mostrarFormulario(context, ref, mov: mov),
+      hijo: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: esIngreso ? MColors.successBg : MColors.dangerBg,
+              border: Border.all(
+                color: esIngreso
+                    ? MColors.successBorder
+                    : MColors.dangerBorder,
+              ),
+              borderRadius: BorderRadius.circular(MRadius.sm),
+            ),
+            child: Text(
+              esIngreso ? '✅' : '🔴',
+              style: const TextStyle(fontSize: 17),
+            ),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: esIngreso ? MColors.successBg : MColors.dangerBg,
-                  shape: BoxShape.circle,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  // El original cae a la categoría y después a "Movimiento":
+                  // una fila sin texto no se puede distinguir de otra.
+                  mov.descripcion?.isNotEmpty ?? false
+                      ? mov.descripcion!
+                      : (mov.categoria?.isNotEmpty ?? false
+                          ? mov.categoria!
+                          : 'Movimiento'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: sans(size: 13, weight: 500),
                 ),
-                child: Icon(
-                  esIngreso
-                      ? Icons.arrow_downward_rounded
-                      : Icons.arrow_upward_rounded,
-                  size: 17,
-                  color:
-                      esIngreso ? MColors.successText : MColors.dangerText,
+                const SizedBox(height: 2),
+                Text(
+                  '${formatDateShort(mov.fecha)} · ${_metodo(mov.metodo)}',
+                  style: sans(size: 11, color: MColors.tMuted),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      mov.descripcion?.isNotEmpty ?? false
-                          ? mov.descripcion!
-                          : (esIngreso ? 'Ingreso' : 'Gasto'),
-                      style: sans(size: 14, weight: 500),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(formatDateShort(mov.fecha), style: MText.menor),
-                  ],
-                ),
-              ),
-              Text(
-                '${esIngreso ? '+' : '−'}${formatMoney(mov.monto)}',
-                style: sans(
-                  size: 14,
-                  weight: 600,
-                  color:
-                      esIngreso ? MColors.successText : MColors.dangerText,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: 8),
+          Text(
+            '${esIngreso ? '+' : '-'}${formatMoney(mov.monto)}',
+            style: sans(
+              size: 14,
+              weight: 700,
+              color: esIngreso ? MColors.ingreso : MColors.gasto,
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(left: 4),
+            child: Text('›',
+                style: TextStyle(fontSize: 18, color: MColors.tMuted)),
+          ),
+        ],
       ),
     );
   }
+
+  static String _metodo(TxMetodo m) => switch (m) {
+        TxMetodo.transferencia => 'Transferencia',
+        TxMetodo.tarjeta => 'Tarjeta',
+        TxMetodo.efectivo => 'Efectivo',
+      };
 }
 
 Future<void> _mostrarFormulario(
