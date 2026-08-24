@@ -15,6 +15,7 @@ import '../../core/theme/typography.dart';
 import '../../data/sync/sync_engine.dart';
 import '../../shared/widgets/version_label.dart';
 import '../auth/session_controller.dart';
+import '../shell/app_shell.dart';
 import '../update/update_sheet.dart';
 
 class SettingsView extends ConsumerWidget {
@@ -26,10 +27,10 @@ class SettingsView extends ConsumerWidget {
     final sync = ref.watch(syncProvider);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 6, 20, 90),
+      padding: padVistaMovil,
       children: [
         FadeSlideIn(
-          child: Text('Ajustes', style: serif(size: 28, weight: 600)),
+          child: Text('Ajustes', style: serif(size: 24, weight: 500)),
         ),
         const SizedBox(height: 20),
 
@@ -133,7 +134,7 @@ class _Tarjeta extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
         decoration: BoxDecoration(
           color: MColors.surface,
-          borderRadius: BorderRadius.circular(MRadius.md),
+          borderRadius: BorderRadius.circular(MRadius.lg),
           border: Border.all(color: MColors.border),
           boxShadow: MShadow.xs,
         ),

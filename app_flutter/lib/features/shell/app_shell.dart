@@ -1,7 +1,21 @@
 /// El caparazón de la app: header, contenido y navegación.
 ///
-/// Replica los tres modos del CSS original: móvil a pantalla completa, tablet
-/// con la columna centrada a 430 px, y escritorio con sidebar de 248 px.
+/// **Portado medida por medida del `index.html`**, no aproximado. Los valores
+/// de este archivo salen del CSS original:
+///
+/// ```
+/// #hdr        { padding:12px 18px 10px; background:surface; border-bottom:1px }
+/// .hdr-logo   { 40x40; border-radius:50%; border:1.5px border-md; sh-xs }
+/// .hdr-name   { Cormorant 18px/600, letter-spacing .2px }
+/// .hdr-tagline{ 10px/500, letter-spacing 1.5px, UPPERCASE, t-muted }
+/// #nav        { background:surface; border-top:1px; padding:0 8px 8px+safe }
+/// .nav-it     { column; gap:3px; padding:10px 4px 6px }
+/// .nav-ic     { 32x32; border-radius:10px; activo → brand-bg }
+/// .nav-lb     { 10px/500 → activo 600 }
+/// .nav-it::after { barra 22x3 ARRIBA, escala en X al activarse }
+/// .view       { padding:16px 16px 96px (móvil) · 18px lados (tablet) }
+/// .fab        { 54x54; bottom:80+safe; right:18; sh-brand + sh-md }
+/// ```
 library;
 
 import 'package:flutter/material.dart';
@@ -21,14 +35,18 @@ class ItemNav {
 }
 
 const itemsNav = <ItemNav>[
-  ItemNav(Icons.dashboard_outlined, 'Inicio'),
-  ItemNav(Icons.calendar_month_outlined, 'Agenda'),
+  ItemNav(Icons.home_outlined, 'Inicio'),
+  ItemNav(Icons.calendar_today_outlined, 'Agenda'),
   ItemNav(Icons.people_outline, 'Clientas'),
-  ItemNav(Icons.account_balance_wallet_outlined, 'Caja'),
+  ItemNav(Icons.attach_money_rounded, 'Caja'),
   ItemNav(Icons.inventory_2_outlined, 'Stock'),
-  ItemNav(Icons.bar_chart_outlined, 'Stats'),
+  ItemNav(Icons.bar_chart_rounded, 'Stats'),
   ItemNav(Icons.settings_outlined, 'Ajustes'),
 ];
+
+/// `.view { padding: 16px 16px 96px }` — los 96 de abajo dejan pasar el FAB y
+/// la barra de navegación sin que tapen la última fila.
+const padVistaMovil = EdgeInsets.fromLTRB(16, 16, 16, 96);
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.vistas});
@@ -47,9 +65,8 @@ class _AppShellState extends ConsumerState<AppShell> {
     final ancho = MediaQuery.sizeOf(context).width;
     final conSidebar = ancho >= MBreak.desktop;
 
-    final contenido = Column(
+    final cuerpo = Column(
       children: [
-        const _Header(),
         const _BarraSync(),
         Expanded(
           child: IndexedStack(index: _indice, children: widget.vistas),
@@ -67,7 +84,14 @@ class _AppShellState extends ConsumerState<AppShell> {
                 indice: _indice,
                 onElegir: (i) => setState(() => _indice = i),
               ),
-              Expanded(child: contenido),
+              Expanded(
+                child: Column(
+                  children: [
+                    _Header(titulo: itemsNav[_indice].etiqueta),
+                    Expanded(child: cuerpo),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -78,14 +102,19 @@ class _AppShellState extends ConsumerState<AppShell> {
       backgroundColor: MColors.bg,
       body: SafeArea(
         bottom: false,
-        // En tablet el original centra la columna a 430 px en vez de estirar
-        // los contenidos a lo ancho, que se ve desangelado.
         child: Center(
           child: ConstrainedBox(
+            // `max-width:430px` centrado desde 600 px — el modo tablet del
+            // original.
             constraints: BoxConstraints(
               maxWidth: ancho >= MBreak.tablet ? 430 : double.infinity,
             ),
-            child: contenido,
+            child: Column(
+              children: [
+                const _Header(),
+                Expanded(child: cuerpo),
+              ],
+            ),
           ),
         ),
       ),
@@ -98,38 +127,70 @@ class _AppShellState extends ConsumerState<AppShell> {
 }
 
 class _Header extends ConsumerWidget {
-  const _Header();
+  const _Header({this.titulo});
+
+  /// En escritorio la marca se oculta (`body.desktop #hdr .hdr-brand
+  /// {display:none}`) y en su lugar va el título de la sección.
+  final String? titulo;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tenant = ref.watch(tenantActivoProvider);
-    final esSuper = ref.watch(puedeVolverAlPanelProvider);
+    final puedeVolver = ref.watch(puedeVolverAlPanelProvider);
+    final esEscritorio = titulo != null;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 14, 14, 12),
+      width: double.infinity,
+      padding: esEscritorio
+          ? const EdgeInsets.fromLTRB(32, 16, 32, 16)
+          : const EdgeInsets.fromLTRB(18, 12, 18, 10),
+      decoration: const BoxDecoration(
+        color: MColors.surface,
+        border: Border(bottom: BorderSide(color: MColors.border)),
+      ),
       child: Row(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Mírame', style: serif(size: 26, weight: 600)),
-                if (tenant != null)
+          if (esEscritorio)
+            Expanded(
+              child: Text(
+                titulo!,
+                style:
+                    serif(size: 26, weight: 600).copyWith(letterSpacing: 0.2),
+              ),
+            )
+          else ...[
+            const _LogoRedondo(),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Text(
-                    tenant.nombre,
-                    style: MText.menor,
-                    overflow: TextOverflow.ellipsis,
+                    'Mírame',
+                    style: serif(size: 18, weight: 600)
+                        .copyWith(letterSpacing: 0.2),
                   ),
-              ],
+                  const SizedBox(height: 1),
+                  Text(
+                    // El original dice siempre "Lash Studio". Con varios
+                    // salones, el nombre del salón activo informa más que
+                    // repetir la marca dos renglones seguidos.
+                    (tenant?.nombre ?? 'Lash Studio').toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: sans(size: 10, weight: 500, color: MColors.tMuted)
+                        .copyWith(letterSpacing: 1.5),
+                  ),
+                ],
+              ),
             ),
-          ),
-          if (esSuper)
-            IconButton(
+          ],
+          if (puedeVolver)
+            _BotonHeader(
+              icono: Icons.apartment_outlined,
               tooltip: 'Volver al panel de plataforma',
-              icon: const Icon(Icons.apartment_outlined,
-                  size: 21, color: MColors.tMuted),
-              onPressed: () =>
-                  ref.read(sessionProvider.notifier).salirDelTenant(),
+              onTap: () => ref.read(sessionProvider.notifier).salirDelTenant(),
             ),
         ],
       ),
@@ -137,10 +198,65 @@ class _Header extends ConsumerWidget {
   }
 }
 
+/// `.hdr-logo` — 40×40, círculo, borde 1.5 px, sombra xs.
+class _LogoRedondo extends StatelessWidget {
+  const _LogoRedondo();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(color: MColors.borderMd, width: 1.5),
+          boxShadow: MShadow.xs,
+        ),
+        child: ClipOval(
+          child: Image.asset(
+            'assets/brand/logo-mirame.jpg',
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+}
+
+/// `.hdr-btn` — 36×36, círculo, fondo bg2, borde 1 px.
+class _BotonHeader extends StatelessWidget {
+  const _BotonHeader({
+    required this.icono,
+    required this.onTap,
+    this.tooltip,
+  });
+
+  final IconData icono;
+  final VoidCallback onTap;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final boton = PressableScale(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: MColors.bg2,
+          shape: BoxShape.circle,
+          border: Border.all(color: MColors.border),
+        ),
+        child: Icon(icono, size: 17, color: MColors.tSecondary),
+      ),
+    );
+    return tooltip == null ? boton : Tooltip(message: tooltip!, child: boton);
+  }
+}
+
 /// Franja de estado del sync. **Solo aparece cuando hay algo que decir.**
 ///
-/// Una barra permanente de "todo bien" es ruido que se deja de mirar, y
-/// entonces tampoco se ve el día que dice algo importante.
+/// No existe en el original porque el original no sincronizaba. Ocupa el lugar
+/// y el estilo de `.bk-bar`, la barra de backup.
 class _BarraSync extends ConsumerWidget {
   const _BarraSync();
 
@@ -155,10 +271,16 @@ class _BarraSync extends ConsumerWidget {
           MColors.warningBg,
           MColors.warningText,
         ),
-      EstadoSync.sinRed => ('Sin conexión · trabajando local',
-          MColors.bg3, MColors.tSecondary),
-      EstadoSync.error => ('No se pudo sincronizar. Se reintenta solo.',
-          MColors.dangerBg, MColors.dangerText),
+      EstadoSync.sinRed => (
+          'Sin conexión · trabajando local',
+          MColors.bg3,
+          MColors.tSecondary,
+        ),
+      EstadoSync.error => (
+          'No se pudo sincronizar. Se reintenta solo.',
+          MColors.dangerBg,
+          MColors.dangerText,
+        ),
       _ when s.pendientes > 0 => (
           '${s.pendientes} por subir',
           MColors.brandBg,
@@ -169,15 +291,14 @@ class _BarraSync extends ConsumerWidget {
 
     if (texto == null) return const SizedBox.shrink();
 
-    return AnimatedContainer(
-      duration: MMotion.t2,
+    return Container(
       width: double.infinity,
       color: fondo,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
       child: Text(
         texto,
         textAlign: TextAlign.center,
-        style: sans(size: 12, weight: 500, color: color),
+        style: sans(size: 11, weight: 500, color: color),
       ),
     );
   }
@@ -194,24 +315,22 @@ class _BottomNav extends StatelessWidget {
         decoration: const BoxDecoration(
           color: MColors.surface,
           border: Border(top: BorderSide(color: MColors.border)),
-          boxShadow: MShadow.lg,
         ),
+        // `padding: 0 8px calc(8px + safe-bottom)`
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
         child: SafeArea(
           top: false,
-          child: SizedBox(
-            height: 58,
-            child: Row(
-              children: [
-                for (var i = 0; i < itemsNav.length; i++)
-                  Expanded(
-                    child: _ItemBottom(
-                      item: itemsNav[i],
-                      activo: i == indice,
-                      onTap: () => onElegir(i),
-                    ),
+          child: Row(
+            children: [
+              for (var i = 0; i < itemsNav.length; i++)
+                Expanded(
+                  child: _ItemBottom(
+                    item: itemsNav[i],
+                    activo: i == indice,
+                    onTap: () => onElegir(i),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       );
@@ -230,35 +349,62 @@ class _ItemBottom extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        // Opaque y no el default: sin esto el toque solo cuenta sobre el
-        // pixel del ícono y la mitad de los toques no hacen nada.
+        // Opaque: sin esto el toque solo cuenta sobre el píxel del ícono.
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
+          alignment: Alignment.topCenter,
           children: [
-            AnimatedContainer(
-              duration: MMotion.t2,
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 4),
-              decoration: BoxDecoration(
-                color: activo ? MColors.brandBg : Colors.transparent,
-                borderRadius: BorderRadius.circular(MRadius.full),
-              ),
-              child: Icon(
-                item.icono,
-                size: 20,
-                color: activo ? MColors.brand : MColors.tLight,
+            Padding(
+              // `.nav-it { padding:10px 4px 6px; gap:3px }`
+              padding: const EdgeInsets.fromLTRB(4, 10, 4, 6),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedContainer(
+                    duration: MMotion.t1,
+                    curve: MMotion.ease,
+                    width: 32,
+                    height: 32,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: activo ? MColors.brandBg : Colors.transparent,
+                      // Radio 10, NO píldora: el original usa un cuadrado
+                      // redondeado y la diferencia se nota.
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      item.icono,
+                      size: 18,
+                      color: activo ? MColors.brand : MColors.tMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    item.etiqueta,
+                    maxLines: 1,
+                    style: sans(
+                      size: 10,
+                      weight: activo ? 600 : 500,
+                      color: activo ? MColors.brand : MColors.tMuted,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 3),
-            Text(
-              item.etiqueta,
-              maxLines: 1,
-              overflow: TextOverflow.clip,
-              style: sans(
-                size: 9.5,
-                weight: activo ? 600 : 500,
-                color: activo ? MColors.brand : MColors.tLight,
+            // `.nav-it::after` — barra de 22×3 arriba, que escala en X.
+            AnimatedScale(
+              duration: MMotion.t2,
+              curve: MMotion.ease,
+              scale: activo ? 1 : 0,
+              child: Container(
+                width: 22,
+                height: 3,
+                decoration: const BoxDecoration(
+                  color: MColors.brand,
+                  borderRadius:
+                      BorderRadius.vertical(bottom: Radius.circular(3)),
+                ),
               ),
             ),
           ],
@@ -266,6 +412,8 @@ class _ItemBottom extends StatelessWidget {
       );
 }
 
+/// Sidebar de escritorio: 248 px, degradado surface→bg2, ítems en fila con
+/// radio 12 y sin la barrita superior.
 class _Sidebar extends StatelessWidget {
   const _Sidebar({required this.indice, required this.onElegir});
 
@@ -276,41 +424,73 @@ class _Sidebar extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         width: 248,
         decoration: const BoxDecoration(
-          color: MColors.surface,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [MColors.surface, MColors.bg2],
+          ),
           border: Border(right: BorderSide(color: MColors.border)),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 14),
+        padding: const EdgeInsets.fromLTRB(14, 22, 14, 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 0, 0, 22),
-              child: Text('Mírame', style: serif(size: 28, weight: 600)),
+            Row(
+              children: [
+                const _LogoRedondo(),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Mírame',
+                        style: serif(size: 18, weight: 600)
+                            .copyWith(letterSpacing: 0.2),
+                      ),
+                      Text(
+                        'LASH STUDIO',
+                        style: sans(
+                          size: 10,
+                          weight: 500,
+                          color: MColors.tMuted,
+                        ).copyWith(letterSpacing: 1.5),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 22),
             for (var i = 0; i < itemsNav.length; i++)
               Padding(
-                padding: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.only(bottom: 6),
                 child: PressableScale(
                   onTap: () => onElegir(i),
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: MMotion.t1,
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 13, vertical: 11),
                     decoration: BoxDecoration(
-                      color:
-                          i == indice ? MColors.brandBg : Colors.transparent,
-                      borderRadius: BorderRadius.circular(MRadius.md),
+                      color: i == indice
+                          ? MColors.brandBg
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          itemsNav[i].icono,
-                          size: 19,
-                          color: i == indice
-                              ? MColors.brand
-                              : MColors.tSecondary,
+                        SizedBox(
+                          width: 34,
+                          height: 34,
+                          child: Icon(
+                            itemsNav[i].icono,
+                            size: 18,
+                            color:
+                                i == indice ? MColors.brand : MColors.tMuted,
+                          ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 13),
                         Text(
                           itemsNav[i].etiqueta,
                           style: sans(
@@ -327,6 +507,33 @@ class _Sidebar extends StatelessWidget {
                 ),
               ),
           ],
+        ),
+      );
+}
+
+/// `.fab` — 54×54, `bottom: 80px + safe`, `right: 18px`, sombra brand + md.
+///
+/// Se define acá en vez de usar `FloatingActionButton`: el de Material mide
+/// 56, se posiciona distinto y trae su propia elevación.
+class FabMirame extends StatelessWidget {
+  const FabMirame({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => PressableScale(
+        onTap: onTap,
+        child: Container(
+          width: 54,
+          height: 54,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+            color: MColors.brand,
+            shape: BoxShape.circle,
+            boxShadow: [...MShadow.brand, ...MShadow.md],
+          ),
+          child:
+              const Icon(Icons.add_rounded, size: 26, color: MColors.tWhite),
         ),
       );
 }

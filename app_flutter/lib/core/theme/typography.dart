@@ -132,4 +132,14 @@ abstract final class MText {
   static TextStyle get secLabel => label(1.2);
   static TextStyle get pie =>
       sans(size: 11, color: MColors.tMuted, height: 1.5);
+
+  /// `.kpi-hero-lbl` — 11px/500, letter-spacing 1.2, mayúsculas, t-muted.
+  static TextStyle get etiquetaHero =>
+      sans(size: 11, weight: 500, color: MColors.tMuted)
+          .copyWith(letterSpacing: 1.2);
+
+  /// La variante chica de la columna derecha del hero: 10px, ls 1.
+  static TextStyle get etiquetaHeroChica =>
+      sans(size: 10, weight: 500, color: MColors.tMuted)
+          .copyWith(letterSpacing: 1);
 }

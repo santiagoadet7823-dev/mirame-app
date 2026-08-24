@@ -3,6 +3,8 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../core/theme/motion.dart';
+import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
 
@@ -269,5 +271,67 @@ class CampoTexto extends StatelessWidget {
             ),
           ),
         ),
+      );
+}
+
+/// `.card` del original — `border-radius: var(--r-lg)` (20 px), borde 1 px y
+/// sombra `xs`. Se usa el radio LARGE, no el medio: es la diferencia que hace
+/// que las tarjetas se vean del original y no de una app Material cualquiera.
+class TarjetaMirame extends StatelessWidget {
+  const TarjetaMirame({
+    super.key,
+    required this.hijo,
+    this.padding = const EdgeInsets.all(14),
+    this.margenInferior = 0,
+    this.onTap,
+    this.borde,
+  });
+
+  final Widget hijo;
+  final EdgeInsets padding;
+  final double margenInferior;
+  final VoidCallback? onTap;
+  final Color? borde;
+
+  @override
+  Widget build(BuildContext context) {
+    final tarjeta = Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: MColors.surface,
+        border: Border.all(color: borde ?? MColors.border),
+        borderRadius: BorderRadius.circular(MRadius.lg),
+        boxShadow: MShadow.xs,
+      ),
+      child: hijo,
+    );
+    return Padding(
+      padding: EdgeInsets.only(bottom: margenInferior),
+      child: onTap == null
+          ? tarjeta
+          : PressableScale(onTap: onTap, child: tarjeta),
+    );
+  }
+}
+
+/// `.sec-t` — el encabezado de sección.
+class TituloSeccion extends StatelessWidget {
+  const TituloSeccion(this.texto, {super.key, this.accion});
+
+  final String texto;
+  final Widget? accion;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            texto,
+            style: sans(size: 13, weight: 600, color: MColors.tSecondary)
+                .copyWith(letterSpacing: 0.3),
+          ),
+          if (accion != null) accion!,
+        ],
       );
 }

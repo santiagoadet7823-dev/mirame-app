@@ -19,9 +19,9 @@ import '../features/caja/caja_view.dart';
 import '../features/crm/clients_view.dart';
 import '../features/dashboard/dashboard_view.dart';
 import '../features/settings/settings_view.dart';
+import '../features/stats/stats_view.dart';
 import '../features/stock/stock_view.dart';
 import '../features/shell/app_shell.dart';
-import '../features/shell/vistas_comunes.dart';
 import '../features/auth/session_controller.dart';
 
 abstract final class Rutas {
@@ -112,10 +112,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             ClientsView(),
             CajaView(),
             StockView(),
-            VistaEnConstruccion(
-              nombre: 'Estadísticas',
-              cuando: 'Los cálculos ya están hechos y testeados; falta el dibujo.',
-            ),
+            StatsView(),
             SettingsView(),
           ],
         ),

@@ -18,6 +18,7 @@ import '../../domain/entities/entities.dart';
 import '../../domain/rules/access.dart';
 import '../../domain/rules/stock.dart';
 import '../auth/session_controller.dart';
+import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
 
 final stockProvider = StreamProvider.autoDispose<List<db.StockItem>>((ref) {
@@ -38,16 +39,17 @@ class StockView extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: puedeEscribir
-          ? FloatingActionButton(
-              backgroundColor: MColors.brand,
-              foregroundColor: MColors.tWhite,
-              onPressed: () => _mostrarFormulario(context, ref),
-              child: const Icon(Icons.add_rounded),
+          ? Padding(
+              // `bottom: 80px + safe` y `right: 18px` del CSS. El
+              // Scaffold ya separa 16 del borde, así que acá van 2.
+              padding: const EdgeInsets.only(right: 2, bottom: 8),
+              child: FabMirame(onTap: () => _mostrarFormulario(context, ref)),
             )
           : null,
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 90),
+        padding: padVistaMovil,
         children: [
           if (alertas.isNotEmpty) ...[
             FadeSlideIn(

@@ -19,6 +19,7 @@ import '../../domain/rules/access.dart';
 import '../../domain/rules/formatting.dart';
 import '../auth/session_controller.dart';
 import '../dashboard/dashboard_view.dart';
+import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
 
 /// Turnos del día que se está mirando.
@@ -57,12 +58,13 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: puedeEscribir
-          ? FloatingActionButton(
-              backgroundColor: MColors.brand,
-              foregroundColor: MColors.tWhite,
-              onPressed: () => _mostrarFormulario(context, ref, dia: _dia),
-              child: const Icon(Icons.add_rounded),
+          ? Padding(
+              // `bottom: 80px + safe` y `right: 18px` del CSS. El
+              // Scaffold ya separa 16 del borde, así que acá van 2.
+              padding: const EdgeInsets.only(right: 2, bottom: 8),
+              child: FabMirame(onTap: () => _mostrarFormulario(context, ref, dia: _dia)),
             )
           : null,
       body: Column(
@@ -79,7 +81,7 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
                     detalle: 'Tocá + para agendar uno.',
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 90),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                     itemCount: turnos.length,
                     itemBuilder: (_, i) {
                       final t = turnos[i];
@@ -456,7 +458,7 @@ class _BotonCampo extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: MColors.bg2,
-            borderRadius: BorderRadius.circular(MRadius.md),
+            borderRadius: BorderRadius.circular(MRadius.lg),
             border: Border.all(color: MColors.border),
           ),
           child: Column(

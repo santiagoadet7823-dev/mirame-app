@@ -15,6 +15,7 @@ import '../../domain/rules/access.dart';
 import '../../domain/rules/formatting.dart';
 import '../auth/session_controller.dart';
 import '../dashboard/dashboard_view.dart';
+import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
 
 class ClientsView extends ConsumerStatefulWidget {
@@ -49,18 +50,19 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: puedeEscribir
-          ? FloatingActionButton(
-              backgroundColor: MColors.brand,
-              foregroundColor: MColors.tWhite,
-              onPressed: () => mostrarFormularioCliente(context, ref),
-              child: const Icon(Icons.add_rounded),
+          ? Padding(
+              // `bottom: 80px + safe` y `right: 18px` del CSS. El
+              // Scaffold ya separa 16 del borde, así que acá van 2.
+              padding: const EdgeInsets.only(right: 2, bottom: 8),
+              child: FabMirame(onTap: () => mostrarFormularioCliente(context, ref)),
             )
           : null,
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
             child: TextField(
               onChanged: (v) => setState(() => _busqueda = v),
               style: sans(size: 14, weight: 500),
@@ -99,7 +101,7 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
                         : 'Probá con otro nombre o teléfono.',
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 90),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
                     itemCount: lista.length,
                     itemBuilder: (_, i) => FadeSlideIn(
                       delay: Duration(milliseconds: (i < 8 ? i : 8) * 35),
@@ -129,7 +131,7 @@ class _FilaCliente extends ConsumerWidget {
           padding: const EdgeInsets.all(13),
           decoration: BoxDecoration(
             color: MColors.surface,
-            borderRadius: BorderRadius.circular(MRadius.md),
+            borderRadius: BorderRadius.circular(MRadius.lg),
             border: Border.all(color: MColors.border),
             boxShadow: MShadow.xs,
           ),

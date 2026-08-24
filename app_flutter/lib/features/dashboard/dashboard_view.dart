@@ -1,7 +1,23 @@
-/// Inicio: el saludo, los turnos de hoy y el pulso del mes.
+/// Inicio. Portado del `#view-dashboard` del `index.html`.
 ///
-/// Lee de Drift, no de Supabase: abre igual sin señal. Los números salen de
-/// `domain/rules/finance.dart`, que ya está testeado.
+/// Estructura del original, en orden:
+///   1. saludo (Cormorant 24/500) + fecha (13px t-muted)
+///   2. `.kpi-hero` — turnos de hoy en grande, ingresos de la semana a la
+///      derecha, y tres `.kpi-mini` abajo
+///   3. secciones de tarjetas
+///
+/// Medidas literales del CSS:
+/// ```
+/// .kpi-hero     { gradient 135deg lav-50→nude-100; border 1px border-lav;
+///                 radius r-xl; padding 24px 20px 18px; margin-bottom 14 }
+/// .kpi-hero-lbl { 11px/500; letter-spacing 1.2; UPPERCASE; t-muted }
+/// .kpi-hero-val { Cormorant 42px/600; line-height 1; letter-spacing -1 }
+/// .kpi-hero-sub { 12px; t-muted; margin-top 5 }
+/// .kpi-mini-row { gap 6; margin-top 14 }
+/// .kpi-mini     { bg rgba(255,255,255,.7); border 1px; r-md; 10px 12px }
+/// .kpi-mini-v   { Cormorant 20px/600 }
+/// .kpi-mini-l   { 9px/600; letter-spacing .8; UPPERCASE; t-muted }
+/// ```
 library;
 
 import 'package:flutter/material.dart';
@@ -14,18 +30,16 @@ import '../../core/theme/typography.dart';
 import '../../data/local/database.dart';
 import '../../data/repositories/business_repository.dart';
 import '../../domain/rules/formatting.dart';
+import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
 
-/// Turnos de hoy.
-final turnosDeHoyProvider = StreamProvider.autoDispose<List<Appointment>>(
-  (ref) {
-    final repo = ref.watch(businessRepoProvider);
-    if (repo == null) return const Stream.empty();
-    return repo.verTurnosDe(DateTime.now());
-  },
-);
+final turnosDeHoyProvider =
+    StreamProvider.autoDispose<List<Appointment>>((ref) {
+  final repo = ref.watch(businessRepoProvider);
+  if (repo == null) return const Stream.empty();
+  return repo.verTurnosDe(DateTime.now());
+});
 
-/// Movimientos del mes en curso.
 final movimientosDelMesProvider =
     StreamProvider.autoDispose<List<Transaction>>((ref) {
   final repo = ref.watch(businessRepoProvider);
@@ -45,78 +59,81 @@ final clientesProvider = StreamProvider.autoDispose<List<Client>>((ref) {
   return repo.verClientes();
 });
 
+/// Movimientos de la semana en curso, para el dato de la derecha del hero.
+final movimientosDeLaSemanaProvider =
+    StreamProvider.autoDispose<List<Transaction>>((ref) {
+  final repo = ref.watch(businessRepoProvider);
+  if (repo == null) return const Stream.empty();
+  final hoy = DateTime.now();
+  // Semana domingo→sábado, igual que el original (`weekRange`).
+  final domingo = hoy.subtract(Duration(days: hoy.weekday % 7));
+  return repo.verMovimientosEntre(domingo, domingo.add(const Duration(days: 6)));
+});
+
 class DashboardView extends ConsumerWidget {
   const DashboardView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final turnos = ref.watch(turnosDeHoyProvider).value ?? const [];
-    final movimientos = ref.watch(movimientosDelMesProvider).value ?? const [];
+    final mes = ref.watch(movimientosDelMesProvider).value ?? const [];
+    final semana = ref.watch(movimientosDeLaSemanaProvider).value ?? const [];
     final clientes = ref.watch(clientesProvider).value ?? const [];
 
-    final ingresos = movimientos
+    num ingresosDe(List<Transaction> txs) => txs
         .where((m) => m.tipo == 'ingreso')
-        .fold<double>(0, (a, m) => a + m.monto);
-    final gastos = movimientos
-        .where((m) => m.tipo == 'gasto')
-        .fold<double>(0, (a, m) => a + m.monto);
+        .fold<num>(0, (a, m) => a + m.monto);
+
+    final delMes = ingresosDe(mes);
+    final deLaSemana = ingresosDe(semana);
+    final deHoy = turnos.fold<num>(0, (a, t) => a + t.precio);
+    final pendientes =
+        turnos.where((t) => t.estado != 'done' && t.estado != 'hecho').length;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 90),
+      padding: padVistaMovil,
       children: [
+        // 1 · Saludo
         FadeSlideIn(
           child: Text(
             greeting(DateTime.now()),
-            style: serif(size: 28, weight: 600),
+            // `font-size:24px; font-weight:500` — no 28/600 como estaba antes.
+            style: serif(size: 24, weight: 500),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         FadeSlideIn(
           delay: const Duration(milliseconds: 30),
-          child: Text(formatDateShort(DateTime.now()), style: MText.cuerpoSec),
+          child: Text(
+            formatDateShort(DateTime.now()),
+            style: sans(size: 13, color: MColors.tMuted),
+          ),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 18),
 
+        // 2 · KPI hero
         FadeSlideIn(
           delay: const Duration(milliseconds: 70),
-          child: _Balance(ingresos: ingresos, gastos: gastos),
+          child: _KpiHero(
+            turnosHoy: turnos.length,
+            ingresoHoy: deHoy,
+            ingresoSemana: deLaSemana,
+            clientas: clientes.length,
+            ingresoMes: delMes,
+            pendientes: pendientes,
+          ),
         ),
         const SizedBox(height: 14),
 
+        // 3 · Turnos del día
         FadeSlideIn(
           delay: const Duration(milliseconds: 110),
-          child: Row(
-            children: [
-              Expanded(
-                child: _Kpi(
-                  valor: '${turnos.length}',
-                  etiqueta: turnos.length == 1 ? 'turno hoy' : 'turnos hoy',
-                  icono: Icons.calendar_month_outlined,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _Kpi(
-                  valor: '${clientes.length}',
-                  etiqueta:
-                      clientes.length == 1 ? 'clienta' : 'clientas',
-                  icono: Icons.people_outline,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 26),
-
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 150),
-          child: Text('Hoy', style: sans(size: 15, weight: 600)),
+          child: const TituloSeccion('Hoy'),
         ),
         const SizedBox(height: 10),
-
         if (turnos.isEmpty)
           FadeSlideIn(
-            delay: const Duration(milliseconds: 190),
+            delay: const Duration(milliseconds: 150),
             child: const EstadoVacio(
               emoji: '🌿',
               titulo: 'Sin turnos hoy',
@@ -126,7 +143,7 @@ class DashboardView extends ConsumerWidget {
         else
           for (var i = 0; i < turnos.length; i++)
             FadeSlideIn(
-              delay: Duration(milliseconds: 190 + i * 40),
+              delay: Duration(milliseconds: 150 + (i < 8 ? i : 8) * 35),
               child: _FilaTurno(turno: turnos[i]),
             ),
       ],
@@ -134,105 +151,137 @@ class DashboardView extends ConsumerWidget {
   }
 }
 
-class _Balance extends StatelessWidget {
-  const _Balance({required this.ingresos, required this.gastos});
-
-  final double ingresos;
-  final double gastos;
-
-  @override
-  Widget build(BuildContext context) {
-    final neto = ingresos - gastos;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
-      decoration: BoxDecoration(
-        gradient: MGradient.balance,
-        borderRadius: BorderRadius.circular(MRadius.lg),
-        boxShadow: MShadow.sm,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Balance del mes',
-            style: sans(size: 12, weight: 600, color: MColors.brandDark)
-                .copyWith(letterSpacing: 0.06),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            formatMoney(neto),
-            style: serif(size: 34, weight: 600, color: MColors.tPrimary),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _MiniDato(etiqueta: 'Ingresos', valor: formatMoney(ingresos)),
-              const SizedBox(width: 22),
-              _MiniDato(etiqueta: 'Gastos', valor: formatMoney(gastos)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniDato extends StatelessWidget {
-  const _MiniDato({required this.etiqueta, required this.valor});
-
-  final String etiqueta;
-  final String valor;
-
-  @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            etiqueta,
-            style: sans(
-              size: 11,
-              weight: 500,
-              color: MColors.tMuted,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            valor,
-            style: sans(size: 14, weight: 600, color: MColors.tSecondary),
-          ),
-        ],
-      );
-}
-
-class _Kpi extends StatelessWidget {
-  const _Kpi({
-    required this.valor,
-    required this.etiqueta,
-    required this.icono,
+class _KpiHero extends StatelessWidget {
+  const _KpiHero({
+    required this.turnosHoy,
+    required this.ingresoHoy,
+    required this.ingresoSemana,
+    required this.clientas,
+    required this.ingresoMes,
+    required this.pendientes,
   });
 
-  final String valor;
-  final String etiqueta;
-  final IconData icono;
+  final int turnosHoy;
+  final num ingresoHoy;
+  final num ingresoSemana;
+  final int clientas;
+  final num ingresoMes;
+  final int pendientes;
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(16),
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 18),
         decoration: BoxDecoration(
-          color: MColors.surface,
-          borderRadius: BorderRadius.circular(MRadius.md),
-          border: Border.all(color: MColors.border),
-          boxShadow: MShadow.xs,
+          gradient: MGradient.kpiHero,
+          border: Border.all(color: MColors.borderLav),
+          borderRadius: BorderRadius.circular(MRadius.xl),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icono, size: 18, color: MColors.brand),
-            const SizedBox(height: 10),
-            Text(valor, style: serif(size: 26, weight: 600)),
-            Text(etiqueta, style: MText.menor),
+            Row(
+              // `align-items: flex-end` — los dos números apoyan abajo.
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('TURNOS HOY', style: MText.etiquetaHero),
+                      const SizedBox(height: 6),
+                      Text(
+                        '$turnosHoy',
+                        style: serif(size: 42, weight: 600).copyWith(
+                          height: 1,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      if (ingresoHoy > 0) ...[
+                        const SizedBox(height: 5),
+                        Text(
+                          '${formatMoney(ingresoHoy)} agendado',
+                          style: sans(size: 12, color: MColors.tMuted),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('ESTA SEMANA', style: MText.etiquetaHeroChica),
+                    const SizedBox(height: 4),
+                    Text(
+                      formatMoney(ingresoSemana),
+                      style: serif(size: 22, weight: 600),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                _KpiMini(valor: '$clientas', etiqueta: 'CLIENTAS'),
+                const SizedBox(width: 6),
+                _KpiMini(
+                  valor: formatMoney(ingresoMes),
+                  etiqueta: 'ESTE MES',
+                  // El original le baja el tamaño a este porque un monto no
+                  // entra a 20px en la columna del medio.
+                  tamanio: 16,
+                ),
+                const SizedBox(width: 6),
+                _KpiMini(valor: '$pendientes', etiqueta: 'PENDIENTES'),
+              ],
+            ),
           ],
+        ),
+      );
+}
+
+class _KpiMini extends StatelessWidget {
+  const _KpiMini({
+    required this.valor,
+    required this.etiqueta,
+    this.tamanio = 20,
+  });
+
+  final String valor;
+  final String etiqueta;
+  final double tamanio;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            // `rgba(255,255,255,0.7)` sobre el degradado: deja pasar un poco
+            // del lavanda y por eso no es blanco puro.
+            color: Colors.white.withValues(alpha: 0.7),
+            border: Border.all(color: MColors.border),
+            borderRadius: BorderRadius.circular(MRadius.md),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                valor,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: serif(size: tamanio, weight: 600),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                etiqueta,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: sans(size: 9, weight: 600, color: MColors.tMuted)
+                    .copyWith(letterSpacing: 0.8),
+              ),
+            ],
+          ),
         ),
       );
 }
@@ -243,16 +292,9 @@ class _FilaTurno extends StatelessWidget {
   final Appointment turno;
 
   @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: MColors.surface,
-          borderRadius: BorderRadius.circular(MRadius.md),
-          border: Border.all(color: MColors.border),
-          boxShadow: MShadow.xs,
-        ),
-        child: Row(
+  Widget build(BuildContext context) => TarjetaMirame(
+        margenInferior: 8,
+        hijo: Row(
           children: [
             Container(
               padding:
@@ -263,8 +305,7 @@ class _FilaTurno extends StatelessWidget {
               ),
               child: Text(
                 turno.hora,
-                style:
-                    sans(size: 13, weight: 600, color: MColors.brandDark),
+                style: sans(size: 13, weight: 600, color: MColors.brandDark),
               ),
             ),
             const SizedBox(width: 12),
@@ -276,7 +317,10 @@ class _FilaTurno extends StatelessWidget {
               ),
             ),
             if (turno.precio > 0)
-              Text(formatMoney(turno.precio), style: MText.menor),
+              Text(
+                formatMoney(turno.precio),
+                style: sans(size: 12, color: MColors.tMuted),
+              ),
           ],
         ),
       );
