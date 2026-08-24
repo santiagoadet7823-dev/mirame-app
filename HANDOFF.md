@@ -5,8 +5,40 @@
 > Actualizarlo al terminar cada sesión no es opcional.
 
 **Última actualización:** 2026-08-23
-**Estado general:** APK 1.0.2 andando en teléfono real · login OK · panel de plataforma real
-**Fase actual:** 3 — motor de sync. Pendiente: correr `scripts/setup-github.sh` (crea el repo y publica)
+**Estado general:** PWA publicada y APK distribuyéndose solo. Repo `mirame-app` vivo.
+**Fase actual:** 3 — motor de sync
+
+## Links en producción
+
+| Qué | Dónde |
+|---|---|
+| PWA | https://santiagoadet7823-dev.github.io/mirame-app/ |
+| Landing de descarga (la del QR) | https://santiagoadet7823-dev.github.io/mirame-app/descargar.html |
+| Repo | https://github.com/santiagoadet7823-dev/mirame-app |
+| Releases | https://github.com/santiagoadet7823-dev/mirame-app/releases |
+
+Publicar una versión nueva:
+
+```bash
+bash scripts/bump-version.sh 1.0.3
+git commit -am "build: sube a 1.0.3" && git push      # republica la PWA sola
+git tag apk-1.0.3 && git push origin apk-1.0.3        # compila, firma y publica el APK
+```
+
+⚠️ **`SUPABASE_SERVICE_ROLE_KEY` no está cargado como secret**, así que el workflow avisa con un
+`::warning::` y `app_config` hay que actualizarlo a mano después de cada release:
+
+```sql
+update public.app_config
+set latest_version = 'X.Y.Z',
+    apk_url = 'https://github.com/santiagoadet7823-dev/mirame-app/releases/download/apk-X.Y.Z/app-release.apk',
+    updated_at = now()
+where id = true;
+```
+
+`min_version` se sube aparte y **a mano siempre**, recién cuando la versión se comprobó buena: es
+el piso que fuerza la actualización, y automatizarlo haría que un release roto trabe a toda la
+flota sin arreglo remoto.
 
 ---
 
