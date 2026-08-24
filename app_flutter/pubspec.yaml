@@ -5,7 +5,7 @@ publish_to: none
 # versionName + versionCode salen de acá. El versionCode (después del +)
 # SIEMPRE sube en 1 y NUNCA baja: Android rechaza instalar uno menor y eso
 # deja a la flota trabada sin arreglo remoto. Usar scripts/bump-version.sh.
-version: 1.5.0+15
+version: 1.6.0+16
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -45,6 +45,11 @@ dependencies:
   connectivity_plus: ^7.3.1     # dispara el drenaje del outbox
   url_launcher: ^6.3.2          # WhatsApp hacia las clientas
   share_plus: ^13.3.0           # export CSV
+  # Elegir el .json al restaurar un backup. Se prefiere sobre file_picker: es
+  # del equipo de Flutter, no arrastra permisos de almacenamiento y en Android
+  # usa el selector del sistema (SAF), asi que no hace falta pedir acceso a
+  # los archivos del telefono.
+  file_selector: ^1.0.3
   flutter_svg: ^2.3.0           # los 12 iconos del original
   # QR de invitacion. Pinta con CustomPainter, sin assets ni red: pesa ~40 KB
   # y respeta la regla de no meter librerias pesadas.

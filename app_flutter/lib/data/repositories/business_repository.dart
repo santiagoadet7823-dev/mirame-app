@@ -22,6 +22,23 @@ import '../sync/sync_engine.dart';
 final _uuid = Uuid();
 String nuevoId() => _uuid.v7();
 
+/// Namespace DNS de RFC 4122. Es el mismo que usa `scripts/migrar-backup.py`,
+/// y tiene que seguir siéndolo.
+const _nsLegacy = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+
+/// uuid5 determinista para un registro que viene de la app vieja.
+///
+/// [clave] es `'<prefijo>:<id viejo>'` — `c:12`, `sv:3`, `a:47`. Los prefijos
+/// son los MISMOS que usa el script de migración, y el tenant va adentro para
+/// que dos salones que importen backups distintos no colisionen.
+///
+/// Que sea determinista es lo que permite restaurar el mismo archivo dos veces
+/// —o en dos teléfonos— sin duplicar nada: cae siempre en el mismo id y el
+/// upsert lo pisa. También hace que un backup ya migrado por SQL coincida fila
+/// por fila con lo que ya está en el servidor.
+String idDesdeLegacy(String tenantId, String clave) =>
+    _uuid.v5(_nsLegacy, '$tenantId:$clave');
+
 /// Fecha local `YYYY-MM-DD`.
 ///
 /// Nunca `toIso8601String()` sobre un DateTime en UTC: el legacy hacía eso y
@@ -41,6 +58,9 @@ class BusinessRepository {
   final MirameDb _db;
   final SyncEngine _sync;
   final String _tenantId;
+
+  /// Lo necesita la restauración de backups para calcular los ids legacy.
+  String get tenantId => _tenantId;
 
   // ── Lecturas ─────────────────────────────────────────────────────────────
 
@@ -237,6 +257,7 @@ class BusinessRepository {
     double precio = 0,
     String estado = 'confirmed',
     String? notas,
+    List<String> serviceIds = const [],
   }) async {
     final filaId = id ?? nuevoId();
     final ahora = DateTime.now();
@@ -273,6 +294,33 @@ class BusinessRepository {
           'notas': notas,
           'updated_at': ahora.toUtc().toIso8601String(),
         },
+      );
+
+      // Los servicios del turno viven en una tabla puente. Se reemplazan
+      // enteros en vez de hacer un diff: editar un turno para SACARLE un
+      // servicio es tan común como agregarle uno, y un upsert solo agrega.
+      //
+      // Sin esto, un turno creado en la app queda sin servicios y la clienta
+      // nunca aparece en los recordatorios de retoque.
+      await (_db.delete(_db.appointmentServices)
+            ..where((f) => f.appointmentId.equals(filaId)))
+          .go();
+      for (final sid in serviceIds) {
+        await _db.into(_db.appointmentServices).insertOnConflictUpdate(
+              AppointmentServicesCompanion.insert(
+                appointmentId: filaId,
+                serviceId: sid,
+              ),
+            );
+      }
+      await _sync.encolar(
+        tenantId: _tenantId,
+        tabla: 'appointment_services',
+        filaId: filaId,
+        // El servidor recibe la lista completa y reemplaza: es la unica forma
+        // de que un servicio quitado desaparezca tambien alla.
+        operacion: 'servicios',
+        payload: {'appointment_id': filaId, 'service_ids': serviceIds},
       );
     });
     return filaId;

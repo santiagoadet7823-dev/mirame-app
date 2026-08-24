@@ -155,7 +155,26 @@ AccessDecision resolveAccess(AccessContext ctx, DateTime ahora) {
   // Un superadmin entra siempre: administra la plataforma, no pertenece a un
   // salón. Si eligió uno, lo abre en modo "ver como".
   if (profile.esSuperadmin) {
-    final id = ctx.tenantActivoId;
+    var id = ctx.tenantActivoId;
+
+    // Un superadmin que ADEMÁS trabaja en un salón entra directo al suyo, no
+    // al panel de plataforma.
+    //
+    // Sin esto, la dueña abre la app, ve el panel vacío de administración y
+    // concluye que se perdieron sus datos — pasó de verdad. El panel sigue a
+    // un toque, en el botón del header, que es donde tiene que estar para
+    // alguien cuyo trabajo diario es atender clientas, no administrar la
+    // plataforma.
+    //
+    // Solo aplica cuando tiene UNA sola membresía: con varias, elegir por él
+    // sería adivinar.
+    if (id == null) {
+      final propias = ctx.memberships
+          .where((m) => m.estado == MiembroEstado.approved)
+          .toList();
+      if (propias.length == 1) id = propias.first.tenantId;
+    }
+
     if (id == null) return const GoToPlatformAdmin();
     final tenant = ctx.tenantPorId(id);
     if (tenant == null) return const GoToPlatformAdmin();

@@ -277,8 +277,38 @@ void main() {
   });
 
   group('superadmin', () {
-    test('sin salón elegido va al panel de plataforma', () {
+    test('sin salón elegido ni membresías va al panel de plataforma', () {
       final d = resolveAccess(const AccessContext(profile: superadmin), ahora);
+      expect(d, isA<GoToPlatformAdmin>());
+    });
+
+    test('si trabaja en un salón entra al suyo, no al panel', () {
+      // El bug que costó caro: la dueña es superadmin Y owner de su salón.
+      // Abría la app, veía el panel de administración vacío y concluía que se
+      // habían perdido sus datos. El panel queda a un toque, en el header.
+      final d = resolveAccess(
+        AccessContext(
+          profile: superadmin,
+          memberships: [miembro('t1', 'u9')],
+          tenants: const [salonA],
+        ),
+        ahora,
+      );
+      expect(d, isA<GoToApp>());
+      final app = d as GoToApp;
+      expect(app.tenant.id, 't1');
+      expect(app.impersonando, isFalse);
+    });
+
+    test('con varios salones NO adivina: va al panel', () {
+      final d = resolveAccess(
+        AccessContext(
+          profile: superadmin,
+          memberships: [miembro('t1', 'u9'), miembro('t2', 'u9')],
+          tenants: const [salonA, salonB],
+        ),
+        ahora,
+      );
       expect(d, isA<GoToPlatformAdmin>());
     });
 

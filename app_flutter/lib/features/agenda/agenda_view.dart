@@ -335,6 +335,10 @@ class _FormTurnoState extends ConsumerState<_FormularioTurno> {
   late DateTime _fecha;
   late TimeOfDay _hora;
   String? _clientId;
+
+  /// Los servicios del turno. Es lo que define cuándo esa clienta tiene que
+  /// volver, así que sin esto no hay recordatorio de retoque.
+  final _servicios = <String>{};
   bool _guardando = false;
   String? _error;
 
@@ -351,6 +355,11 @@ class _FormTurnoState extends ConsumerState<_FormularioTurno> {
         ? const TimeOfDay(hour: 10, minute: 0)
         : TimeOfDay(hour: t!.hora!.hour, minute: t.hora!.minute);
     _clientId = t?.clientId;
+    if (t != null) {
+      _servicios.addAll(
+        ref.read(serviciosDeTurnosProvider).value?[t.id] ?? const [],
+      );
+    }
   }
 
   @override
@@ -378,6 +387,7 @@ class _FormTurnoState extends ConsumerState<_FormularioTurno> {
       await repo.guardarTurno(
         id: widget.turno?.id,
         clientId: _clientId,
+        serviceIds: _servicios.toList(),
         fecha: _fecha,
         hora: _horaTexto,
         precio: double.tryParse(crudo) ?? 0,
@@ -401,6 +411,8 @@ class _FormTurnoState extends ConsumerState<_FormularioTurno> {
   @override
   Widget build(BuildContext context) {
     final clientes = ref.watch(clientesProvider).value ?? const <db.Client>[];
+    final serviciosDisponibles =
+        ref.watch(serviciosProvider).value ?? const <db.Service>[];
 
     return SheetFormulario(
       titulo: widget.turno == null ? 'Nuevo turno' : 'Editar turno',
@@ -440,6 +452,41 @@ class _FormTurnoState extends ConsumerState<_FormularioTurno> {
             onChanged: (v) => setState(() => _clientId = v),
           ),
         ),
+        // Los servicios van como chips y no como otro desplegable: un turno
+        // suele llevar más de uno, y el precio se arma sumándolos.
+        if (serviciosDisponibles.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Servicios', style: MText.menor),
+                const SizedBox(height: 7),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  children: [
+                    for (final sv in serviciosDisponibles)
+                      _ChipServicio(
+                        nombre: sv.nombre,
+                        elegido: _servicios.contains(sv.id),
+                        onTap: () => setState(() {
+                          if (!_servicios.remove(sv.id)) _servicios.add(sv.id);
+                          // El precio se autocompleta con la suma, pero se
+                          // puede pisar a mano: hay descuentos y combos que la
+                          // app no conoce.
+                          final total = serviciosDisponibles
+                              .where((x) => _servicios.contains(x.id))
+                              .fold<num>(0, (a, x) => a + x.precio);
+                          _precio.text =
+                              total == 0 ? '' : total.round().toString();
+                        }),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         Row(
           children: [
             Expanded(
@@ -515,6 +562,44 @@ class _BotonCampo extends StatelessWidget {
               const SizedBox(height: 2),
               Text(valor, style: sans(size: 14, weight: 600)),
             ],
+          ),
+        ),
+      );
+}
+
+/// Chip de servicio del formulario de turno. Mismo aire que las `.pill` del
+/// original, pero en estado elegido/no elegido.
+class _ChipServicio extends StatelessWidget {
+  const _ChipServicio({
+    required this.nombre,
+    required this.elegido,
+    required this.onTap,
+  });
+
+  final String nombre;
+  final bool elegido;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+          decoration: BoxDecoration(
+            color: elegido ? MColors.brandBg : MColors.bg2,
+            border: Border.all(
+              color: elegido ? MColors.borderLav : MColors.border,
+            ),
+            borderRadius: BorderRadius.circular(MRadius.full),
+          ),
+          child: Text(
+            nombre,
+            style: sans(
+              size: 12,
+              weight: elegido ? 600 : 400,
+              color: elegido ? MColors.brand : MColors.tSecondary,
+            ),
           ),
         ),
       );

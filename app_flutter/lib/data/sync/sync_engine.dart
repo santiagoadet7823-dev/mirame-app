@@ -174,6 +174,21 @@ class SyncEngine {
           'p_item': fila.filaId,
           'p_delta': payload['delta'],
         });
+      case 'servicios':
+        // Reemplazo completo de la tabla puente de un turno: primero se borra
+        // lo que habia y despues se inserta la lista nueva. Un upsert solo no
+        // alcanza, porque no elimina el servicio que la usuaria saco.
+        await sb
+            .from('appointment_services')
+            .delete()
+            .eq('appointment_id', fila.filaId);
+        final ids = (payload['service_ids'] as List).cast<String>();
+        if (ids.isNotEmpty) {
+          await sb.from('appointment_services').insert([
+            for (final sid in ids)
+              {'appointment_id': fila.filaId, 'service_id': sid},
+          ]);
+        }
       case 'delete':
         // Tombstone, no DELETE: un borrado real no se puede propagar porque
         // el otro dispositivo nunca se entera de que la fila existió.
@@ -192,7 +207,39 @@ class SyncEngine {
     for (final tabla in tablasSync) {
       total += await _traerTabla(tenantId, tabla);
     }
+    total += await _traerServiciosDeTurnos(tenantId);
     return total;
+  }
+
+  /// `appointment_services` va aparte del resto.
+  ///
+  /// Es una tabla puente pura: sin `id`, sin `tenant_id` y sin `updated_at`,
+  /// así que no tiene cursor con el que hacer un pull incremental. Se baja
+  /// entera y se reemplaza.
+  ///
+  /// Eso alcanza porque son pocas filas (una por servicio de cada turno) y
+  /// porque saltearla tiene una consecuencia cara: sin los servicios de cada
+  /// turno, los recordatorios de retoque no encuentran los días y no avisan
+  /// nunca. La usuaria lo vería como "la app dejó de avisarme".
+  Future<int> _traerServiciosDeTurnos(String tenantId) async {
+    // Sin filtro de tenant a propósito: la tabla no tiene la columna, y la RLS
+    // del servidor ya devuelve solo los turnos que a esta persona le
+    // corresponden.
+    final filas = await sb.from('appointment_services').select() as List;
+
+    await _db.transaction(() async {
+      // Los turnos de OTROS salones no se tocan: en el panel de plataforma un
+      // superadmin puede tener varios abiertos.
+      await _db.customStatement(
+        'delete from appointment_services where appointment_id in '
+        '(select id from appointments where tenant_id = ?)',
+        [tenantId],
+      );
+      for (final f in filas) {
+        await _aplicar('appointment_services', f as Map<String, dynamic>);
+      }
+    });
+    return filas.length;
   }
 
   Future<int> _traerTabla(String tenantId, String tabla) async {

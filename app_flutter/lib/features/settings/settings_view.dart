@@ -20,6 +20,7 @@ import '../auth/session_controller.dart';
 import '../shell/app_shell.dart';
 import '../update/update_sheet.dart';
 import 'backup_view.dart';
+import 'restaurar_backup.dart';
 import 'catalogo.dart';
 
 class SettingsView extends ConsumerWidget {
@@ -119,8 +120,16 @@ class SettingsView extends ConsumerWidget {
                 Expanded(
                   child: _Acceso(
                     emoji: '💾',
-                    titulo: 'Backup',
+                    titulo: 'Guardar backup',
                     onTap: () => exportarBackup(ctx, ref),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _Acceso(
+                    emoji: '📥',
+                    titulo: 'Restaurar',
+                    onTap: () => restaurarBackup(ctx, ref),
                   ),
                 ),
               ],
