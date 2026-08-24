@@ -5,7 +5,7 @@ publish_to: none
 # versionName + versionCode salen de acá. El versionCode (después del +)
 # SIEMPRE sube en 1 y NUNCA baja: Android rechaza instalar uno menor y eso
 # deja a la flota trabada sin arreglo remoto. Usar scripts/bump-version.sh.
-version: 1.0.2+3
+version: 1.0.3+4
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -20,10 +20,10 @@ dependencies:
 
   # — Datos locales (fuente de verdad de la UI) —
   drift: ^2.34.3
-  # NOTA: `sqlite3_flutter_libs` resolvió a 0.6.0+eol — el paquete está marcado
-  # como end-of-life. Revisar en la Fase 3 cuál es el reemplazo vigente antes
-  # de construir la capa de datos sobre él.
-  sqlite3_flutter_libs: ^0.6.0
+  # quedó VACÍO: con sqlite3 3.x la librería nativa ya viene incluida y el
+  # paquete viejo no hace nada. `drift_flutter` resuelve además la ruta del
+  # archivo y el worker de web sin código extra.
+  drift_flutter: ^0.3.1
   path_provider: ^2.1.6
   path: ^1.9.1
 

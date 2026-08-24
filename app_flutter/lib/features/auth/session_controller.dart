@@ -10,7 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthChangeEvent;
 
 import '../../data/remote/supabase_client.dart';
+import '../../data/repositories/access_cache.dart';
 import '../../data/repositories/access_repository.dart';
+import '../../data/sync/sync_engine.dart';
 import '../../domain/rules/access.dart';
 
 const _kTenantActivo = 'mirame.tenant_activo';
@@ -21,10 +23,17 @@ class SessionState {
     required this.decision,
     this.cargando = false,
     this.error,
+    this.esSuperadmin = false,
   });
 
   final AccessDecision decision;
   final bool cargando;
+
+  /// Se guarda aparte de la decisión porque un superadmin que además es
+  /// miembro del salón entra como `GoToApp` con `impersonando: false`, igual
+  /// que un owner cualquiera: desde la decisión sola no se distingue, y el
+  /// header necesita saberlo para ofrecer "volver al panel".
+  final bool esSuperadmin;
 
   /// Solo para errores que NO son de red. Quedarse sin señal es un estado
   /// normal en una app local-first, no un error que mostrar.
@@ -34,22 +43,26 @@ class SessionState {
     AccessDecision? decision,
     bool? cargando,
     String? error,
+    bool? esSuperadmin,
     bool limpiarError = false,
   }) =>
       SessionState(
         decision: decision ?? this.decision,
         cargando: cargando ?? this.cargando,
         error: limpiarError ? null : (error ?? this.error),
+        esSuperadmin: esSuperadmin ?? this.esSuperadmin,
       );
 }
 
 class SessionController extends Notifier<SessionState> {
   late final AccessRepository _repo;
+  late final AccessCache _cache;
   SharedPreferences? _prefs;
 
   @override
   SessionState build() {
     _repo = const AccessRepository();
+    _cache = AccessCache(ref.read(dbProvider));
 
     // Reevaluar en cada cambio de sesión: login, logout, refresh del token.
     final sub = sb.auth.onAuthStateChange.listen((data) {
@@ -94,18 +107,47 @@ class SessionController extends Notifier<SessionState> {
       );
       await prefs.setInt(
           _kUltimaValidacion, DateTime.now().millisecondsSinceEpoch);
-      state = SessionState(decision: resolveAccess(ctx, DateTime.now()));
-    } catch (_) {
-      // Sin red o servidor caído: se decide con lo que hay en disco.
-      // TODO(fase-3): leer profile/membresías del cache de Drift en vez de
-      // resolver con un contexto vacío. Hasta entonces, sin red no hay datos
-      // locales y el gate manda a login — que es el lado seguro.
-      final ctx = AccessContext(
-        tenantActivoId: tenantActivo,
-        ultimaValidacion: ultima,
-        hayRed: false,
+      // Se guarda DESPUÉS de resolver bien: cachear un contexto a medias
+      // dejaría a la app abriendo offline con datos peores que los que ya
+      // tenía.
+      await _cache.guardar(ctx);
+      final decision = resolveAccess(ctx, DateTime.now());
+      state = SessionState(
+        decision: decision,
+        esSuperadmin: ctx.profile?.esSuperadmin ?? false,
       );
-      state = SessionState(decision: resolveAccess(ctx, DateTime.now()));
+      _arrancarSyncSiCorresponde(decision);
+    } catch (_) {
+      // Sin red o servidor caído: se decide con lo último que se supo.
+      final ctx = await _cache.leer(
+            tenantActivoId: tenantActivo,
+            ultimaValidacion: ultima,
+          ) ??
+          // Sin cache no se puede afirmar nada del usuario, y el gate manda a
+          // login: el lado seguro.
+          AccessContext(
+            tenantActivoId: tenantActivo,
+            ultimaValidacion: ultima,
+            hayRed: false,
+          );
+      final decision = resolveAccess(ctx, DateTime.now());
+      state = SessionState(
+        decision: decision,
+        esSuperadmin: ctx.profile?.esSuperadmin ?? false,
+      );
+      _arrancarSyncSiCorresponde(decision);
+    }
+  }
+
+  /// El sync solo corre estando adentro de un salón, y **nunca** cuando un
+  /// superadmin está mirando uno ajeno: bajar a disco los datos de un salón
+  /// de terceros para dar soporte sería guardar lo que no corresponde.
+  void _arrancarSyncSiCorresponde(AccessDecision d) {
+    final sync = ref.read(syncProvider.notifier);
+    if (d is GoToApp && !d.impersonando) {
+      sync.arrancar(d.tenant.id);
+    } else {
+      sync.detener();
     }
   }
 
@@ -149,6 +191,10 @@ class SessionController extends Notifier<SessionState> {
 
   Future<void> cerrarSesion() async {
     final prefs = await _p;
+    ref.read(syncProvider.notifier).detener();
+    // El cache se borra al salir: en un dispositivo compartido, dejarlo
+    // permitiría abrir offline con la sesión de quien lo usó antes.
+    await _cache.limpiar();
     await prefs.remove(_kTenantActivo);
     await prefs.remove(_kUltimaValidacion);
     await signOut();
@@ -177,3 +223,16 @@ final puedeProvider = Provider.family<bool, Permiso>((ref, permiso) {
   if (d is! GoToApp) return false;
   return puedeEnDecision(d, permiso);
 });
+
+/// ¿Este usuario puede salir del salón y volver al panel de plataforma?
+///
+/// Solo un superadmin: para un `owner` el botón no tendría a dónde llevarlo,
+/// y mostrarlo deshabilitado es peor que no mostrarlo.
+final puedeVolverAlPanelProvider = Provider<bool>((ref) {
+  final d = ref.watch(sessionProvider).decision;
+  return d is GoToApp && ref.watch(esSuperadminProvider);
+});
+
+final esSuperadminProvider = Provider<bool>((ref) => ref.watch(
+      sessionProvider.select((s) => s.esSuperadmin),
+    ));

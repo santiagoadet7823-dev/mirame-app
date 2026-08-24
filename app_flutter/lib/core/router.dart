@@ -14,8 +14,10 @@ import '../domain/rules/access.dart';
 import '../features/admin/invite_screen.dart';
 import '../features/admin/platform_screen.dart';
 import '../features/auth/auth_screens.dart';
+import '../features/dashboard/dashboard_view.dart';
+import '../features/shell/app_shell.dart';
+import '../features/shell/vistas_comunes.dart';
 import '../features/auth/session_controller.dart';
-import 'theme/tokens.dart';
 
 abstract final class Rutas {
   static const splash = '/';
@@ -87,8 +89,38 @@ final routerProvider = Provider<GoRouter>((ref) {
               : const ExpiredScreen(motivo: MotivoExpiracion.licencia);
         },
       ),
-      // Andamios provisorios: las pantallas reales llegan en las fases 5 y 6.
-      GoRoute(path: Rutas.app, builder: (_, __) => const _Placeholder('App')),
+      GoRoute(
+        path: Rutas.app,
+        builder: (_, __) => const AppShell(
+          vistas: [
+            DashboardView(),
+            VistaEnConstruccion(
+              nombre: 'Agenda',
+              cuando: 'Es lo próximo que se construye.',
+            ),
+            VistaEnConstruccion(
+              nombre: 'Clientas',
+              cuando: 'Los datos ya sincronizan; falta la pantalla.',
+            ),
+            VistaEnConstruccion(
+              nombre: 'Caja',
+              cuando: 'Los datos ya sincronizan; falta la pantalla.',
+            ),
+            VistaEnConstruccion(
+              nombre: 'Stock',
+              cuando: 'Los datos ya sincronizan; falta la pantalla.',
+            ),
+            VistaEnConstruccion(
+              nombre: 'Estadísticas',
+              cuando: 'Los cálculos ya están hechos y testeados; falta el dibujo.',
+            ),
+            VistaEnConstruccion(
+              nombre: 'Ajustes',
+              cuando: 'Servicios, profesionales y datos del salón.',
+            ),
+          ],
+        ),
+      ),
       GoRoute(
         path: Rutas.admin,
         builder: (_, __) => const PlatformScreen(),
@@ -109,39 +141,5 @@ final routerProvider = Provider<GoRouter>((ref) {
 class _SessionListenable extends ChangeNotifier {
   _SessionListenable(Ref ref) {
     ref.listen(sessionProvider, (_, __) => notifyListeners());
-  }
-}
-
-class _Placeholder extends ConsumerWidget {
-  const _Placeholder(this.titulo);
-  final String titulo;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tenant = ref.watch(tenantActivoProvider);
-    return Scaffold(
-      backgroundColor: MColors.bg,
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(titulo, style: Theme.of(context).textTheme.headlineMedium),
-              if (tenant != null) ...[
-                const SizedBox(height: 8),
-                Text(tenant.nombre,
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              const SizedBox(height: 24),
-              TextButton(
-                onPressed: () =>
-                    ref.read(sessionProvider.notifier).cerrarSesion(),
-                child: const Text('Cerrar sesión'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
