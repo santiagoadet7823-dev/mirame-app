@@ -51,7 +51,7 @@ flota sin arreglo remoto.
 | 2 | Auth + tenancy + roles | ✅ **login end-to-end funcionando** con Google real |
 | 3 | Capa de datos local + motor de sync | ✅ Drift + outbox + deltas + cache de acceso offline |
 | 4 | Design system en Dart | 🟨 tokens, tipografía, sombras, motion y tema listos · faltan los componentes de negocio |
-| 5 | Pantallas de negocio | 🟨 shell + inicio ✅ · faltan agenda, CRM, caja, stock, stats y ajustes |
+| 5 | Pantallas de negocio | 🟨 shell, inicio y ajustes ✅ · faltan agenda, CRM, caja, stock y stats |
 | 6 | Panel superadmin / revendedor | 🟨 lista de salones + entrar a un salón ✅ · faltan alta de tenant, licencias, usuarios y auditoría |
 | 7 | Notificaciones | ⬜ pendiente |
 | 8 | Build PWA + APK, auto-update, distribución | 🟨 **APK 1.0.0 firmado y compilando OK** (62 MB) · falta el auto-updater y el pipeline de GitHub |
