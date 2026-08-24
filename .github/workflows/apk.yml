@@ -73,7 +73,8 @@ jobs:
             --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
             --dart-define=FLAVOR=prod \
-            --dart-define=URL_PUBLICA="https://${{ github.repository_owner }}.github.io/mirame-app/"
+            --dart-define=URL_PUBLICA="https://${{ github.repository_owner }}.github.io/mirame-app/" \
+            --dart-define=FIREBASE_ANDROID_APP_ID="${{ secrets.FIREBASE_ANDROID_APP_ID }}"
 
       # La verificacion que siempre se saltea y siempre duele: si key.properties
       # no se hubiera generado, Gradle cae a la firma de DEBUG sin fallar, y ese

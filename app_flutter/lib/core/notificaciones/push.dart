@@ -1,10 +1,13 @@
 /// Push remoto (FCM). Firebase se usa **solo** para esto: la identidad y los
 /// datos son de Supabase.
 ///
-/// Todo está detrás de guardas porque `google-services.json` no se commitea
-/// (entra en el APK desde un secret de CI). Sin ese archivo `Firebase
-/// .initializeApp()` lanza, y la app tiene que seguir funcionando igual: los
-/// avisos que de verdad usa la dueña son los locales, que no dependen de esto.
+/// No se usa `google-services.json`: la config va por Dart (ver
+/// `firebase_options.dart`), así no hay nada que commitear ni que cargar como
+/// secret en CI. Falta un solo valor, el App ID de Android, que solo lo genera
+/// la consola al registrar `com.mirame.app`.
+///
+/// Mientras falte, esto queda apagado y la app funciona igual: los avisos que
+/// de verdad usa la dueña son los locales, que no dependen de Firebase.
 library;
 
 import 'package:firebase_core/firebase_core.dart';
@@ -13,6 +16,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/rules/avisos.dart';
+import 'firebase_options.dart';
 import 'servicio_avisos.dart';
 
 class Push {
@@ -33,8 +37,14 @@ class Push {
   Future<void> iniciar() async {
     if (kIsWeb || _iniciado) return;
     _iniciado = true;
+    final opciones = opcionesFirebaseAndroid;
+    if (opciones == null) {
+      debugPrint('push: falta FIREBASE_ANDROID_APP_ID, queda apagado');
+      return;
+    }
+
     try {
-      await Firebase.initializeApp();
+      await Firebase.initializeApp(options: opciones);
       final fm = FirebaseMessaging.instance;
       _token = await fm.getToken();
 

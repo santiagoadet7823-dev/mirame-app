@@ -100,15 +100,34 @@ Las notificaciones de este documento son para **quien trabaja en el salón**, no
 | Edge Function `enviar-push` | `supabase/functions/enviar-push/index.ts` | ✅ escrita, **sin desplegar** |
 | Cron de vencimientos | — | ⬜ |
 
+### Qué proyecto de Firebase se usa, y por qué
+
+**`mirame-lash-studio-41ba9`** — el que la app legacy ya usa para Auth. Sus identificadores
+(`apiKey`, `messagingSenderId 998613317742`, `projectId`) ya están a la vista en el `index.html`
+público, así que no hay nada secreto en reutilizarlos.
+
+**NO se usa `gestor-local-celulares`**, que es el de DisT-At (`com.launion.app`). Compartir
+proyecto entre las dos flotas significa que un error de segmentación le manda a los repartidores
+un aviso de retoque de pestañas. Son negocios distintos y quedan separados.
+
+**No hay `google-services.json`.** La config va por Dart en `firebase_options.dart`, así no hay
+archivo que commitear ni secret de CI que mantener. El único valor que se pasa aparte es el App ID
+de Android, por `--dart-define=FIREBASE_ANDROID_APP_ID`, que en el workflow sale del secret del
+mismo nombre.
+
 ### Lo que falta para que el push funcione de verdad
 
-Son tres pasos con credenciales, no código:
+Tres pasos, y **solo el primero es imprescindible**:
 
-1. Firebase Console → proyecto `mirame-lash-studio-41ba9` → agregar app Android
-   `com.mirame.app` → bajar `google-services.json` → `app_flutter/android/app/`
-   y como secret `GOOGLE_SERVICES_JSON` (base64) en GitHub.
-2. Generar la service account (Configuración → Cuentas de servicio → Generar clave) y
-   cargarla como secret `FIREBASE_SERVICE_ACCOUNT` en Supabase.
+1. **Registrar la app Android** (30 segundos, es lo único que no se puede hacer desde acá).
+   Firebase Console → `mirame-lash-studio-41ba9` → ⚙️ → *Agregar app* → Android → package name
+   `com.mirame.app` → **Registrar**. No hace falta bajar el archivo ni poner el SHA-1: el SHA-1 es
+   para Google Sign-In nativo, y el login va por OAuth web de Supabase.
+   Copiar el **App ID** (`1:998613317742:android:…`) y cargarlo como secret
+   `FIREBASE_ANDROID_APP_ID` en GitHub.
+   → Con esto los teléfonos ya registran su token en `device_tokens`.
+2. Service account (⚙️ → Cuentas de servicio → Generar clave privada) como secret
+   `FIREBASE_SERVICE_ACCOUNT` en Supabase. → Con esto se puede *enviar*.
 3. `supabase functions deploy enviar-push`.
 
 Hasta entonces `Push.disponible` es `false`, Ajustes lo muestra como *"No configurado"* y
