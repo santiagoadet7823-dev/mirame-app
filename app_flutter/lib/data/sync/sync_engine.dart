@@ -231,11 +231,26 @@ class SyncEngine {
   /// Se hace con SQL crudo y no con la API tipada de Drift para no repetir
   /// once bloques idénticos que solo cambian en el nombre de la tabla. Los
   /// nombres de columna vienen del esquema, no del usuario.
+  /// Columnas que Drift guarda como DateTime, es decir como **entero epoch**.
+  /// El servidor las manda en ISO: hay que convertirlas o la fila queda
+  /// ilegible y la próxima lectura lanza `FormatException`.
+  static const _columnasFecha = {'created_at', 'updated_at', 'deleted_at',
+      'cumple'};
+
   Future<void> _aplicar(String tabla, Map<String, dynamic> fila) async {
     final columnas = <String, dynamic>{};
     fila.forEach((k, v) {
       if (v is Map || v is List) return; // relaciones anidadas, no columnas
-      columnas[k] = v is bool ? (v ? 1 : 0) : v;
+      if (v == null) {
+        columnas[k] = null;
+      } else if (_columnasFecha.contains(k) && v is String) {
+        final d = DateTime.tryParse(v);
+        // Una fecha que no parsea se descarta en vez de guardarse cruda: mejor
+        // perder ese campo que dejar la fila entera sin poder leerse.
+        if (d != null) columnas[k] = d.millisecondsSinceEpoch ~/ 1000;
+      } else {
+        columnas[k] = v is bool ? (v ? 1 : 0) : v;
+      }
     });
     if (columnas.isEmpty) return;
 

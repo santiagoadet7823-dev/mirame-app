@@ -70,3 +70,21 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
+
+
+def iconos_web() -> None:
+    """Iconos de la PWA. Sin esto el manifest usa los de plantilla de Flutter,
+    y al instalar aparece una app llamada 'mirame' con el logo de Flutter."""
+    em = emblema_cuadrado()
+    web = RAIZ / 'web'
+    (web / 'icons').mkdir(parents=True, exist_ok=True)
+    for px in (192, 512):
+        # Normal: con margen, como se ve en un listado.
+        sobre_crema(em, px, 0.88).convert('RGB').save(
+            web / f'icons/Icon-{px}.png')
+        # Maskable: el sistema recorta hasta el 80% central, asi que el
+        # emblema tiene que ocupar menos o pierde las hojas.
+        sobre_crema(em, px, 0.62).convert('RGB').save(
+            web / f'icons/Icon-maskable-{px}.png')
+    sobre_crema(em, 32, 0.9).convert('RGB').save(web / 'favicon.png')
+    print('iconos web: 192, 512, maskable y favicon')

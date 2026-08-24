@@ -25,6 +25,16 @@ class ClientsView extends ConsumerStatefulWidget {
   ConsumerState<ClientsView> createState() => _ClientsViewState();
 }
 
+/// Turnos y gasto por clienta. Va aparte del listado para que escribir una
+/// clienta no obligue a recalcular los agregados de todas.
+final resumenClientesProvider =
+    StreamProvider.autoDispose<Map<String, ({int turnos, double gastado})>>(
+        (ref) {
+  final repo = ref.watch(businessRepoProvider);
+  if (repo == null) return const Stream.empty();
+  return repo.verResumenClientes();
+});
+
 class _ClientsViewState extends ConsumerState<ClientsView> {
   // La búsqueda es estado de ESTA pantalla, no del programa: guardarla en un
   // provider global la dejaría escrita al volver desde otra sección.
@@ -34,8 +44,9 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
   Widget build(BuildContext context) {
     final todas = ref.watch(clientesProvider).value ?? const <Client>[];
     final busqueda = _busqueda.trim().toLowerCase();
-    final puedeEscribir =
-        ref.watch(puedeProvider(Permiso.escribirDatos));
+    final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirDatos));
+    final resumen = ref.watch(resumenClientesProvider).value ??
+        const <String, ({int turnos, double gastado})>{};
 
     // El filtro corre en memoria y no en SQL: son decenas o cientos de
     // clientas, no millones, y así la búsqueda responde sin ir al disco en
@@ -92,20 +103,23 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
           Expanded(
             child: lista.isEmpty
                 ? EstadoVacio(
-                    emoji: busqueda.isEmpty ? '💌' : '🔍',
-                    titulo: busqueda.isEmpty
-                        ? 'Todavía no hay clientas'
-                        : 'Sin resultados',
+                    // Textos literales de `renderClients`.
+                    emoji: busqueda.isEmpty ? '🌸' : '🔍',
+                    titulo: busqueda.isEmpty ? 'Sin clientas' : 'Sin resultados',
                     detalle: busqueda.isEmpty
-                        ? 'Tocá el botón + para cargar la primera.'
-                        : 'Probá con otro nombre o teléfono.',
+                        ? 'Registrá tu primera clienta'
+                        : 'Probá con otro nombre o teléfono',
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
                     itemCount: lista.length,
                     itemBuilder: (_, i) => FadeSlideIn(
                       delay: Duration(milliseconds: (i < 8 ? i : 8) * 35),
-                      child: _FilaCliente(cliente: lista[i]),
+                      child: _FilaCliente(
+                        cliente: lista[i],
+                        turnos: resumen[lista[i].id]?.turnos ?? 0,
+                        gastado: resumen[lista[i].id]?.gastado ?? 0,
+                      ),
                     ),
                   ),
           ),
@@ -115,91 +129,167 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
   }
 }
 
+/// `.cli-card` — avatar de 46, nombre, tag VIP, teléfono, estadísticas y la
+/// flecha `›` a la derecha.
+///
+/// Las estadísticas ("N turnos · $X") son parte de la tarjeta en el original y
+/// son la razón de ser de la lista: sin ellas es una agenda de contactos.
 class _FilaCliente extends ConsumerWidget {
-  const _FilaCliente({required this.cliente});
+  const _FilaCliente({
+    required this.cliente,
+    required this.turnos,
+    required this.gastado,
+  });
 
   final Client cliente;
+  final int turnos;
+  final num gastado;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final gradiente = MGradient.avatar(avatarIndex(cliente.nombre));
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: PressableScale(
+  Widget build(BuildContext context, WidgetRef ref) => TarjetaMirame(
+        margenInferior: 8,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         onTap: () => mostrarFormularioCliente(context, ref, cliente: cliente),
-        child: Container(
-          padding: const EdgeInsets.all(13),
-          decoration: BoxDecoration(
-            color: MColors.surface,
-            borderRadius: BorderRadius.circular(MRadius.lg),
-            border: Border.all(color: MColors.border),
-            boxShadow: MShadow.xs,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  gradient: gradiente,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  initials(cliente.nombre),
-                  style:
-                      sans(size: 14, weight: 600, color: MColors.tWhite),
-                ),
+        hijo: Row(
+          children: [
+            // `.cli-av { 46x46; 17px; weight 700 }`
+            Container(
+              width: 46,
+              height: 46,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                gradient: MGradient.avatar(avatarIndex(cliente.nombre)),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            cliente.nombre,
-                            style: sans(size: 14.5, weight: 600),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+              child: Text(
+                initials(cliente.nombre),
+                style: sans(size: 17, weight: 700, color: MColors.tWhite),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          cliente.nombre,
+                          style: sans(size: 14, weight: 600),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        if (cliente.vip) ...[
-                          const SizedBox(width: 6),
-                          const Text('⭐', style: TextStyle(fontSize: 12)),
-                        ],
+                      ),
+                      if (cliente.vip) ...[
+                        const SizedBox(width: 7),
+                        const _TagVip(),
                       ],
-                    ),
-                    if (cliente.telefono?.isNotEmpty ?? false)
-                      Text(cliente.telefono!, style: MText.menor),
-                  ],
-                ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    // El original escribe "Sin teléfono" en vez de dejar el
+                    // renglón vacío: así la tarjeta no cambia de alto.
+                    cliente.telefono?.isNotEmpty ?? false
+                        ? cliente.telefono!
+                        : 'Sin teléfono',
+                    style: sans(size: 12, color: MColors.tSecondary),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      _Estadistica(valor: '$turnos', sufijo: 'turnos'),
+                      if (gastado > 0) ...[
+                        const SizedBox(width: 10),
+                        _Estadistica(valor: formatMoney(gastado)),
+                      ],
+                    ],
+                  ),
+                ],
               ),
-              if (cliente.telefono?.isNotEmpty ?? false)
-                IconButton(
-                  tooltip: 'WhatsApp',
-                  onPressed: () => _abrirWhatsapp(cliente.telefono!),
-                  icon: const Icon(Icons.chat_bubble_outline_rounded,
-                      size: 19, color: MColors.whatsapp),
-                ),
-            ],
-          ),
+            ),
+            if (cliente.telefono?.isNotEmpty ?? false)
+              _BotonWhatsapp(telefono: cliente.telefono!),
+            // `.ch-arrow` — la flecha que indica que la fila se abre.
+            const Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text(
+                '›',
+                style: TextStyle(fontSize: 16, color: MColors.tLight),
+              ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
+      );
+}
 
-  Future<void> _abrirWhatsapp(String telefono) async {
-    // Solo dígitos: los teléfonos se cargan con espacios, guiones y paréntesis
-    // y wa.me los rechaza.
-    final limpio = telefono.replaceAll(RegExp(r'\D'), '');
-    if (limpio.isEmpty) return;
-    await launchUrl(
-      Uri.parse('https://wa.me/$limpio'),
-      mode: LaunchMode.externalApplication,
-    );
-  }
+/// `.vip-tag` — nude-100 sobre borde nude-300, texto nude-500, 9px/700.
+class _TagVip extends StatelessWidget {
+  const _TagVip();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+        decoration: BoxDecoration(
+          color: MColors.nude100,
+          border: Border.all(color: MColors.nude300),
+          borderRadius: BorderRadius.circular(MRadius.full),
+        ),
+        child: Text(
+          'VIP 🌸',
+          style: sans(size: 9, weight: 700, color: MColors.nude500)
+              .copyWith(letterSpacing: 0.3),
+        ),
+      );
+}
+
+/// `.cst` — el número en lav-600 y el resto en t-muted.
+class _Estadistica extends StatelessWidget {
+  const _Estadistica({required this.valor, this.sufijo});
+
+  final String valor;
+  final String? sufijo;
+
+  @override
+  Widget build(BuildContext context) => Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: valor,
+              style: sans(size: 11, weight: 600, color: MColors.lav600),
+            ),
+            if (sufijo != null)
+              TextSpan(
+                text: ' $sufijo',
+                style: sans(size: 11, color: MColors.tMuted),
+              ),
+          ],
+        ),
+      );
+}
+
+class _BotonWhatsapp extends StatelessWidget {
+  const _BotonWhatsapp({required this.telefono});
+
+  final String telefono;
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+        tooltip: 'WhatsApp',
+        visualDensity: VisualDensity.compact,
+        onPressed: () async {
+          // Solo dígitos: los teléfonos se cargan con espacios, guiones y
+          // paréntesis, y wa.me los rechaza.
+          final limpio = telefono.replaceAll(RegExp(r'\D'), '');
+          if (limpio.isEmpty) return;
+          await launchUrl(
+            Uri.parse('https://wa.me/$limpio'),
+            mode: LaunchMode.externalApplication,
+          );
+        },
+        icon: const Icon(Icons.chat_bubble_outline_rounded,
+            size: 18, color: MColors.whatsapp),
+      );
 }
 
 /// Alta y edición. Es un sheet en móvil, igual que los modales del original.

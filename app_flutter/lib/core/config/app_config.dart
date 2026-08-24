@@ -46,7 +46,12 @@ abstract final class AppConfig {
   /// callejon sin salida. La pagina funciona siempre y desde ahi se elige.
   static String urlInvitacion(String? slug) {
     final base = urlPublica.endsWith('/') ? urlPublica : '$urlPublica/';
-    return slug == null || slug.isEmpty ? base : '$base?salon=$slug';
+    // OJO: `descargar.html`, no la raiz. La raiz es la PWA, y quien escanea
+    // el QR caeria directo en el login sin que nadie le ofrezca instalar la
+    // app. Una version anterior apuntaba ahi — el comentario decia "landing"
+    // pero el codigo mandaba a la raiz.
+    final pagina = '${base}descargar.html';
+    return slug == null || slug.isEmpty ? pagina : '$pagina?salon=$slug';
   }
 
   static bool get configurado =>

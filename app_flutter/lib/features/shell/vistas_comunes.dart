@@ -22,19 +22,33 @@ class EstadoVacio extends StatelessWidget {
   final String titulo;
   final String detalle;
 
+  /// `.empty-s { padding:52px 20px; gap:8px }`
+  /// `.empty-ic { font-size:40px; opacity:.25 }` — el emoji va DESVAÍDO; a
+  /// opacidad plena compite con el contenido real de la pantalla.
+  /// `.empty-t { 16px/600 t-secondary }` · `.empty-d { 13px t-muted, max 200 }`
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+        padding: const EdgeInsets.symmetric(vertical: 52, horizontal: 20),
         child: Column(
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 42)),
-            const SizedBox(height: 14),
-            Text(titulo, style: serif(size: 20, weight: 600)),
-            const SizedBox(height: 6),
+            Opacity(
+              opacity: 0.25,
+              child: Text(emoji, style: const TextStyle(fontSize: 40)),
+            ),
+            const SizedBox(height: 8),
             Text(
-              detalle,
-              textAlign: TextAlign.center,
-              style: MText.cuerpoSec,
+              titulo,
+              style: sans(size: 16, weight: 600, color: MColors.tSecondary),
+            ),
+            const SizedBox(height: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 200),
+              child: Text(
+                detalle,
+                textAlign: TextAlign.center,
+                style: sans(size: 13, color: MColors.tMuted)
+                    .copyWith(height: 1.6),
+              ),
             ),
           ],
         ),
@@ -334,4 +348,40 @@ class TituloSeccion extends StatelessWidget {
           if (accion != null) accion!,
         ],
       );
+}
+
+
+/// `.badge` — la píldora de estado de un turno. Cada estado tiene su terna de
+/// fondo, borde y texto en el CSS original.
+class BadgeEstado extends StatelessWidget {
+  const BadgeEstado(this.estado, {super.key});
+
+  final String estado;
+
+  @override
+  Widget build(BuildContext context) {
+    final (texto, fondo, borde, color) = switch (estado) {
+      'confirmed' || 'confirmado' =>
+        ('Confirmado', MColors.lav50, MColors.lav200, MColors.lav700),
+      'done' || 'hecho' || 'completado' =>
+        ('Hecho', MColors.successBg, MColors.successBorder, MColors.successText),
+      'cancelled' || 'cancelado' =>
+        ('Cancelado', MColors.dangerBg, MColors.dangerBorder, MColors.dangerText),
+      _ => ('Pendiente', MColors.warningBg, MColors.warningBorder,
+          MColors.warningText),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: fondo,
+        border: Border.all(color: borde),
+        borderRadius: BorderRadius.circular(MRadius.full),
+      ),
+      child: Text(
+        texto,
+        style: sans(size: 10, weight: 600, color: color),
+      ),
+    );
+  }
 }

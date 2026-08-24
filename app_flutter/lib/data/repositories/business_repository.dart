@@ -25,6 +25,15 @@ String nuevoId() => _uuid.v7();
 ///
 /// Nunca `toIso8601String()` sobre un DateTime en UTC: el legacy hacía eso y
 /// después de las 21:00 (UTC-3) el turno saltaba al día siguiente.
+/// Drift guarda `DateTime` como **segundos epoch (entero)**, no como texto.
+///
+/// Hace falta al escribir con SQL crudo: pasar un `toIso8601String()` deja la
+/// columna con un texto que después NO se puede leer — el mapeo hace
+/// `int.parse` y lanza `FormatException`, tumbando la consulta entera. Lo
+/// encontró un test, después de que un `borrar()` dejara la lista de clientas
+/// sin poder abrirse.
+int aEpoch(DateTime d) => d.millisecondsSinceEpoch ~/ 1000;
+
 String claveFecha(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-'
     '${d.month.toString().padLeft(2, '0')}-'
@@ -97,6 +106,41 @@ class BusinessRepository {
             ..where((p) => p.deletedAt.isNull())
             ..orderBy([(p) => OrderingTerm.asc(p.nombre)]))
           .watch();
+
+  /// Turnos y gasto acumulado por clienta, para la lista del CRM.
+  ///
+  /// Se resuelve con dos agregados en SQL y no trayendo todos los turnos y
+  /// movimientos a memoria: la lista de clientas se abre seguido y el
+  /// historial solo crece.
+  ///
+  /// El gasto sale de las TRANSACCIONES de tipo ingreso con `client_id`, igual
+  /// que `renderClients` del original.
+  Stream<Map<String, ({int turnos, double gastado})>> verResumenClientes() {
+    final consulta = '''
+      select c.id as cid,
+             (select count(*) from appointments a
+               where a.client_id = c.id and a.deleted_at is null) as turnos,
+             (select coalesce(sum(t.monto), 0) from transactions t
+               where t.client_id = c.id and t.tipo = 'ingreso'
+                 and t.deleted_at is null) as gastado
+      from clients c
+      where c.tenant_id = ? and c.deleted_at is null
+    ''';
+    return _db
+        .customSelect(
+          consulta,
+          variables: [Variable.withString(_tenantId)],
+          readsFrom: {_db.clients, _db.appointments, _db.transactions},
+        )
+        .watch()
+        .map((filas) => {
+              for (final f in filas)
+                f.read<String>('cid'): (
+                  turnos: f.read<int>('turnos'),
+                  gastado: f.read<double>('gastado'),
+                ),
+            });
+  }
 
   // ── Escrituras ───────────────────────────────────────────────────────────
 
@@ -308,7 +352,7 @@ class BusinessRepository {
       await _db.customStatement(
         'update stock_items set cantidad = max(0, cantidad + ?), '
         'updated_at = ? where id = ? and tenant_id = ?',
-        [delta, DateTime.now().toIso8601String(), itemId, _tenantId],
+        [delta, aEpoch(DateTime.now()), itemId, _tenantId],
       );
       await _sync.encolar(
         tenantId: _tenantId,
@@ -327,7 +371,7 @@ class BusinessRepository {
       await _db.customStatement(
         'update $tabla set deleted_at = ?, updated_at = ? '
         'where id = ? and tenant_id = ?',
-        [ahora.toIso8601String(), ahora.toIso8601String(), filaId, _tenantId],
+        [aEpoch(ahora), aEpoch(ahora), filaId, _tenantId],
       );
       await _sync.encolar(
         tenantId: _tenantId,

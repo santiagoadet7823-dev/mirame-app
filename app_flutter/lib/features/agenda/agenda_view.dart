@@ -76,41 +76,171 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
           Expanded(
             child: turnos.isEmpty
                 ? const EstadoVacio(
-                    emoji: '🌿',
-                    titulo: 'Sin turnos este día',
-                    detalle: 'Tocá + para agendar uno.',
+                    // Textos literales de `renderAgenda`.
+                    emoji: '📅',
+                    titulo: 'Sin turnos',
+                    detalle: 'No hay turnos para este día',
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                    itemCount: turnos.length,
-                    itemBuilder: (_, i) {
-                      final t = turnos[i];
-                      // Un turno se marca en conflicto si comparte horario con
-                      // otro del mismo día. Verlo en la lista evita el llamado
-                      // incómodo de "vení media hora antes".
-                      final choca = turnos.any(
-                        (o) =>
-                            o.id != t.id &&
-                            o.hora != null &&
-                            t.hora != null &&
-                            o.hora!.hour == t.hora!.hour &&
-                            o.hora!.minute == t.hora!.minute &&
-                            o.estado != TurnoEstado.cancelled &&
-                            t.estado != TurnoEstado.cancelled,
-                      );
-                      return FadeSlideIn(
-                        delay:
-                            Duration(milliseconds: (i < 8 ? i : 8) * 35),
-                        child: _FilaTurno(
-                          turno: t,
-                          nombreCliente: nombrePorId[t.clientId],
-                          enConflicto: choca,
-                        ),
-                      );
-                    },
+                : _Timeline(
+                    turnos: turnos,
+                    nombrePorId: nombrePorId,
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// `.timeline` del original: los turnos se agrupan por HORA, con la hora en
+/// una columna angosta a la izquierda y una línea vertical que la separa.
+///
+/// No es decorativo: agrupar por hora es lo que deja ver de un vistazo si dos
+/// turnos caen en la misma franja.
+class _Timeline extends StatelessWidget {
+  const _Timeline({required this.turnos, required this.nombrePorId});
+
+  final List<Appointment> turnos;
+  final Map<String, String> nombrePorId;
+
+  @override
+  Widget build(BuildContext context) {
+    // `byH` en el original: clave = la hora, sin los minutos.
+    final porHora = <int, List<Appointment>>{};
+    for (final t in turnos) {
+      porHora.putIfAbsent(t.hora?.hour ?? 9, () => []).add(t);
+    }
+    final horas = porHora.keys.toList()..sort();
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+      itemCount: horas.length,
+      itemBuilder: (_, i) {
+        final h = horas[i];
+        final delHora = porHora[h]!;
+        // 12 horas con AM/PM, como `${+h%12||12}` del original.
+        final h12 = h % 12 == 0 ? 12 : h % 12;
+        final ampm = h >= 12 ? 'PM' : 'AM';
+
+        return FadeSlideIn(
+          delay: Duration(milliseconds: (i < 8 ? i : 8) * 35),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // `.tl-time { width:38px; text-align:right; 11px t-muted }`
+                SizedBox(
+                  width: 38,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '$h12',
+                          style: sans(
+                              size: 11, weight: 500, color: MColors.tMuted),
+                        ),
+                        Text(
+                          ampm,
+                          style: sans(
+                              size: 9, weight: 500, color: MColors.tMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // `.tl-row::before` — la línea vertical a 38px del borde.
+                Container(width: 1, color: MColors.bg3),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 0, 2),
+                    child: Column(
+                      children: [
+                        for (final t in delHora)
+                          _EventoTimeline(
+                            turno: t,
+                            nombreCliente: nombrePorId[t.clientId],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// `.tl-ev` — tarjeta del turno, con la **barra lavanda de 3px a la
+/// izquierda**, que es lo que le da el aire de agenda.
+class _EventoTimeline extends ConsumerWidget {
+  const _EventoTimeline({required this.turno, this.nombreCliente});
+
+  final Appointment turno;
+  final String? nombreCliente;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cancelado = turno.estado == TurnoEstado.cancelled;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: PressableScale(
+        onTap: () => _mostrarFormulario(context, ref, turno: turno),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: MColors.surface,
+            border: Border(
+              top: const BorderSide(color: MColors.border),
+              right: const BorderSide(color: MColors.border),
+              bottom: const BorderSide(color: MColors.border),
+              left: BorderSide(
+                color: cancelado ? MColors.tLight : MColors.brand,
+                width: 3,
+              ),
+            ),
+            borderRadius: BorderRadius.circular(MRadius.md),
+            boxShadow: MShadow.xs,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      nombreCliente ?? 'Clienta',
+                      style: sans(size: 13, weight: 600).copyWith(
+                        decoration:
+                            cancelado ? TextDecoration.lineThrough : null,
+                        color: cancelado ? MColors.tMuted : null,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  BadgeEstado(textoDesdeEstado(turno.estado)),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                // `.tl-ev-info` — servicios · hora · profesional · precio.
+                [
+                  turno.hora?.toString(),
+                  if (turno.precio > 0) formatMoney(turno.precio),
+                  if (turno.notas?.isNotEmpty ?? false) turno.notas,
+                ].whereType<String>().join(' · '),
+                style: sans(size: 11, color: MColors.tSecondary),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -170,94 +300,6 @@ class _SelectorDia extends StatelessWidget {
                 color: MColors.tSecondary),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _FilaTurno extends ConsumerWidget {
-  const _FilaTurno({
-    required this.turno,
-    required this.enConflicto,
-    this.nombreCliente,
-  });
-
-  final Appointment turno;
-  final String? nombreCliente;
-  final bool enConflicto;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cancelado = turno.estado == TurnoEstado.cancelled;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: PressableScale(
-        onTap: () => _mostrarFormulario(context, ref, turno: turno),
-        child: Container(
-          padding: const EdgeInsets.all(13),
-          decoration: BoxDecoration(
-            color: MColors.surface,
-            borderRadius: BorderRadius.circular(MRadius.md),
-            border: Border.all(
-              color: enConflicto ? MColors.warningText : MColors.border,
-            ),
-            boxShadow: MShadow.xs,
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: cancelado ? MColors.bg3 : MColors.brandBg,
-                  borderRadius: BorderRadius.circular(MRadius.sm),
-                ),
-                child: Text(
-                  turno.hora?.toString() ?? '--:--',
-                  style: sans(
-                    size: 13,
-                    weight: 600,
-                    color:
-                        cancelado ? MColors.tMuted : MColors.brandDark,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      nombreCliente ?? 'Sin clienta asignada',
-                      style: sans(size: 14, weight: 600).copyWith(
-                        decoration:
-                            cancelado ? TextDecoration.lineThrough : null,
-                        color: cancelado ? MColors.tMuted : null,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (enConflicto)
-                      Text(
-                        'Se superpone con otro turno',
-                        style: sans(
-                            size: 11.5,
-                            weight: 600,
-                            color: MColors.warningText),
-                      )
-                    else if (turno.notas?.isNotEmpty ?? false)
-                      Text(
-                        turno.notas!,
-                        style: MText.menor,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-              if (turno.precio > 0)
-                Text(formatMoney(turno.precio), style: MText.menor),
-            ],
-          ),
-        ),
       ),
     );
   }
