@@ -75,3 +75,199 @@ class VistaEnConstruccion extends StatelessWidget {
         ),
       );
 }
+
+/// Sheet de formulario. Lo comparten todas las altas y ediciones para que
+/// crear una clienta y crear un movimiento se sientan igual.
+class SheetFormulario extends StatelessWidget {
+  const SheetFormulario({
+    super.key,
+    required this.titulo,
+    required this.campos,
+    required this.onGuardar,
+    this.onBorrar,
+    this.error,
+    this.guardando = false,
+  });
+
+  final String titulo;
+  final List<Widget> campos;
+  final VoidCallback onGuardar;
+  final VoidCallback? onBorrar;
+  final String? error;
+  final bool guardando;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        // El teclado tapa los campos de abajo si no se le cede el espacio.
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: MColors.surface,
+            borderRadius:
+                BorderRadius.vertical(top: Radius.circular(MRadius.xl)),
+          ),
+          padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: MColors.borderMd,
+                        borderRadius: BorderRadius.circular(MRadius.full),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(titulo, style: serif(size: 22, weight: 600)),
+                  const SizedBox(height: 16),
+                  ...campos,
+                  if (error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      error!,
+                      style: sans(
+                          size: 13, weight: 500, color: MColors.dangerText),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: MColors.brand,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(MRadius.full),
+                      ),
+                    ),
+                    onPressed: guardando ? null : onGuardar,
+                    child: guardando
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: MColors.tWhite,
+                            ),
+                          )
+                        : Text(
+                            'Guardar',
+                            style: sans(
+                                size: 15,
+                                weight: 600,
+                                color: MColors.tWhite),
+                          ),
+                  ),
+                  if (onBorrar != null) ...[
+                    const SizedBox(height: 6),
+                    TextButton(
+                      onPressed: guardando
+                          ? null
+                          : () => _confirmarBorrado(context, onBorrar!),
+                      child: Text(
+                        'Eliminar',
+                        style: sans(
+                            size: 13,
+                            weight: 500,
+                            color: MColors.dangerText),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+  /// Borrar siempre pregunta. Es la única acción de estas pantallas que la
+  /// persona no puede deshacer sola.
+  static Future<void> _confirmarBorrado(
+    BuildContext context,
+    VoidCallback onSi,
+  ) async {
+    final si = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: MColors.surface,
+        title: Text('¿Eliminar?', style: serif(size: 20, weight: 600)),
+        content: Text(
+          'No se puede deshacer desde la app.',
+          style: MText.cuerpoSec,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Cancelar', style: MText.menor),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              'Eliminar',
+              style:
+                  sans(size: 13, weight: 600, color: MColors.dangerText),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (si ?? false) onSi();
+  }
+}
+
+class CampoTexto extends StatelessWidget {
+  const CampoTexto({
+    super.key,
+    required this.controlador,
+    required this.etiqueta,
+    this.teclado,
+    this.lineas = 1,
+    this.autofocus = false,
+    this.prefijo,
+  });
+
+  final TextEditingController controlador;
+  final String etiqueta;
+  final TextInputType? teclado;
+  final int lineas;
+  final bool autofocus;
+  final String? prefijo;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: TextField(
+          controller: controlador,
+          keyboardType: teclado,
+          maxLines: lineas,
+          autofocus: autofocus,
+          style: sans(size: 14, weight: 500),
+          decoration: InputDecoration(
+            labelText: etiqueta,
+            labelStyle: MText.menor,
+            prefixText: prefijo,
+            filled: true,
+            fillColor: MColors.bg2,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(MRadius.md),
+              borderSide: const BorderSide(color: MColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(MRadius.md),
+              borderSide: const BorderSide(color: MColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(MRadius.md),
+              borderSide: const BorderSide(color: MColors.brand),
+            ),
+          ),
+        ),
+      );
+}

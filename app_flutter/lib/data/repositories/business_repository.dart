@@ -252,6 +252,51 @@ class BusinessRepository {
     return filaId;
   }
 
+  Future<String> guardarStock({
+    String? id,
+    required String nombre,
+    int cantidad = 0,
+    int minimo = 0,
+    String? categoria,
+    String? unidad,
+  }) async {
+    final filaId = id ?? nuevoId();
+    final ahora = DateTime.now();
+    await _db.transaction(() async {
+      await _db.into(_db.stockItems).insertOnConflictUpdate(
+            StockItemsCompanion.insert(
+              id: filaId,
+              tenantId: _tenantId,
+              nombre: nombre,
+              cantidad: Value(cantidad),
+              minimo: Value(minimo),
+              categoria: Value(categoria),
+              unidad: Value(unidad),
+              updatedAt: Value(ahora),
+            ),
+          );
+      await _sync.encolar(
+        tenantId: _tenantId,
+        tabla: 'stock_items',
+        filaId: filaId,
+        // Alta y edición van como upsert: acá se fija un valor absoluto a
+        // propósito. Los deltas son solo para el +1/-1 del uso diario.
+        operacion: 'upsert',
+        payload: {
+          'id': filaId,
+          'tenant_id': _tenantId,
+          'nombre': nombre,
+          'categoria': categoria,
+          'cantidad': cantidad,
+          'minimo': minimo,
+          'unidad': unidad,
+          'updated_at': ahora.toUtc().toIso8601String(),
+        },
+      );
+    });
+    return filaId;
+  }
+
   /// Ajusta el stock **por diferencia**, no por valor absoluto.
   ///
   /// Es la única excepción al last-write-wins de todo el sistema. Dos

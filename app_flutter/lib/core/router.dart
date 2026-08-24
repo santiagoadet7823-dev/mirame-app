@@ -14,8 +14,12 @@ import '../domain/rules/access.dart';
 import '../features/admin/invite_screen.dart';
 import '../features/admin/platform_screen.dart';
 import '../features/auth/auth_screens.dart';
+import '../features/agenda/agenda_view.dart';
+import '../features/caja/caja_view.dart';
+import '../features/crm/clients_view.dart';
 import '../features/dashboard/dashboard_view.dart';
 import '../features/settings/settings_view.dart';
+import '../features/stock/stock_view.dart';
 import '../features/shell/app_shell.dart';
 import '../features/shell/vistas_comunes.dart';
 import '../features/auth/session_controller.dart';
@@ -104,22 +108,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const AppShell(
           vistas: [
             DashboardView(),
-            VistaEnConstruccion(
-              nombre: 'Agenda',
-              cuando: 'Es lo próximo que se construye.',
-            ),
-            VistaEnConstruccion(
-              nombre: 'Clientas',
-              cuando: 'Los datos ya sincronizan; falta la pantalla.',
-            ),
-            VistaEnConstruccion(
-              nombre: 'Caja',
-              cuando: 'Los datos ya sincronizan; falta la pantalla.',
-            ),
-            VistaEnConstruccion(
-              nombre: 'Stock',
-              cuando: 'Los datos ya sincronizan; falta la pantalla.',
-            ),
+            AgendaView(),
+            ClientsView(),
+            CajaView(),
+            StockView(),
             VistaEnConstruccion(
               nombre: 'Estadísticas',
               cuando: 'Los cálculos ya están hechos y testeados; falta el dibujo.',
