@@ -214,8 +214,14 @@ drop policy if exists cfg_select on public.app_config;
 create policy cfg_select on public.app_config for select
   using (auth.role() = 'authenticated');
 
+-- `to authenticated` NO es decorativo. Sin eso la policy aplica al rol
+-- `public`, y como es `for all` su USING se evalúa TAMBIÉN en los select:
+-- llama a es_superadmin(), que `anon` no puede ejecutar (ver sql/05), y leer
+-- app_config sin sesión falla con «permission denied for function» en vez de
+-- devolver vacío. Lo pagó el auto-updater: consultaba antes del login y se
+-- comía un error duro.
 drop policy if exists cfg_write on public.app_config;
-create policy cfg_write on public.app_config for all
+create policy cfg_write on public.app_config for all to authenticated
   using (public.es_superadmin()) with check (public.es_superadmin());
 
 -- device_tokens: cada uno gestiona los suyos

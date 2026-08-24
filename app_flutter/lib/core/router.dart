@@ -15,6 +15,7 @@ import '../features/admin/invite_screen.dart';
 import '../features/admin/platform_screen.dart';
 import '../features/auth/auth_screens.dart';
 import '../features/dashboard/dashboard_view.dart';
+import '../features/settings/settings_view.dart';
 import '../features/shell/app_shell.dart';
 import '../features/shell/vistas_comunes.dart';
 import '../features/auth/session_controller.dart';
@@ -40,8 +41,17 @@ String rutaDe(AccessDecision d) => switch (d) {
       GoToPlatformAdmin() => Rutas.admin,
     };
 
+/// Clave del Navigator raíz.
+///
+/// Hace falta para abrir sheets desde widgets que viven en el `builder` de
+/// `MaterialApp.router` — es decir, POR ENCIMA del Navigator. Con el contexto
+/// de esos widgets, `showModalBottomSheet` no encuentra Navigator ancestro y
+/// lanza. Es exactamente lo que le pasaba al aviso de actualización.
+final navigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
+    navigatorKey: navigatorKey,
     initialLocation: Rutas.splash,
     // `refreshListenable` reevalúa el redirect cada vez que cambia la sesión.
     refreshListenable: _SessionListenable(ref),
@@ -114,10 +124,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               nombre: 'Estadísticas',
               cuando: 'Los cálculos ya están hechos y testeados; falta el dibujo.',
             ),
-            VistaEnConstruccion(
-              nombre: 'Ajustes',
-              cuando: 'Servicios, profesionales y datos del salón.',
-            ),
+            SettingsView(),
           ],
         ),
       ),

@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/router.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -31,12 +32,19 @@ class _UpdateGateState extends ConsumerState<UpdateGate> {
 
   @override
   Widget build(BuildContext context) {
+    // `watch` además de `listen`: sin alguien observándolo, el provider es
+    // perezoso y podría no llegar a ejecutarse nunca.
+    ref.watch(actualizacionProvider);
     ref.listen(actualizacionProvider, (_, next) {
       final info = next.value;
       if (info == null || !info.ofrecible || _yaOfrecida) return;
       _yaOfrecida = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _mostrar(context, info);
+        // El contexto del Navigator raíz, NO el de este widget: `UpdateGate`
+        // vive en el `builder` de MaterialApp.router, por encima del
+        // Navigator, y con su propio contexto el sheet no puede abrirse.
+        final ctx = navigatorKey.currentContext;
+        if (mounted && ctx != null) _mostrar(ctx, info);
       });
     });
     return widget.child;
@@ -230,4 +238,75 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
       ),
     );
   }
+}
+
+
+/// Botón de "Buscar actualización".
+///
+/// El chequeo automático corre al entrar; este botón existe para poder
+/// verificarlo sin reiniciar la app, y para que en soporte se pueda pedir
+/// "tocá acá" en vez de "cerrá y volvé a abrir". Dice SIEMPRE algo: un botón
+/// que no responde no se distingue de uno roto.
+class BotonBuscarActualizacion extends ConsumerStatefulWidget {
+  const BotonBuscarActualizacion({super.key});
+
+  @override
+  ConsumerState<BotonBuscarActualizacion> createState() =>
+      _BotonBuscarState();
+}
+
+class _BotonBuscarState extends ConsumerState<BotonBuscarActualizacion> {
+  bool _buscando = false;
+
+  Future<void> _buscar() async {
+    setState(() => _buscando = true);
+    ref.invalidate(actualizacionProvider);
+    final info = await ref.read(actualizacionProvider.future);
+    if (!mounted) return;
+    setState(() => _buscando = false);
+
+    if (info != null && info.ofrecible) {
+      await showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isDismissible: !info.obligatoria,
+        builder: (_) => UpdateSheet(info: info),
+      );
+      return;
+    }
+
+    final mensaje = switch (info) {
+      null => 'No se pudo consultar. Revisá la conexión.',
+      final i when !i.hayNueva => 'Ya tenés la última versión (${i.instalada}).',
+      // Hay versión nueva pero sin URL publicada: decirlo tal cual evita que
+      // se persiga un bug del teléfono cuando el problema está en el release.
+      _ => 'Hay una versión nueva pero todavía no está publicada.',
+    };
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje, style: MText.menor),
+        backgroundColor: MColors.surface,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => TextButton.icon(
+        onPressed: _buscando ? null : _buscar,
+        icon: _buscando
+            ? const SizedBox(
+                width: 13,
+                height: 13,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: MColors.tMuted,
+                ),
+              )
+            : const Icon(Icons.refresh_rounded,
+                size: 16, color: MColors.tMuted),
+        label: Text(
+          _buscando ? 'Buscando…' : 'Buscar actualización',
+          style: MText.menor,
+        ),
+      );
 }

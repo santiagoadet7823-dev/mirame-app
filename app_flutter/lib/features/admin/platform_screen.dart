@@ -16,6 +16,7 @@ import '../../core/theme/typography.dart';
 import '../../data/remote/supabase_client.dart';
 import '../../shared/widgets/version_label.dart';
 import '../auth/session_controller.dart';
+import '../update/update_sheet.dart';
 
 /// Un salón tal como lo ve el panel, con lo necesario para decidir de un
 /// vistazo: si opera, hasta cuándo, y cuánta gente tiene adentro.
@@ -179,7 +180,8 @@ class PlatformScreen extends ConsumerWidget {
                             ref.read(sessionProvider.notifier).cerrarSesion(),
                         child: Text('Cerrar sesión', style: MText.menor),
                       ),
-                      const SizedBox(height: 6),
+                      const BotonBuscarActualizacion(),
+                      const SizedBox(height: 2),
                       const VersionLabel(),
                     ],
                   ),

@@ -17,7 +17,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../data/remote/supabase_client.dart';
+import '../../domain/rules/access.dart';
 import '../../domain/rules/version.dart';
+import '../auth/session_controller.dart';
 
 const _canal = MethodChannel('com.mirame.app/updater');
 
@@ -159,9 +161,22 @@ class Updater {
 
 final updaterProvider = Provider<Updater>((_) => const Updater());
 
-/// Se consulta al arrancar. Un fallo acá **nunca** puede trabar la app: si
-/// Supabase no responde, no hay actualización que ofrecer y listo.
+/// Consulta el plano de control. Un fallo acá **nunca** puede trabar la app:
+/// si Supabase no responde, no hay actualización que ofrecer y listo.
+///
+/// ⚠️ Depende del estado de sesión A PROPÓSITO, y no es un detalle: la policy
+/// `cfg_select` de `app_config` exige `authenticated`. Una versión anterior no
+/// observaba la sesión, así que este provider corría UNA sola vez al arrancar
+/// —antes del login—, obtenía vacío y cacheaba ese `null` para siempre: el
+/// cartel de actualización no aparecía nunca. Observar la sesión hace que se
+/// recalcule al entrar.
 final actualizacionProvider = FutureProvider<InfoActualizacion?>((ref) async {
+  final sesion = ref.watch(sessionProvider);
+  // Solo tiene sentido preguntar con sesión resuelta y adentro.
+  final adentro =
+      sesion.decision is GoToApp || sesion.decision is GoToPlatformAdmin;
+  if (sesion.cargando || !adentro) return null;
+
   try {
     return await ref.read(updaterProvider).consultar();
   } catch (_) {
