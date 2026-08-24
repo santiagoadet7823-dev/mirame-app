@@ -1,0 +1,133 @@
+name: APK
+
+# Se dispara con un tag `apk-1.0.3`. La version del tag tiene que coincidir con
+# la de pubspec.yaml o el job falla antes de compilar: publicar un APK con una
+# version distinta de la que dice el tag deja el plano de control mintiendo.
+#
+#   bash scripts/bump-version.sh 1.0.3
+#   git commit -am "build: sube a 1.0.3" && git push
+#   git tag apk-1.0.3 && git push origin apk-1.0.3
+on:
+  push:
+    tags: ['apk-*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app_flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          # Gradle y AGP no soportan el 25. Se fija el 21 explicito y no "el
+          # ultimo": una actualizacion del runner no puede romper el release.
+          distribution: temurin
+          java-version: '21'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter test
+
+      - name: Verificar que el tag y pubspec coincidan
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${GITHUB_REF#refs/tags/apk-}"
+          PUB=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')
+          echo "tag=$TAG pubspec=$PUB"
+          if [ "$TAG" != "$PUB" ]; then
+            echo "::error::El tag dice $TAG y pubspec.yaml dice $PUB."
+            exit 1
+          fi
+
+      - name: Reconstruir el keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || { echo "::error::Falta KEYSTORE_BASE64"; exit 1; }
+          echo "$KEYSTORE_BASE64" | base64 -d > android/mirame.keystore
+          cat > android/key.properties <<EOF
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEYSTORE_PASSWORD
+          keyAlias=mirame
+          storeFile=mirame.keystore
+          EOF
+
+      - name: Compilar el APK
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
+            --dart-define=FLAVOR=prod \
+            --dart-define=URL_PUBLICA="https://${{ github.repository_owner }}.github.io/mirame-app/"
+
+      # La verificacion que siempre se saltea y siempre duele: si key.properties
+      # no se hubiera generado, Gradle cae a la firma de DEBUG sin fallar, y ese
+      # APK no se instala encima de los que ya estan en la calle.
+      - name: Verificar la firma
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
+          SALIDA=$("$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk)
+          echo "$SALIDA"
+          echo "$SALIDA" | grep -qi "CN=Mirame Lash Studio" || {
+            echo "::error::El APK NO quedo firmado con el keystore de release."
+            exit 1
+          }
+
+      # Nombre de asset FIJO. El updater guarda esta URL en app_config y no
+      # descubre nombres: si el asset cambiara de nombre en cada release, cada
+      # publicacion exigiria tocar la base a mano.
+      - name: Publicar el release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')
+          cp build/app/outputs/flutter-apk/app-release.apk /tmp/app-release.apk
+          gh release create "apk-$VER" /tmp/app-release.apk \
+            --title "Mírame $VER" \
+            --notes "APK de Mírame $VER.
+
+          Los dispositivos que ya tengan la app instalada la reciben sola cuando
+          se actualice \`app_config\` en Supabase." \
+            --repo "${{ github.repository }}" || \
+          gh release upload "apk-$VER" /tmp/app-release.apk --clobber \
+            --repo "${{ github.repository }}"
+
+      # Cierra el circuito: sin esto el APK queda publicado pero ningun telefono
+      # se entera. Si el secret no esta, no falla — se avisa y se hace a mano.
+      - name: Avisar a la flota (app_config)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SERVICE_ROLE" ]; then
+            echo "::warning::Sin SUPABASE_SERVICE_ROLE_KEY. El APK quedo publicado pero app_config NO se actualizo: ningun telefono va a ver la actualizacion hasta que se cargue a mano."
+            exit 0
+          fi
+          VER=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')
+          URL="https://github.com/${{ github.repository }}/releases/download/apk-$VER/app-release.apk"
+          # Solo se toca `latest_version` y `apk_url`. `min_version` es el PISO
+          # y se sube a mano, despues de comprobar que la version anda: subirlo
+          # automaticamente convertiria cada release en obligatorio y un release
+          # roto dejaria a toda la flota trabada sin arreglo remoto.
+          curl -sS -X PATCH "$SUPABASE_URL/rest/v1/app_config?id=eq.true" \
+            -H "apikey: $SERVICE_ROLE" \
+            -H "Authorization: Bearer $SERVICE_ROLE" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=representation" \
+            -d "{\"latest_version\":\"$VER\",\"apk_url\":\"$URL\"}" | tee /tmp/r.json
+          grep -q "$VER" /tmp/r.json || { echo "::error::app_config no se actualizo"; exit 1; }

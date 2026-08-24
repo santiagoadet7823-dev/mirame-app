@@ -31,6 +31,24 @@ abstract final class AppConfig {
   /// intent-filter del manifest y con las Redirect URLs de Supabase.
   static const authRedirectNativo = 'com.mirame.app://auth';
 
+  /// Base publica de la PWA. Es tambien la landing de descarga del APK, y por
+  /// eso vive en `--dart-define`: al cambiar de dominio no hay que recompilar
+  /// nada mas que esto.
+  static const urlPublica = String.fromEnvironment(
+    'URL_PUBLICA',
+    defaultValue: 'https://santiagoadet7823-dev.github.io/mirame-app/',
+  );
+
+  /// Link que se comparte y que codifica el QR de invitacion.
+  ///
+  /// Apunta a la PWA y NO al `.apk` directo: un `.apk` abierto desde la camara
+  /// de un iPhone, o desde un navegador sin permiso de instalacion, es un
+  /// callejon sin salida. La pagina funciona siempre y desde ahi se elige.
+  static String urlInvitacion(String? slug) {
+    final base = urlPublica.endsWith('/') ? urlPublica : '$urlPublica/';
+    return slug == null || slug.isEmpty ? base : '$base?salon=$slug';
+  }
+
   static bool get configurado =>
       supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty;
 

@@ -1,0 +1,83 @@
+name: PWA
+
+# Canal instantaneo. Todo push a main republica la PWA; los usuarios de web no
+# tienen que hacer nada. El APK, en cambio, necesita un release (ver apk.yml):
+# Flutter no tiene canal OTA, Google prohibe bajar codigo Dart ejecutable.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app_flutter/**'
+      - '.github/workflows/pwa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un solo deploy a la vez. Sin esto, dos push seguidos se pisan y puede quedar
+# publicado el build viejo.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app_flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # Si los tests no pasan no se publica: la PWA llega a los usuarios en
+      # segundos y no hay forma de "despublicarla" a tiempo.
+      - run: flutter test
+
+      - name: Compilar PWA
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          test -n "$SUPABASE_URL" || { echo "Falta el secret SUPABASE_URL"; exit 1; }
+          test -n "$SUPABASE_PUBLISHABLE_KEY" || { echo "Falta el secret SUPABASE_PUBLISHABLE_KEY"; exit 1; }
+          # base-href tiene que terminar en / y coincidir con el nombre del
+          # repo, o todos los assets dan 404 en GitHub Pages.
+          flutter build web --release \
+            --base-href "/mirame-app/" \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
+            --dart-define=FLAVOR=prod \
+            --dart-define=URL_PUBLICA="https://${{ github.repository_owner }}.github.io/mirame-app/"
+
+      # GitHub Pages sirve el contenido con Jekyll salvo que se lo desactive, y
+      # Jekyll ignora todo lo que empieza con guion bajo — incluido el
+      # directorio de canvaskit. Sin esto la PWA carga en blanco.
+      - run: touch build/web/.nojekyll
+
+      # La landing de descarga vive fuera de Flutter: tiene que abrir y decidir
+      # (APK o PWA) sin cargar 3 MB de app antes.
+      - name: Copiar la landing de descarga
+        run: cp ../web-landing/descargar.html build/web/descargar.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app_flutter/build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

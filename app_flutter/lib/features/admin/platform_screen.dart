@@ -7,6 +7,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
@@ -146,6 +147,33 @@ class PlatformScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(22, 28, 22, 30),
                   child: Column(
                     children: [
+                      PressableScale(
+                        onTap: () => context.go('/admin/invitar'),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: MColors.surface,
+                            borderRadius: BorderRadius.circular(MRadius.full),
+                            border: Border.all(color: MColors.borderMd),
+                            boxShadow: MShadow.sm,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.qr_code_2_rounded,
+                                  size: 18, color: MColors.brand),
+                              const SizedBox(width: 8),
+                              Text('Invitar a alguien',
+                                  style: sans(
+                                      size: 14,
+                                      weight: 600,
+                                      color: MColors.brand)),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       TextButton(
                         onPressed: () =>
                             ref.read(sessionProvider.notifier).cerrarSesion(),

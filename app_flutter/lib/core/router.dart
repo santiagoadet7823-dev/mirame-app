@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../domain/rules/access.dart';
+import '../features/admin/invite_screen.dart';
 import '../features/admin/platform_screen.dart';
 import '../features/auth/auth_screens.dart';
 import '../features/auth/session_controller.dart';
@@ -24,6 +25,7 @@ abstract final class Rutas {
   static const vencido = '/vencido';
   static const app = '/app';
   static const admin = '/admin';
+  static const invitar = '/admin/invitar';
 }
 
 /// Traduce la decisión del gate a una ruta.
@@ -88,7 +90,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Andamios provisorios: las pantallas reales llegan en las fases 5 y 6.
       GoRoute(path: Rutas.app, builder: (_, __) => const _Placeholder('App')),
       GoRoute(
-          path: Rutas.admin, builder: (_, __) => const PlatformScreen()),
+        path: Rutas.admin,
+        builder: (_, __) => const PlatformScreen(),
+        routes: [
+          // Anidada bajo /admin para que el redirect del gate la trate como
+          // "dentro del area autorizada" y no la rebote a la raiz.
+          GoRoute(
+            path: 'invitar',
+            builder: (_, __) => const InviteScreen(),
+          ),
+        ],
+      ),
     ],
   );
 });

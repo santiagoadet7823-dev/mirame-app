@@ -42,6 +42,9 @@ dependencies:
   url_launcher: ^6.3.2          # WhatsApp hacia las clientas
   share_plus: ^13.3.0           # export CSV
   flutter_svg: ^2.3.0           # los 12 iconos del original
+  # QR de invitacion. Pinta con CustomPainter, sin assets ni red: pesa ~40 KB
+  # y respeta la regla de no meter librerias pesadas.
+  qr_flutter: ^4.1.0
   intl: ^0.20.3
   uuid: ^4.6.0                  # v7 generado en el cliente
   shared_preferences: ^2.5.5
