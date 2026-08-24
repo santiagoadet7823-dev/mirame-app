@@ -27,6 +27,7 @@ import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
 import '../../data/sync/sync_engine.dart';
 import '../auth/session_controller.dart';
+import 'notificaciones.dart';
 
 class ItemNav {
   const ItemNav(this.icono, this.etiqueta);
@@ -65,6 +66,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     final ancho = MediaQuery.sizeOf(context).width;
     final conSidebar = ancho >= MBreak.desktop;
 
+    // El engranaje del header lleva a Ajustes, que es la última sección.
+    void irAAjustes() => setState(() => _indice = itemsNav.length - 1);
+
     final cuerpo = Column(
       children: [
         const _BarraSync(),
@@ -87,7 +91,10 @@ class _AppShellState extends ConsumerState<AppShell> {
               Expanded(
                 child: Column(
                   children: [
-                    _Header(titulo: itemsNav[_indice].etiqueta),
+                    _Header(
+                      titulo: itemsNav[_indice].etiqueta,
+                      onAjustes: irAAjustes,
+                    ),
                     Expanded(child: cuerpo),
                   ],
                 ),
@@ -111,7 +118,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             ),
             child: Column(
               children: [
-                const _Header(),
+                _Header(onAjustes: irAAjustes),
                 Expanded(child: cuerpo),
               ],
             ),
@@ -127,7 +134,14 @@ class _AppShellState extends ConsumerState<AppShell> {
 }
 
 class _Header extends ConsumerWidget {
-  const _Header({this.titulo});
+  const _Header({this.titulo, required this.onAjustes});
+
+  /// `.hdr-actions` del original tiene tres botones: cambiar de modo,
+  /// notificaciones y ajustes. El de modo NO se porta: en el original alterna
+  /// entre el layout móvil y el de escritorio a mano, y acá eso lo decide el
+  /// ancho de la pantalla — un botón que pelea con el `LayoutBuilder` es una
+  /// fuente de bugs, no una función.
+  final VoidCallback onAjustes;
 
   /// En escritorio la marca se oculta (`body.desktop #hdr .hdr-brand
   /// {display:none}`) y en su lugar va el título de la sección.
@@ -186,12 +200,21 @@ class _Header extends ConsumerWidget {
               ),
             ),
           ],
-          if (puedeVolver)
+          if (puedeVolver) ...[
             _BotonHeader(
               icono: Icons.apartment_outlined,
               tooltip: 'Volver al panel de plataforma',
               onTap: () => ref.read(sessionProvider.notifier).salirDelTenant(),
             ),
+            const SizedBox(width: 6),
+          ],
+          const _BotonNotificaciones(),
+          const SizedBox(width: 6),
+          _BotonHeader(
+            icono: Icons.settings_outlined,
+            tooltip: 'Ajustes',
+            onTap: onAjustes,
+          ),
         ],
       ),
     );
@@ -250,6 +273,51 @@ class _BotonHeader extends StatelessWidget {
       ),
     );
     return tooltip == null ? boton : Tooltip(message: tooltip!, child: boton);
+  }
+}
+
+/// La campanita, con el contador de avisos encima.
+///
+/// El número va en una burbuja y no como texto al lado: es lo que se mira de
+/// reojo, y un "3" suelto se confunde con parte del ícono.
+class _BotonNotificaciones extends ConsumerWidget {
+  const _BotonNotificaciones();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cuantos = ref.watch(avisosProvider).length;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _BotonHeader(
+          icono: Icons.notifications_none_rounded,
+          tooltip: 'Notificaciones',
+          onTap: () => mostrarNotificaciones(context),
+        ),
+        if (cuantos > 0)
+          Positioned(
+            top: -2,
+            right: -2,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              constraints: const BoxConstraints(minWidth: 16),
+              decoration: BoxDecoration(
+                color: MColors.brand,
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.circular(MRadius.full),
+                border: Border.all(color: MColors.surface, width: 1.5),
+              ),
+              child: Text(
+                // Más de 9 avisos no entran y tampoco aportan: lo que importa
+                // es que hay varios.
+                cuantos > 9 ? '9+' : '$cuantos',
+                textAlign: TextAlign.center,
+                style: sans(size: 9, weight: 700, color: MColors.tWhite),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }
 

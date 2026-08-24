@@ -17,6 +17,7 @@ import '../auth/session_controller.dart';
 import '../dashboard/dashboard_view.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
+import 'client_detail.dart';
 
 class ClientsView extends ConsumerStatefulWidget {
   const ClientsView({super.key});
@@ -171,7 +172,9 @@ class _FilaCliente extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => TarjetaMirame(
         margenInferior: 8,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        onTap: () => mostrarFormularioCliente(context, ref, cliente: cliente),
+        // Abre la ficha, no la edición: lo que se hace todo el tiempo es
+        // mirar el historial, no cambiarle el nombre.
+        onTap: () => mostrarFichaCliente(context, cliente),
         hijo: Row(
           children: [
             // `.cli-av { 46x46; 17px; weight 700 }`
@@ -204,7 +207,7 @@ class _FilaCliente extends ConsumerWidget {
                       ),
                       if (cliente.vip) ...[
                         const SizedBox(width: 7),
-                        const _TagVip(),
+                        const TagVip(),
                       ],
                     ],
                   ),
@@ -246,8 +249,8 @@ class _FilaCliente extends ConsumerWidget {
 }
 
 /// `.vip-tag` — nude-100 sobre borde nude-300, texto nude-500, 9px/700.
-class _TagVip extends StatelessWidget {
-  const _TagVip();
+class TagVip extends StatelessWidget {
+  const TagVip({super.key});
 
   @override
   Widget build(BuildContext context) => Container(

@@ -76,6 +76,18 @@ class BusinessRepository {
             ]))
           .watch();
 
+  /// Historial de una clienta, del turno más nuevo al más viejo.
+  Stream<List<Appointment>> verTurnosDeCliente(String clienteId) =>
+      (_db.select(_db.appointments)
+            ..where((a) => a.tenantId.equals(_tenantId))
+            ..where((a) => a.deletedAt.isNull())
+            ..where((a) => a.clientId.equals(clienteId))
+            ..orderBy([
+              (a) => OrderingTerm.desc(a.fecha),
+              (a) => OrderingTerm.desc(a.hora),
+            ]))
+          .watch();
+
   Stream<List<Transaction>> verMovimientosEntre(
     DateTime desde,
     DateTime hasta,

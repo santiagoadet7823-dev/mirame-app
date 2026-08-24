@@ -19,6 +19,7 @@ import '../../domain/rules/access.dart';
 import '../../domain/rules/formatting.dart';
 import '../auth/session_controller.dart';
 import '../dashboard/dashboard_view.dart';
+import 'calendario.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
 
@@ -35,6 +36,20 @@ final turnosDelDiaProvider =
   },
 );
 
+/// Turnos del mes visible, solo para marcar con un punto los días que tienen
+/// algo. Va aparte de los del día para que cambiar de día no vuelva a
+/// consultar el mes entero.
+final turnosDelMesVisibleProvider =
+    StreamProvider.autoDispose.family<List<db.Appointment>, String>(
+        (ref, claveMes) {
+  final repo = ref.watch(businessRepoProvider);
+  if (repo == null) return const Stream.empty();
+  final partes = claveMes.split('-');
+  final y = int.parse(partes[0]);
+  final m = int.parse(partes[1]);
+  return repo.verTurnosEntre(DateTime(y, m, 1), DateTime(y, m + 1, 0));
+});
+
 class AgendaView extends ConsumerStatefulWidget {
   const AgendaView({super.key});
 
@@ -44,13 +59,28 @@ class AgendaView extends ConsumerStatefulWidget {
 
 class _AgendaViewState extends ConsumerState<AgendaView> {
   DateTime _dia = DateTime.now();
+  late DateTime _mes = DateTime(_dia.year, _dia.month, 1);
+  String _filtro = 'all';
 
   @override
   Widget build(BuildContext context) {
     final clave = claveFecha(_dia);
+    final claveMes =
+        '${_mes.year}-${_mes.month.toString().padLeft(2, '0')}';
     final filas =
         ref.watch(turnosDelDiaProvider(clave)).value ?? const <db.Appointment>[];
-    final turnos = filas.map((f) => aAppointment(f)).toList();
+    final todos = filas.map((f) => aAppointment(f)).toList();
+    // El filtro se aplica a la lista, NO al calendario: los puntos del mes
+    // tienen que seguir mostrando que ahí hay algo aunque el filtro activo lo
+    // esconda de la lista.
+    final turnos = _filtro == 'all'
+        ? todos
+        : todos.where((t) => textoDesdeEstado(t.estado) == _filtro).toList();
+
+    final delMes =
+        ref.watch(turnosDelMesVisibleProvider(claveMes)).value ??
+            const <db.Appointment>[];
+    final diasConTurno = {for (final t in delMes) t.fecha};
     final clientes = ref.watch(clientesProvider).value ?? const <db.Client>[];
     final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirDatos));
 
@@ -69,17 +99,45 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
           : null,
       body: Column(
         children: [
-          _SelectorDia(
-            dia: _dia,
-            onCambiar: (d) => setState(() => _dia = d),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              children: [
+                CalendarioMes(
+                  mes: _mes,
+                  diaElegido: _dia,
+                  diasConTurno: diasConTurno,
+                  onElegirDia: (d) => setState(() {
+                    _dia = d;
+                    _mes = DateTime(d.year, d.month, 1);
+                  }),
+                  onCambiarMes: (delta) => setState(() {
+                    _mes = DateTime(_mes.year, _mes.month + delta, 1);
+                  }),
+                ),
+                FilaFiltros(
+                  opciones: const [
+                    ('all', 'Todos'),
+                    ('confirmed', 'Confirmados'),
+                    ('pending', 'Pendientes'),
+                    ('done', 'Completados'),
+                  ],
+                  activo: _filtro,
+                  onElegir: (f) => setState(() => _filtro = f),
+                ),
+                const SizedBox(height: 14),
+              ],
+            ),
           ),
           Expanded(
             child: turnos.isEmpty
-                ? const EstadoVacio(
+                ? EstadoVacio(
                     // Textos literales de `renderAgenda`.
                     emoji: '📅',
                     titulo: 'Sin turnos',
-                    detalle: 'No hay turnos para este día',
+                    detalle: _filtro == 'all'
+                        ? 'No hay turnos para este día'
+                        : 'Ningún turno en este estado',
                   )
                 : _Timeline(
                     turnos: turnos,
@@ -113,7 +171,7 @@ class _Timeline extends StatelessWidget {
     final horas = porHora.keys.toList()..sort();
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
       itemCount: horas.length,
       itemBuilder: (_, i) {
         final h = horas[i];
@@ -241,65 +299,6 @@ class _EventoTimeline extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SelectorDia extends StatelessWidget {
-  const _SelectorDia({required this.dia, required this.onCambiar});
-
-  final DateTime dia;
-  final ValueChanged<DateTime> onCambiar;
-
-  @override
-  Widget build(BuildContext context) {
-    final hoy = DateTime.now();
-    final esHoy = dia.year == hoy.year &&
-        dia.month == hoy.month &&
-        dia.day == hoy.day;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 2, 14, 6),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () =>
-                onCambiar(dia.subtract(const Duration(days: 1))),
-            icon: const Icon(Icons.chevron_left_rounded,
-                color: MColors.tSecondary),
-          ),
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () async {
-                final elegido = await showDatePicker(
-                  context: context,
-                  initialDate: dia,
-                  firstDate: DateTime(hoy.year - 2),
-                  lastDate: DateTime(hoy.year + 3),
-                );
-                if (elegido != null) onCambiar(elegido);
-              },
-              child: Column(
-                children: [
-                  Text(
-                    formatDateShort(dia),
-                    textAlign: TextAlign.center,
-                    style: sans(size: 15, weight: 600),
-                  ),
-                  if (!esHoy)
-                    Text('Tocá para elegir otro día', style: MText.pie),
-                ],
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: () => onCambiar(dia.add(const Duration(days: 1))),
-            icon: const Icon(Icons.chevron_right_rounded,
-                color: MColors.tSecondary),
-          ),
-        ],
       ),
     );
   }
