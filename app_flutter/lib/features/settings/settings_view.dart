@@ -8,6 +8,8 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/notificaciones/push.dart';
+import '../../core/notificaciones/servicio_avisos.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -87,10 +89,16 @@ class SettingsView extends ConsumerWidget {
             ),
           ),
         ),
+        const SizedBox(height: 12),
+
+        FadeSlideIn(
+          delay: const Duration(milliseconds: 110),
+          child: const _TarjetaAvisos(),
+        ),
         const SizedBox(height: 26),
 
         FadeSlideIn(
-          delay: const Duration(milliseconds: 120),
+          delay: const Duration(milliseconds: 140),
           child: Column(
             children: [
               const BotonBuscarActualizacion(),
@@ -172,4 +180,51 @@ class _Tarjeta extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// Estado de las notificaciones, con el botón para activarlas si se dijo que
+/// no la primera vez.
+class _TarjetaAvisos extends StatefulWidget {
+  const _TarjetaAvisos();
+
+  @override
+  State<_TarjetaAvisos> createState() => _TarjetaAvisosState();
+}
+
+class _TarjetaAvisosState extends State<_TarjetaAvisos> {
+  @override
+  Widget build(BuildContext context) {
+    final servicio = ServicioAvisos.instancia;
+
+    return _Tarjeta(
+      titulo: 'Avisos',
+      filas: [
+        (
+          'Notificaciones',
+          !servicio.disponible
+              ? 'No disponibles acá'
+              : servicio.permitido
+                  ? 'Activadas'
+                  : 'Desactivadas'
+        ),
+        // Se muestra aunque no esté configurado: es la primera pregunta al
+        // dar soporte cuando alguien dice "no me llega nada".
+        ('Push', Push.instancia.disponible ? 'Conectado' : 'No configurado'),
+      ],
+      accion: servicio.disponible && !servicio.permitido
+          ? TextButton.icon(
+              onPressed: () async {
+                await servicio.pedirPermiso();
+                if (mounted) setState(() {});
+              },
+              icon: const Icon(Icons.notifications_active_outlined,
+                  size: 16, color: MColors.brand),
+              label: Text(
+                'Activar avisos',
+                style: sans(size: 13, weight: 600, color: MColors.brand),
+              ),
+            )
+          : null,
+    );
+  }
 }

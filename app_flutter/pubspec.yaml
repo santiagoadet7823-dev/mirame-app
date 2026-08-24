@@ -34,6 +34,10 @@ dependencies:
   firebase_core: ^4.13.0
   firebase_messaging: ^16.5.0
   flutter_local_notifications: ^22.3.0
+  # Lo exige zonedSchedule. La zona se fija a America/Argentina/Salta en vez
+  # de leerla del sistema: el negocio esta ahi y el cierre de caja de las
+  # 21:00 no tiene que moverse si la duena viaja.
+  timezone: ^0.11.1
 
   # — Utilidades —
   dio: ^5.11.0                  # descarga del APK con progreso

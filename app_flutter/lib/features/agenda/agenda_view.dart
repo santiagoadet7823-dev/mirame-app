@@ -7,6 +7,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/notificaciones/pedir_permiso.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -382,6 +383,10 @@ class _FormTurnoState extends ConsumerState<_FormularioTurno> {
         notas: _notas.text.trim().isEmpty ? null : _notas.text.trim(),
       );
       nav.pop();
+      // Momento del pedido de permiso: acaba de agendar algo, así que el
+      // "te aviso el día anterior" tiene sentido. Pedirlo al arrancar la app
+      // se rechaza y después no hay segunda oportunidad.
+      if (mounted) await pedirPermisoDeAvisos(context);
     } catch (_) {
       if (mounted) {
         setState(() {

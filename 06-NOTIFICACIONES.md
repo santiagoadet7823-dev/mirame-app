@@ -87,7 +87,39 @@ Las notificaciones de este documento son para **quien trabaja en el salón**, no
 
 ---
 
-## 6. Verificación
+## 6. Estado de la implementación (2026-08-24)
+
+| Pieza | Dónde | Estado |
+|---|---|---|
+| Reglas de qué avisar | `lib/domain/rules/avisos.dart` | ✅ con 13 tests |
+| Motor local (canales, agenda, tap) | `lib/core/notificaciones/servicio_avisos.dart` | ✅ |
+| Reprogramación con los datos vivos | `lib/features/shell/programador_avisos.dart` | ✅ |
+| Pedido de permiso en contexto | `lib/core/notificaciones/pedir_permiso.dart` | ✅ tras guardar un turno |
+| Tabla `device_tokens` + RPCs | `sql/07_notificaciones.sql` | ✅ aplicada |
+| Cliente FCM | `lib/core/notificaciones/push.dart` | ✅ pero **inerte** sin `google-services.json` |
+| Edge Function `enviar-push` | `supabase/functions/enviar-push/index.ts` | ✅ escrita, **sin desplegar** |
+| Cron de vencimientos | — | ⬜ |
+
+### Lo que falta para que el push funcione de verdad
+
+Son tres pasos con credenciales, no código:
+
+1. Firebase Console → proyecto `mirame-lash-studio-41ba9` → agregar app Android
+   `com.mirame.app` → bajar `google-services.json` → `app_flutter/android/app/`
+   y como secret `GOOGLE_SERVICES_JSON` (base64) en GitHub.
+2. Generar la service account (Configuración → Cuentas de servicio → Generar clave) y
+   cargarla como secret `FIREBASE_SERVICE_ACCOUNT` en Supabase.
+3. `supabase functions deploy enviar-push`.
+
+Hasta entonces `Push.disponible` es `false`, Ajustes lo muestra como *"No configurado"* y
+**todo lo local sigue andando**: es la parte que la dueña usa todos los días.
+
+Los tres canales de Android (`Agenda`, `Caja`, `Stock`) se crean al iniciar, así que se pueden
+silenciar por separado desde los ajustes del sistema sin perder los otros.
+
+---
+
+## 7. Verificación
 
 - [ ] El recordatorio de retoque se dispara con la misma regla que el legacy (−3 a +7 días).
 - [ ] Rechazar el permiso de notificaciones no rompe nada.

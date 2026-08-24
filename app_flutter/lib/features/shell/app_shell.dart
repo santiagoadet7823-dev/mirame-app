@@ -28,6 +28,8 @@ import '../../core/theme/typography.dart';
 import '../../data/sync/sync_engine.dart';
 import '../auth/session_controller.dart';
 import 'notificaciones.dart';
+import 'programador_avisos.dart';
+import '../../core/notificaciones/servicio_avisos.dart';
 
 class ItemNav {
   const ItemNav(this.icono, this.etiqueta);
@@ -107,6 +109,37 @@ class NavegadorShell extends InheritedWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   int _indice = 0;
 
+  /// Secciones a las que puede llevar una notificación. El payload es texto y
+  /// no un índice: un número guardado por Android sobreviviría a un cambio de
+  /// orden del nav y abriría la vista equivocada.
+  static const _destinos = {
+    'inicio': Vistas.inicio,
+    'agenda': Vistas.agenda,
+    'clientas': Vistas.clientas,
+    'caja': Vistas.caja,
+    'stock': Vistas.stock,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    payloadTocadoNotifier.addListener(_abrirDesdeNotificacion);
+  }
+
+  @override
+  void dispose() {
+    payloadTocadoNotifier.removeListener(_abrirDesdeNotificacion);
+    super.dispose();
+  }
+
+  void _abrirDesdeNotificacion() {
+    final destino = _destinos[payloadTocadoNotifier.value];
+    if (destino == null || !mounted) return;
+    setState(() => _indice = destino);
+    // Se limpia para que no vuelva a saltar al siguiente rebuild.
+    payloadTocadoNotifier.value = null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final ancho = MediaQuery.sizeOf(context).width;
@@ -116,13 +149,15 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final cuerpo = NavegadorShell(
       irA: irA,
-      child: Column(
-        children: [
-          const _BarraSync(),
-          Expanded(
-            child: IndexedStack(index: _indice, children: widget.vistas),
-          ),
-        ],
+      child: ProgramadorAvisos(
+        child: Column(
+          children: [
+            const _BarraSync(),
+            Expanded(
+              child: IndexedStack(index: _indice, children: widget.vistas),
+            ),
+          ],
+        ),
       ),
     );
 

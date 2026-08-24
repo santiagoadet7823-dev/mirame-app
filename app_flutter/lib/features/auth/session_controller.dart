@@ -5,10 +5,13 @@
 /// adentro.
 library;
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthChangeEvent;
 
+import '../../core/notificaciones/push.dart';
 import '../../data/remote/supabase_client.dart';
 import '../../data/repositories/access_cache.dart';
 import '../../data/repositories/access_repository.dart';
@@ -158,6 +161,10 @@ class SessionController extends Notifier<SessionState> {
     await prefs.setString(_kTenantActivo, tenantId);
     await refrescar();
 
+    // El token de push se ata al salón activo: así el servidor puede avisarle
+    // a "todo el salón" sin resolver membresías en cada envío.
+    unawaited(Push.instancia.registrar(tenantId: tenantId));
+
     // Si entró a un salón ajeno, queda constancia. La función del servidor se
     // saltea sola cuando el actor sí es miembro.
     final d = state.decision;
@@ -197,6 +204,9 @@ class SessionController extends Notifier<SessionState> {
     await _cache.limpiar();
     await prefs.remove(_kTenantActivo);
     await prefs.remove(_kUltimaValidacion);
+    // ANTES del signOut: la RPC valida `auth.uid()`, y sin sesión no borraría
+    // nada y el teléfono seguiría recibiendo avisos de quien ya se fue.
+    await Push.instancia.olvidar();
     await signOut();
     state = const SessionState(decision: GoToLogin());
   }
