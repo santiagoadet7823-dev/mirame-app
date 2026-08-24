@@ -15,21 +15,20 @@ library;
 
 import 'package:firebase_core/firebase_core.dart';
 
-/// El único valor que falta. Lo genera la consola al registrar la app Android
-/// `com.mirame.app` dentro de `mirame-lash-studio-41ba9`, y tiene esta forma:
+/// La app Android `com.mirame.app` registrada en `mirame-lash-studio-41ba9`.
 ///
-/// ```
-/// 1:998613317742:android:xxxxxxxxxxxxxxxxxxxxxx
-/// ```
+/// Va hardcodeado y NO como secret de CI a propósito: este identificador viaja
+/// dentro de cada APK que se publica, así que "esconderlo" en un secret daría
+/// una sensación de seguridad falsa a cambio de una cosa más que mantener. Lo
+/// que sí es secreto —la service account que firma los envíos— vive solo en la
+/// Edge Function.
 ///
-/// Se pasa en el build:
-/// ```
-/// flutter build apk --dart-define=FIREBASE_ANDROID_APP_ID=1:998613317742:android:…
-/// ```
-///
-/// Mientras esté vacío el push queda apagado y la app funciona igual con las
-/// notificaciones locales, que son las que se usan todos los días.
-const _appIdAndroid = String.fromEnvironment('FIREBASE_ANDROID_APP_ID');
+/// El `--dart-define` sigue disponible para apuntar a otro proyecto (un build
+/// de prueba, un tenant propio) sin tocar el código.
+const _appIdAndroid = String.fromEnvironment(
+  'FIREBASE_ANDROID_APP_ID',
+  defaultValue: '1:998613317742:android:0d77c08dd9373a5f844e7f',
+);
 
 /// El de la web ya existe: es el que usa el `index.html` legacy.
 const _appIdWeb = '1:998613317742:web:bc5a3c9c87f74c8a844e7f';

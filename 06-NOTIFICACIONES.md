@@ -111,21 +111,22 @@ proyecto entre las dos flotas significa que un error de segmentación le manda a
 un aviso de retoque de pestañas. Son negocios distintos y quedan separados.
 
 **No hay `google-services.json`.** La config va por Dart en `firebase_options.dart`, así no hay
-archivo que commitear ni secret de CI que mantener. El único valor que se pasa aparte es el App ID
-de Android, por `--dart-define=FIREBASE_ANDROID_APP_ID`, que en el workflow sale del secret del
-mismo nombre.
+archivo que commitear ni secret de CI que mantener. El App ID de Android va hardcodeado ahí mismo y **no**
+como secret de CI: viaja dentro de cada APK publicado, así que esconderlo daría una sensación de
+seguridad falsa a cambio de una cosa más que mantener. El `--dart-define=FIREBASE_ANDROID_APP_ID`
+sigue existiendo para apuntar a otro proyecto sin tocar el código.
 
 ### Lo que falta para que el push funcione de verdad
 
 Tres pasos, y **solo el primero es imprescindible**:
 
-1. **Registrar la app Android** (30 segundos, es lo único que no se puede hacer desde acá).
-   Firebase Console → `mirame-lash-studio-41ba9` → ⚙️ → *Agregar app* → Android → package name
-   `com.mirame.app` → **Registrar**. No hace falta bajar el archivo ni poner el SHA-1: el SHA-1 es
-   para Google Sign-In nativo, y el login va por OAuth web de Supabase.
-   Copiar el **App ID** (`1:998613317742:android:…`) y cargarlo como secret
-   `FIREBASE_ANDROID_APP_ID` en GitHub.
-   → Con esto los teléfonos ya registran su token en `device_tokens`.
+1. ~~Registrar la app Android~~ ✅ **hecho el 24/08/2026.**
+   `com.mirame.app` → App ID `1:998613317742:android:0d77c08dd9373a5f844e7f`, ya en
+   `firebase_options.dart`. Desde la 1.5.0 los teléfonos registran su token en `device_tokens`.
+
+   Nota para cuando aparezca otra guía: la consola ofrece pasos de Gradle
+   (`com.google.gms.google-services`, el BoM, `firebase-analytics`). **No van.** Son del camino de
+   `google-services.json`, que acá no se usa, y romperían el build.
 2. Service account (⚙️ → Cuentas de servicio → Generar clave privada) como secret
    `FIREBASE_SERVICE_ACCOUNT` en Supabase. → Con esto se puede *enviar*.
 3. `supabase functions deploy enviar-push`.
