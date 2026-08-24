@@ -445,3 +445,58 @@ class FilaFiltros extends StatelessWidget {
         ),
       );
 }
+
+/// `.sec-label` — el encabezado de sección, en mayúsculas y tracking amplio.
+class EtiquetaSeccion extends StatelessWidget {
+  const EtiquetaSeccion(this.texto, {super.key});
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        // `margin: 20px 0 8px 2px`
+        padding: const EdgeInsets.fromLTRB(2, 20, 0, 8),
+        child: Text(
+          texto,
+          style: sans(size: 11, weight: 600, color: MColors.tMuted)
+              .copyWith(letterSpacing: 1.2),
+        ),
+      );
+}
+
+/// `.sec-row` — encabezado con una acción a la derecha ("Ver todo").
+class FilaSeccion extends StatelessWidget {
+  const FilaSeccion({
+    super.key,
+    required this.titulo,
+    required this.accion,
+    required this.onAccion,
+  });
+
+  final String titulo;
+  final String accion;
+  final VoidCallback onAccion;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(2, 20, 2, 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              titulo,
+              style: sans(size: 11, weight: 600, color: MColors.tMuted)
+                  .copyWith(letterSpacing: 1.2),
+            ),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onAccion,
+              child: Text(
+                accion,
+                style: sans(size: 13, weight: 500, color: MColors.brand),
+              ),
+            ),
+          ],
+        ),
+      );
+}

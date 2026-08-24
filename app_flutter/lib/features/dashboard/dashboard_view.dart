@@ -27,21 +27,26 @@ import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
-import '../../data/local/database.dart';
+import '../../data/local/database.dart' as db;
+import '../../data/local/mappers.dart';
 import '../../data/repositories/business_repository.dart';
 import '../../domain/rules/formatting.dart';
+import '../../domain/entities/entities.dart';
+import '../../domain/rules/reminders.dart';
+import '../../domain/rules/stock.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
+import '../stock/stock_view.dart';
 
 final turnosDeHoyProvider =
-    StreamProvider.autoDispose<List<Appointment>>((ref) {
+    StreamProvider.autoDispose<List<db.Appointment>>((ref) {
   final repo = ref.watch(businessRepoProvider);
   if (repo == null) return const Stream.empty();
   return repo.verTurnosDe(DateTime.now());
 });
 
 final movimientosDelMesProvider =
-    StreamProvider.autoDispose<List<Transaction>>((ref) {
+    StreamProvider.autoDispose<List<db.Transaction>>((ref) {
   final repo = ref.watch(businessRepoProvider);
   if (repo == null) return const Stream.empty();
   final hoy = DateTime.now();
@@ -53,7 +58,29 @@ final movimientosDelMesProvider =
   );
 });
 
-final clientesProvider = StreamProvider.autoDispose<List<Client>>((ref) {
+/// Turnos de los últimos 90 días y sus servicios: es lo que necesitan los
+/// recordatorios de retoque.
+final turnosRecientesProvider =
+    StreamProvider.autoDispose<List<db.Appointment>>((ref) {
+  final repo = ref.watch(businessRepoProvider);
+  if (repo == null) return const Stream.empty();
+  return repo.verTurnosRecientes();
+});
+
+final serviciosDeTurnosProvider =
+    StreamProvider.autoDispose<Map<String, List<String>>>((ref) {
+  final repo = ref.watch(businessRepoProvider);
+  if (repo == null) return const Stream.empty();
+  return repo.verServiciosDeTurnos();
+});
+
+final serviciosProvider = StreamProvider.autoDispose<List<db.Service>>((ref) {
+  final repo = ref.watch(businessRepoProvider);
+  if (repo == null) return const Stream.empty();
+  return repo.verServicios();
+});
+
+final clientesProvider = StreamProvider.autoDispose<List<db.Client>>((ref) {
   final repo = ref.watch(businessRepoProvider);
   if (repo == null) return const Stream.empty();
   return repo.verClientes();
@@ -61,7 +88,7 @@ final clientesProvider = StreamProvider.autoDispose<List<Client>>((ref) {
 
 /// Movimientos de la semana en curso, para el dato de la derecha del hero.
 final movimientosDeLaSemanaProvider =
-    StreamProvider.autoDispose<List<Transaction>>((ref) {
+    StreamProvider.autoDispose<List<db.Transaction>>((ref) {
   final repo = ref.watch(businessRepoProvider);
   if (repo == null) return const Stream.empty();
   final hoy = DateTime.now();
@@ -78,10 +105,33 @@ class DashboardView extends ConsumerWidget {
     final turnos = ref.watch(turnosDeHoyProvider).value ?? const [];
     final mes = ref.watch(movimientosDelMesProvider).value ?? const [];
     final semana = ref.watch(movimientosDeLaSemanaProvider).value ?? const [];
-    final clientes = ref.watch(clientesProvider).value ?? const [];
+    final clientes = ref.watch(clientesProvider).value ?? const <db.Client>[];
+    final stock = (ref.watch(stockProvider).value ?? const <db.StockItem>[])
+        .map(aStockItem)
+        .toList();
+    final alertas = stockAlerts(stock, limit: 3);
+
+    // Los recordatorios de retoque necesitan el historial y el catálogo:
+    // `pendingReminders` cruza el último turno hecho de cada clienta con los
+    // días de retoque de su servicio.
+    final serviciosPorTurno =
+        ref.watch(serviciosDeTurnosProvider).value ?? const <String, List<String>>{};
+    final recordatorios = pendingReminders(
+      clients: clientes.map(aClient),
+      // Los `serviceIds` viven en la tabla puente, así que hay que unirlos
+      // acá: sin ellos `pendingReminders` no encuentra los días de retoque y
+      // devuelve siempre vacío.
+      appointments: (ref.watch(turnosRecientesProvider).value ??
+              const <db.Appointment>[])
+          .map((f) => aAppointment(f,
+              serviceIds: serviciosPorTurno[f.id] ?? const [])),
+      services: (ref.watch(serviciosProvider).value ?? const <db.Service>[])
+          .map(aService),
+      hoy: DateTime.now(),
+    );
 
     // 'income' es el valor del enum `tx_tipo` de Postgres.
-    num ingresosDe(List<Transaction> txs) => txs
+    num ingresosDe(List<db.Transaction> txs) => txs
         .where((m) => m.tipo == 'income')
         .fold<num>(0, (a, m) => a + m.monto);
 
@@ -129,7 +179,11 @@ class DashboardView extends ConsumerWidget {
         // 3 · Turnos del día
         FadeSlideIn(
           delay: const Duration(milliseconds: 110),
-          child: const TituloSeccion('Hoy'),
+          child: FilaSeccion(
+            titulo: 'AGENDA DE HOY',
+            accion: 'Ver todo',
+            onAccion: () => NavegadorShell.ir(context, Vistas.agenda),
+          ),
         ),
         const SizedBox(height: 10),
         if (turnos.isEmpty)
@@ -147,6 +201,92 @@ class DashboardView extends ConsumerWidget {
               delay: Duration(milliseconds: 150 + (i < 8 ? i : 8) * 35),
               child: _FilaTurno(turno: turnos[i]),
             ),
+
+        // 4 · Acciones rápidas — `.qa-grid`
+        FadeSlideIn(
+          delay: const Duration(milliseconds: 190),
+          child: const EtiquetaSeccion('ACCIONES RÁPIDAS'),
+        ),
+        FadeSlideIn(
+          delay: const Duration(milliseconds: 220),
+          child: Row(
+            children: [
+              _AccionRapida(
+                emoji: '📅',
+                titulo: 'Nuevo Turno',
+                detalle: 'Agendar cita',
+                fondo: MColors.lav50,
+                borde: MColors.borderLav,
+                onTap: () => NavegadorShell.ir(context, Vistas.agenda),
+              ),
+              const SizedBox(width: 10),
+              _AccionRapida(
+                emoji: '🌸',
+                titulo: 'Nueva Clienta',
+                detalle: 'Registrar',
+                fondo: MColors.nude100,
+                borde: MColors.nude300,
+                onTap: () => NavegadorShell.ir(context, Vistas.clientas),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        FadeSlideIn(
+          delay: const Duration(milliseconds: 250),
+          child: Row(
+            children: [
+              _AccionRapida(
+                emoji: '💰',
+                titulo: 'Registrar Pago',
+                detalle: 'Caja',
+                fondo: MColors.successBg,
+                borde: MColors.successBorder,
+                onTap: () => NavegadorShell.ir(context, Vistas.caja),
+              ),
+              const SizedBox(width: 10),
+              _AccionRapida(
+                emoji: '📊',
+                titulo: 'Estadísticas',
+                detalle: 'Ver análisis',
+                fondo: MColors.skyBg,
+                borde: MColors.skyBorder,
+                onTap: () => NavegadorShell.ir(context, Vistas.stats),
+              ),
+            ],
+          ),
+        ),
+
+        // 5 · Alertas de stock
+        if (alertas.isNotEmpty) ...[
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 280),
+            child: FilaSeccion(
+              titulo: 'ALERTAS DE STOCK',
+              accion: 'Ver stock',
+              onAccion: () => NavegadorShell.ir(context, Vistas.stock),
+            ),
+          ),
+          for (final s in alertas.take(3))
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 300),
+              child: _FilaAlertaStock(item: s),
+            ),
+        ],
+
+        // 6 · Recordatorios de retoque — `#rem-wrap`, que en el original
+        // está oculto salvo que haya algo que recordar.
+        if (recordatorios.isNotEmpty) ...[
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 320),
+            child: const EtiquetaSeccion('RECORDATORIOS RETOQUE ✂️'),
+          ),
+          for (final r in recordatorios)
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 340),
+              child: _FilaRecordatorio(recordatorio: r),
+            ),
+        ],
       ],
     );
   }
@@ -290,7 +430,7 @@ class _KpiMini extends StatelessWidget {
 class _FilaTurno extends StatelessWidget {
   const _FilaTurno({required this.turno});
 
-  final Appointment turno;
+  final db.Appointment turno;
 
   @override
   Widget build(BuildContext context) => TarjetaMirame(
@@ -325,4 +465,185 @@ class _FilaTurno extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// `.qa-card` — ícono de 40 con su fondo de color, título y descripción.
+class _AccionRapida extends StatelessWidget {
+  const _AccionRapida({
+    required this.emoji,
+    required this.titulo,
+    required this.detalle,
+    required this.fondo,
+    required this.borde,
+    required this.onTap,
+  });
+
+  final String emoji;
+  final String titulo;
+  final String detalle;
+  final Color fondo;
+  final Color borde;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        child: TarjetaMirame(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          onTap: onTap,
+          hijo: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: fondo,
+                  border: Border.all(color: borde),
+                  borderRadius: BorderRadius.circular(MRadius.sm),
+                ),
+                child: Text(emoji, style: const TextStyle(fontSize: 19)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titulo,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: sans(size: 13, weight: 600),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      detalle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: sans(size: 11, color: MColors.tMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+class _FilaAlertaStock extends StatelessWidget {
+  const _FilaAlertaStock({required this.item});
+
+  final StockItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final agotado = stockStatus(item) == StockStatus.out;
+    return TarjetaMirame(
+      margenInferior: 7,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      hijo: Row(
+        children: [
+          Text(agotado ? '🔴' : '⚠️', style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              item.nombre,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: sans(size: 13, weight: 500),
+            ),
+          ),
+          Text(
+            '${item.cantidad} ${item.unidad}',
+            style: sans(
+              size: 12,
+              weight: 600,
+              color: agotado ? MColors.dangerText : MColors.warningText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// `.rem-tag` — la píldora ámbar del retoque; roja si ya se pasó.
+class _FilaRecordatorio extends StatelessWidget {
+  const _FilaRecordatorio({required this.recordatorio});
+
+  final Reminder recordatorio;
+
+  @override
+  Widget build(BuildContext context) {
+    // `Reminder` ya sabe si venció y cómo se escribe la etiqueta: no se
+    // reimplementa acá.
+    final vencido = recordatorio.vencido;
+    final etiqueta = recordatorio.etiqueta;
+
+    return TarjetaMirame(
+      margenInferior: 7,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      hijo: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: MGradient.avatar(avatarIndex(recordatorio.client.nombre)),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              initials(recordatorio.client.nombre),
+              style: sans(size: 13, weight: 600, color: MColors.tWhite),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  recordatorio.client.nombre,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: sans(size: 13, weight: 600),
+                ),
+                Text(
+                  recordatorio.service.nombre,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: sans(size: 11, color: MColors.tSecondary),
+                ),
+                const SizedBox(height: 5),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: vencido ? MColors.dangerBg : MColors.warningBg,
+                    border: Border.all(
+                      color: vencido
+                          ? MColors.dangerBorder
+                          : MColors.warningBorder,
+                    ),
+                    borderRadius: BorderRadius.circular(MRadius.full),
+                  ),
+                  child: Text(
+                    '✂️ Retoque: $etiqueta',
+                    style: sans(
+                      size: 10,
+                      weight: 600,
+                      color: vencido
+                          ? MColors.dangerText
+                          : MColors.warningText,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

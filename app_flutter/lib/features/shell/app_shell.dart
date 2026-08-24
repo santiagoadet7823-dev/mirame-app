@@ -35,15 +35,39 @@ class ItemNav {
   final String etiqueta;
 }
 
+/// **CINCO** ítems, como el `#nav` del original — ni uno más.
+///
+/// Estadísticas y Ajustes NO están acá a propósito: en el `index.html` se
+/// llega a Stats desde una acción rápida del Inicio y a Ajustes desde el
+/// engranaje del header. Siete ítems dejan cada uno en ~53 px y las etiquetas
+/// se aprietan; con cinco respiran.
 const itemsNav = <ItemNav>[
   ItemNav(Icons.home_outlined, 'Inicio'),
   ItemNav(Icons.calendar_today_outlined, 'Agenda'),
   ItemNav(Icons.people_outline, 'Clientas'),
   ItemNav(Icons.attach_money_rounded, 'Caja'),
   ItemNav(Icons.inventory_2_outlined, 'Stock'),
+];
+
+/// Índices de las vistas que no están en el nav. El orden tiene que coincidir
+/// con la lista que recibe `AppShell`.
+/// Lo que ve el sidebar de escritorio: las cinco del nav más las dos que en
+/// móvil viven en otro lado.
+const itemsSidebar = <ItemNav>[
+  ...itemsNav,
   ItemNav(Icons.bar_chart_rounded, 'Stats'),
   ItemNav(Icons.settings_outlined, 'Ajustes'),
 ];
+
+abstract final class Vistas {
+  static const inicio = 0;
+  static const agenda = 1;
+  static const clientas = 2;
+  static const caja = 3;
+  static const stock = 4;
+  static const stats = 5;
+  static const ajustes = 6;
+}
 
 /// `.view { padding: 16px 16px 96px }` — los 96 de abajo dejan pasar el FAB y
 /// la barra de navegación sin que tapen la última fila.
@@ -58,6 +82,28 @@ class AppShell extends ConsumerStatefulWidget {
   ConsumerState<AppShell> createState() => _AppShellState();
 }
 
+/// Permite que una vista mande a otra sección — lo usan las acciones rápidas
+/// del Inicio ("Ver todo", "Estadísticas").
+///
+/// Es un `InheritedWidget` y no un provider global: la sección activa es
+/// estado de ESTE shell, y con dos salones abiertos en escritorio un provider
+/// global los pondría de acuerdo cuando no deberían estarlo.
+class NavegadorShell extends InheritedWidget {
+  const NavegadorShell({
+    super.key,
+    required this.irA,
+    required super.child,
+  });
+
+  final void Function(int) irA;
+
+  static void ir(BuildContext context, int indice) =>
+      context.dependOnInheritedWidgetOfExactType<NavegadorShell>()?.irA(indice);
+
+  @override
+  bool updateShouldNotify(NavegadorShell viejo) => false;
+}
+
 class _AppShellState extends ConsumerState<AppShell> {
   int _indice = 0;
 
@@ -66,16 +112,18 @@ class _AppShellState extends ConsumerState<AppShell> {
     final ancho = MediaQuery.sizeOf(context).width;
     final conSidebar = ancho >= MBreak.desktop;
 
-    // El engranaje del header lleva a Ajustes, que es la última sección.
-    void irAAjustes() => setState(() => _indice = itemsNav.length - 1);
+    void irA(int i) => setState(() => _indice = i);
 
-    final cuerpo = Column(
-      children: [
-        const _BarraSync(),
-        Expanded(
-          child: IndexedStack(index: _indice, children: widget.vistas),
-        ),
-      ],
+    final cuerpo = NavegadorShell(
+      irA: irA,
+      child: Column(
+        children: [
+          const _BarraSync(),
+          Expanded(
+            child: IndexedStack(index: _indice, children: widget.vistas),
+          ),
+        ],
+      ),
     );
 
     if (conSidebar) {
@@ -92,8 +140,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                 child: Column(
                   children: [
                     _Header(
-                      titulo: itemsNav[_indice].etiqueta,
-                      onAjustes: irAAjustes,
+                      titulo: itemsSidebar[_indice].etiqueta,
+                      onAjustes: () => irA(Vistas.ajustes),
                     ),
                     Expanded(child: cuerpo),
                   ],
@@ -118,7 +166,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             ),
             child: Column(
               children: [
-                _Header(onAjustes: irAAjustes),
+                _Header(onAjustes: () => irA(Vistas.ajustes)),
                 Expanded(child: cuerpo),
               ],
             ),
@@ -530,7 +578,9 @@ class _Sidebar extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 22),
-            for (var i = 0; i < itemsNav.length; i++)
+            // En escritorio sí entran las siete: el sidebar tiene 248 px y
+            // esconder Stats detrás de una tarjeta ahí no tiene sentido.
+            for (var i = 0; i < itemsSidebar.length; i++)
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: PressableScale(
@@ -552,7 +602,7 @@ class _Sidebar extends StatelessWidget {
                           width: 34,
                           height: 34,
                           child: Icon(
-                            itemsNav[i].icono,
+                            itemsSidebar[i].icono,
                             size: 18,
                             color:
                                 i == indice ? MColors.brand : MColors.tMuted,
@@ -560,7 +610,7 @@ class _Sidebar extends StatelessWidget {
                         ),
                         const SizedBox(width: 13),
                         Text(
-                          itemsNav[i].etiqueta,
+                          itemsSidebar[i].etiqueta,
                           style: sans(
                             size: 14,
                             weight: i == indice ? 600 : 500,

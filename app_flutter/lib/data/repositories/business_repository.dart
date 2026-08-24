@@ -106,6 +106,30 @@ class BusinessRepository {
         ..orderBy([(s) => OrderingTerm.asc(s.nombre)]))
       .watch();
 
+  /// Turnos de los últimos 90 días: alcanza para los recordatorios de retoque
+  /// (que miran como mucho 30 días atrás) sin traer todo el historial.
+  Stream<List<Appointment>> verTurnosRecientes() {
+    final desde = DateTime.now().subtract(const Duration(days: 90));
+    return (_db.select(_db.appointments)
+          ..where((a) => a.tenantId.equals(_tenantId))
+          ..where((a) => a.deletedAt.isNull())
+          ..where((a) => a.fecha.isBiggerOrEqualValue(claveFecha(desde))))
+        .watch();
+  }
+
+  /// `appointment_id` → los `service_id` de ese turno.
+  ///
+  /// Va aparte y no dentro del turno porque vive en la tabla puente. Sin esto
+  /// los recordatorios de retoque no tienen con qué calcular.
+  Stream<Map<String, List<String>>> verServiciosDeTurnos() =>
+      _db.select(_db.appointmentServices).watch().map((filas) {
+        final m = <String, List<String>>{};
+        for (final f in filas) {
+          (m[f.appointmentId] ??= []).add(f.serviceId);
+        }
+        return m;
+      });
+
   Stream<List<Service>> verServicios() => (_db.select(_db.services)
         ..where((s) => s.tenantId.equals(_tenantId))
         ..where((s) => s.deletedAt.isNull())
