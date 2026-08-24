@@ -19,6 +19,8 @@ import '../../shared/widgets/version_label.dart';
 import '../auth/session_controller.dart';
 import '../shell/app_shell.dart';
 import '../update/update_sheet.dart';
+import 'backup_view.dart';
+import 'catalogo.dart';
 
 class SettingsView extends ConsumerWidget {
   const SettingsView({super.key});
@@ -91,8 +93,44 @@ class SettingsView extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
 
+        // Catálogo: es lo que se toca al abrir el salón y después casi nunca,
+        // así que va como dos accesos y no como dos listas desplegadas.
         FadeSlideIn(
-          delay: const Duration(milliseconds: 110),
+          delay: const Duration(milliseconds: 100),
+          child: Builder(
+            builder: (ctx) => Row(
+              children: [
+                Expanded(
+                  child: _Acceso(
+                    emoji: '💅',
+                    titulo: 'Servicios',
+                    onTap: () => mostrarServicios(ctx),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _Acceso(
+                    emoji: '👩',
+                    titulo: 'Profesionales',
+                    onTap: () => mostrarProfesionales(ctx),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _Acceso(
+                    emoji: '💾',
+                    titulo: 'Backup',
+                    onTap: () => exportarBackup(ctx, ref),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        FadeSlideIn(
+          delay: const Duration(milliseconds: 130),
           child: const _TarjetaAvisos(),
         ),
         const SizedBox(height: 26),
@@ -227,4 +265,39 @@ class _TarjetaAvisosState extends State<_TarjetaAvisos> {
           : null,
     );
   }
+}
+
+/// Tarjeta cuadrada de acceso, con el mismo aire que las de export de Stats.
+class _Acceso extends StatelessWidget {
+  const _Acceso({
+    required this.emoji,
+    required this.titulo,
+    required this.onTap,
+  });
+
+  final String emoji;
+  final String titulo;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: MColors.surface,
+            borderRadius: BorderRadius.circular(MRadius.md),
+            border: Border.all(color: MColors.border),
+            boxShadow: MShadow.xs,
+          ),
+          child: Column(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 24)),
+              const SizedBox(height: 6),
+              Text(titulo, style: sans(size: 12, weight: 500)),
+            ],
+          ),
+        ),
+      );
 }

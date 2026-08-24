@@ -401,6 +401,133 @@ class BusinessRepository {
     });
   }
 
+  /// Alta y edición de un servicio del catálogo.
+  ///
+  /// `retoqueDias` es el campo que alimenta los recordatorios: si queda en
+  /// null, ese servicio simplemente no genera aviso de retoque.
+  Future<String> guardarServicio({
+    String? id,
+    required String nombre,
+    num precio = 0,
+    int duracionMin = 60,
+    int? retoqueDias,
+    int? mantenimientoDias,
+    String? notas,
+  }) async {
+    final filaId = id ?? nuevoId();
+    final ahora = DateTime.now();
+    await _db.transaction(() async {
+      await _db.into(_db.services).insertOnConflictUpdate(
+            ServicesCompanion.insert(
+              id: filaId,
+              tenantId: _tenantId,
+              nombre: nombre,
+              precio: Value(precio.toDouble()),
+              duracionMin: Value(duracionMin),
+              retoqueDias: Value(retoqueDias),
+              mantenimientoDias: Value(mantenimientoDias),
+              notas: Value(notas),
+              updatedAt: Value(ahora),
+            ),
+          );
+      await _sync.encolar(
+        tenantId: _tenantId,
+        tabla: 'services',
+        filaId: filaId,
+        operacion: 'upsert',
+        payload: {
+          'id': filaId,
+          'tenant_id': _tenantId,
+          'nombre': nombre,
+          'precio': precio,
+          'duracion_min': duracionMin,
+          'retoque_dias': retoqueDias,
+          'mantenimiento_dias': mantenimientoDias,
+          'notas': notas,
+          'updated_at': ahora.toUtc().toIso8601String(),
+        },
+      );
+    });
+    return filaId;
+  }
+
+  Future<String> guardarProfesional({
+    String? id,
+    required String nombre,
+    String? telefono,
+  }) async {
+    final filaId = id ?? nuevoId();
+    final ahora = DateTime.now();
+    await _db.transaction(() async {
+      await _db.into(_db.professionals).insertOnConflictUpdate(
+            ProfessionalsCompanion.insert(
+              id: filaId,
+              tenantId: _tenantId,
+              nombre: nombre,
+              telefono: Value(telefono),
+              updatedAt: Value(ahora),
+            ),
+          );
+      await _sync.encolar(
+        tenantId: _tenantId,
+        tabla: 'professionals',
+        filaId: filaId,
+        operacion: 'upsert',
+        payload: {
+          'id': filaId,
+          'tenant_id': _tenantId,
+          'nombre': nombre,
+          'telefono': telefono,
+          'updated_at': ahora.toUtc().toIso8601String(),
+        },
+      );
+    });
+    return filaId;
+  }
+
+  /// Lee TODO de una vez, para el backup.
+  ///
+  /// Es una lectura puntual y no un stream: el backup es una foto, y un stream
+  /// abierto sobre las seis tablas mientras se arma el JSON solo agregaría
+  /// reconstrucciones a mitad de camino.
+  ///
+  /// Los servicios de cada turno NO vienen acá: viven en la tabla puente y se
+  /// piden aparte con `verServiciosDeTurnos()`. Quien arme el backup tiene que
+  /// unirlos, o restauraría turnos sin servicio y se perderían los
+  /// recordatorios de retoque.
+  Future<({
+    List<Appointment> turnos,
+    List<Client> clientas,
+    List<Transaction> movimientos,
+    List<StockItem> stock,
+    List<Professional> profesionales,
+    List<Service> servicios,
+  })> leerTodoParaBackup() async {
+    Future<List<T>> vivos<T extends DataClass>(
+      TableInfo<Table, T> tabla,
+      GeneratedColumn<String> tenant,
+      GeneratedColumn<DateTime> borrado,
+    ) =>
+        (_db.select(tabla)
+              ..where((_) => tenant.equals(_tenantId) & borrado.isNull()))
+            .get();
+
+    return (
+      turnos: await vivos(_db.appointments, _db.appointments.tenantId,
+          _db.appointments.deletedAt),
+      clientas: await vivos(
+          _db.clients, _db.clients.tenantId, _db.clients.deletedAt),
+      movimientos: await vivos(_db.transactions, _db.transactions.tenantId,
+          _db.transactions.deletedAt),
+      stock: await vivos(
+          _db.stockItems, _db.stockItems.tenantId, _db.stockItems.deletedAt),
+      profesionales: await vivos(_db.professionals,
+          _db.professionals.tenantId, _db.professionals.deletedAt),
+      servicios: await vivos(
+          _db.services, _db.services.tenantId, _db.services.deletedAt),
+    );
+  }
+
   /// Borrado lógico. Ver `deletedAt` en `database.dart`.
   Future<void> borrar(String tabla, String filaId) async {
     final ahora = DateTime.now();
