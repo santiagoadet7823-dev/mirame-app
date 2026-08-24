@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- El token `bg` del design system. El fondo del adaptive icon es plano
+         a proposito: el emblema es linea fina y sobre un degrade se ensucia.
+         (Ojo: en un comentario XML no se puede escribir dos guiones seguidos.) -->
+    <color name="ic_launcher_background">#faf8f5</color>
+</resources>

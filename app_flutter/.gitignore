@@ -1,0 +1,14 @@
+# Config con valores reales — NUNCA al repo
+env.json
+.env
+.env.*
+android/key.properties
+android/app/*.keystore
+android/app/google-services.json
+
+# Flutter
+.dart_tool/
+build/
+.flutter-plugins*
+*.iml
+.packages

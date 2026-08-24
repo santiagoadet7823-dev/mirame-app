@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Donde el updater deja el APK descargado. getExternalFilesDir es
+         privado de la app y no necesita permisos de almacenamiento. -->
+    <external-files-path name="updates" path="updates/"/>
+</paths>

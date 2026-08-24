@@ -1,0 +1,22 @@
+gradle-wrapper.jar
+/.gradle
+/captures/
+/gradlew
+/gradlew.bat
+/local.properties
+GeneratedPluginRegistrant.java
+.cxx/
+
+# Remember to never publicly share your keystore.
+# See https://flutter.dev/to/reference-keystore
+key.properties
+**/*.keystore
+**/*.jks
+
+# Firma del APK — NUNCA se commitea.
+# Si se pierde el keystore, ningun APK futuro se instala como actualizacion
+# sobre los ya instalados: la unica salida es que cada usuario desinstale,
+# perdiendo sus datos locales.
+key.properties
+*.keystore
+*.jks

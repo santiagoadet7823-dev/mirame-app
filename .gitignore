@@ -1,0 +1,60 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Este .gitignore se copia a la raíz del repo `mirame-app` al crearlo (Fase 0).
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── Bitácora de planificación: LOCAL, nunca al repo ────────────────────────
+# Cada planificación del proyecto vive acá como archivo separado, para poder
+# leerla en modificaciones futuras. El índice sí se versiona, en HANDOFF.md.
+planes/
+
+# ── Firma del APK — punto único de falla, jamás en el repo ─────────────────
+*.keystore
+*.jks
+key.properties
+keystore.properties
+android/key.properties
+app_flutter/android/key.properties
+
+# ── Configuración con valores reales ───────────────────────────────────────
+env.json
+.env
+.env.*
+!.env.example
+google-services.json
+app_flutter/android/app/google-services.json
+service-account*.json
+
+# ── Flutter / Dart ─────────────────────────────────────────────────────────
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+.flutter-plugins
+.flutter-plugins-dependencies
+**/generated_plugin_registrant.dart
+
+# ── Android ────────────────────────────────────────────────────────────────
+**/android/.gradle/
+**/android/captures/
+**/android/local.properties
+# gradle-wrapper.jar SI se versiona: sin el, `gradlew` no arranca y el build
+# de CI falla en el primer paso. Es la excepcion a "no commitear binarios".
+*.apk
+*.aab
+
+# ── IDE ────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+!.vscode/launch.json
+*.swp
+
+# ── SO ─────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Temporales ─────────────────────────────────────────────────────────────
+*.log
+*.bak
