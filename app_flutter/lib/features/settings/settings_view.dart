@@ -80,15 +80,32 @@ class SettingsView extends ConsumerWidget {
                     : _hora(sync.ultimoOk!),
               ),
             ],
-            accion: TextButton.icon(
-              onPressed: () =>
-                  ref.read(syncProvider.notifier).sincronizar(),
-              icon: const Icon(Icons.sync_rounded,
-                  size: 16, color: MColors.brand),
-              label: Text(
-                'Sincronizar ahora',
-                style: sans(size: 13, weight: 600, color: MColors.brand),
-              ),
+            accion: Row(
+              children: [
+                TextButton.icon(
+                  onPressed: () =>
+                      ref.read(syncProvider.notifier).sincronizar(),
+                  icon: const Icon(Icons.sync_rounded,
+                      size: 16, color: MColors.brand),
+                  label: Text(
+                    'Sincronizar',
+                    style: sans(size: 13, weight: 600, color: MColors.brand),
+                  ),
+                ),
+                // Un sync normal solo pide lo NUEVO. Si un dispositivo quedó
+                // con datos a medias, hay que pedir todo otra vez, y sin esto
+                // la única salida era desinstalar.
+                TextButton.icon(
+                  onPressed: () =>
+                      ref.read(syncProvider.notifier).resincronizarTodo(),
+                  icon: const Icon(Icons.cloud_download_outlined,
+                      size: 16, color: MColors.tMuted),
+                  label: Text(
+                    'Bajar todo',
+                    style: sans(size: 13, weight: 600, color: MColors.tMuted),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

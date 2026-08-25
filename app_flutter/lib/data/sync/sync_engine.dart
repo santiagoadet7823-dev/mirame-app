@@ -206,6 +206,16 @@ class SyncEngine {
     }
   }
 
+  /// Olvida hasta dónde bajó cada tabla, para que el próximo pull traiga
+  /// TODO de nuevo.
+  ///
+  /// Es la herramienta de rescate: si por lo que sea un dispositivo quedó con
+  /// datos incompletos, esto los vuelve a pedir enteros. No borra nada local
+  /// —el pull hace upsert por id— así que es seguro correrlo siempre.
+  Future<void> olvidarCursores(String tenantId) => (_db.delete(_db.syncState)
+        ..where((s) => s.tenantId.equals(tenantId)))
+      .go();
+
   /// Baja lo que cambió desde el último cursor de cada tabla.
   Future<int> traer(String tenantId) async {
     var total = 0;
@@ -282,11 +292,27 @@ class SyncEngine {
     if (filas.isEmpty) return 0;
 
     DateTime? maximo;
+    var fallaron = 0;
     for (final f in filas) {
       final fila = f as Map<String, dynamic>;
-      await _aplicar(tabla, fila);
+      // Una fila que no se puede escribir NO puede costar las que vienen
+      // detrás. Sin esto, un solo registro raro a mitad de la lista deja el
+      // resto del mes afuera y parece que los datos se perdieron.
+      try {
+        await _aplicar(tabla, fila);
+      } catch (e) {
+        fallaron++;
+        debugPrint('sync: no se pudo aplicar ${fila['id']} de $tabla ($e)');
+        // El cursor NO avanza más allá de una fila que falló, así que el
+        // próximo pull la vuelve a intentar en vez de saltearla para siempre.
+        continue;
+      }
       final u = DateTime.tryParse('${fila['updated_at']}');
       if (u != null && (maximo == null || u.isAfter(maximo))) maximo = u;
+    }
+    if (fallaron > 0) {
+      debugPrint('sync: $fallaron de ${filas.length} filas de $tabla quedaron '
+          'sin aplicar');
     }
 
     await _db.into(_db.syncState).insertOnConflictUpdate(
@@ -401,6 +427,15 @@ class SyncController extends Notifier<SyncStatus> {
     _periodico = null;
     _tenant = null;
     state = const SyncStatus();
+  }
+
+  /// Vuelve a bajar todo desde cero. Para cuando un dispositivo quedó con
+  /// datos a medias y no alcanza con un sync normal, que solo pide lo nuevo.
+  Future<void> resincronizarTodo() async {
+    final tenant = _tenant;
+    if (tenant == null) return;
+    await ref.read(syncEngineProvider).olvidarCursores(tenant);
+    await sincronizar();
   }
 
   Future<void> sincronizar() async {
