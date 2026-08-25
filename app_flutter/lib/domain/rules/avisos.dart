@@ -128,7 +128,6 @@ List<AvisoProgramado> avisosDelDia({
   final nombres = {for (final c in clients) c.id: c.nombre};
 
   if (deHoy.isNotEmpty) {
-    final primero = deHoy.first.hora?.toString();
     agregar(AvisoProgramado(
       id: idEstable('hoy-${claveFecha(hoy)}'),
       titulo: deHoy.length == 1
