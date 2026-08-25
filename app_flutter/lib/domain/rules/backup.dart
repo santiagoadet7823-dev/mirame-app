@@ -181,12 +181,16 @@ Appointment _leerTurno(Map<String, Object?> f) => Appointment(
       id: _id(f['id']),
       clientId: _txt(f['clientId']),
       professionalId: _txt(f['proId']),
-      // En el legacy esto era una lista de NOMBRES de servicio. Se conserva tal
-      // cual: quien restaura decide cómo resolverlos, acá no se inventa nada.
-      serviceIds: [
-        for (final s in (f['services'] as List? ?? const []))
-          if (_txt(s) case final v?) v,
-      ],
+      // Tres formatos conviven en un mismo archivo, porque la app vieja fue
+      // cambiando y nunca migró lo anterior:
+      //   · `services: [ids]`      — la app nueva
+      //   · `services: [nombres]`  — el legacy tardío
+      //   · `service: 'nombre'`    — el legacy temprano, UN solo servicio
+      //
+      // Ignorar el tercero es lo que hizo que una restauración le borrara los
+      // servicios a 16 turnos de la dueña: se leían como "sin servicios" y al
+      // guardar se reemplazaba la lista por una vacía.
+      serviceIds: _serviciosDe(f),
       fecha: _fecha(f['date']) ?? DateTime.now(),
       hora: TimeOfDayValue.parse(_txt(f['time'])),
       precio: _num(f['price']) ?? 0,
@@ -245,6 +249,18 @@ Service _leerServicio(Map<String, Object?> f) => Service(
       mantenimientoDias: _num(f['maintenance'])?.round(),
       notas: _txt(f['notes']),
     );
+
+/// Los servicios de un turno, mirando los dos campos posibles.
+List<String> _serviciosDe(Map<String, Object?> f) {
+  final lista = [
+    for (final s in (f['services'] as List? ?? const []))
+      if (_txt(s) case final v?) v,
+  ];
+  if (lista.isNotEmpty) return lista;
+  // Campo viejo, un solo servicio por turno.
+  final uno = _txt(f['service']);
+  return uno == null ? const [] : [uno];
+}
 
 TurnoEstado _estado(String? crudo) => switch (crudo) {
       'pending' => TurnoEstado.pending,

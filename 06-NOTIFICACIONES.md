@@ -111,10 +111,18 @@ proyecto entre las dos flotas significa que un error de segmentación le manda a
 un aviso de retoque de pestañas. Son negocios distintos y quedan separados.
 
 **No hay `google-services.json`.** La config va por Dart en `firebase_options.dart`, así no hay
-archivo que commitear ni secret de CI que mantener. El App ID de Android va hardcodeado ahí mismo y **no**
-como secret de CI: viaja dentro de cada APK publicado, así que esconderlo daría una sensación de
-seguridad falsa a cambio de una cosa más que mantener. El `--dart-define=FIREBASE_ANDROID_APP_ID`
-sigue existiendo para apuntar a otro proyecto sin tocar el código.
+archivo que commitear ni secret de CI que mantener. El App ID de Android va hardcodeado ahí mismo; la **API key
+va por `--dart-define=FIREBASE_API_KEY`**, desde el secret del mismo nombre en GitHub.
+
+Esa asimetría es por pedido del dueño, después de que el escáner de secretos de GitHub marcara la
+key. Vale dejar claro para quien lea esto más adelante: **una API key de Firebase no es una
+credencial**. Identifica al proyecto, viaja dentro de cada APK y de cada página de la PWA, y ya
+estaba pública en el `index.html` legacy. Sacarla del repo calla la alerta; **lo que de verdad
+protege es restringirla** en Google Cloud → Credenciales → restricción por app Android
+(`com.mirame.app` + SHA-1) y por API. Eso sigue pendiente.
+
+Y queda en el historial de git: purgarlo exigiría reescribir la historia, que para un
+identificador público no vale la pena. La alerta se cierra a mano.
 
 ### Lo que falta para que el push funcione de verdad
 

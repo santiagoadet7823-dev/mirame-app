@@ -98,6 +98,51 @@ void main() {
     expect(b.clientas.map((c) => c.nombre).toList(), ['Ana', 'Bea']);
   });
 
+  group('los tres formatos de servicios de un turno', () {
+    // El backup real de la dueña traía los tres MEZCLADOS, y leer solo el
+    // primero hizo que una restauración le borrara los servicios a 16 turnos.
+    test('lista de servicios — la app nueva', () {
+      final b = leerBackup({
+        'a': [
+          {'id': 1, 'date': '2026-08-24', 'services': ['s1', 's2']}
+        ]
+      });
+      expect(b.turnos.single.serviceIds, ['s1', 's2']);
+    });
+
+    test('campo `service` singular — el legacy temprano', () {
+      final b = leerBackup({
+        'a': [
+          {'id': 1, 'date': '2026-08-24', 'service': 'Perfilado de cejas'}
+        ]
+      });
+      expect(b.turnos.single.serviceIds, ['Perfilado de cejas']);
+    });
+
+    test('con los dos, gana la lista', () {
+      final b = leerBackup({
+        'a': [
+          {
+            'id': 1,
+            'date': '2026-08-24',
+            'services': ['Lifting', 'Cejas'],
+            'service': 'Lifting',
+          }
+        ]
+      });
+      expect(b.turnos.single.serviceIds, ['Lifting', 'Cejas']);
+    });
+
+    test('sin ninguno de los dos queda vacío', () {
+      final b = leerBackup({
+        'a': [
+          {'id': 1, 'date': '2026-08-24'}
+        ]
+      });
+      expect(b.turnos.single.serviceIds, isEmpty);
+    });
+  });
+
   test('lo exportado se vuelve a leer igual', () {
     final original = armarBackup(
       version: '1.5.0',

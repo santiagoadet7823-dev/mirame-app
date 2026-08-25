@@ -257,7 +257,14 @@ class BusinessRepository {
     double precio = 0,
     String estado = 'confirmed',
     String? notas,
-    List<String> serviceIds = const [],
+    /// `null` significa **no tocar** los servicios del turno; una lista los
+    /// reemplaza por completo, incluso si viene vacía.
+    ///
+    /// La distinción no es un detalle: al restaurar un backup viejo que no
+    /// trae servicios, tratar "vacío" como "borrá todos" destruyó datos que
+    /// estaban bien. El formulario siempre manda una lista; quien no sabe,
+    /// manda `null`.
+    List<String>? serviceIds,
   }) async {
     final filaId = id ?? nuevoId();
     final ahora = DateTime.now();
@@ -302,6 +309,8 @@ class BusinessRepository {
       //
       // Sin esto, un turno creado en la app queda sin servicios y la clienta
       // nunca aparece en los recordatorios de retoque.
+      if (serviceIds == null) return;
+
       await (_db.delete(_db.appointmentServices)
             ..where((f) => f.appointmentId.equals(filaId)))
           .go();

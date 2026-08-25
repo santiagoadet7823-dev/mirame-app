@@ -231,4 +231,14 @@ class MirameDb extends _$MirameDb {
       );
 }
 
-QueryExecutor _abrir() => driftDatabase(name: 'mirame');
+QueryExecutor _abrir() => driftDatabase(
+      name: 'mirame',
+      // Obligatorio en web: sin esto la PWA no arranca y muestra
+      // "When compiling to the web, the `web` parameter needs to be set".
+      // Los dos archivos van en `web/` y salen del paquete drift, para que
+      // siempre correspondan a la version que compila la app.
+      web: DriftWebOptions(
+        sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+        driftWorker: Uri.parse('drift_worker.js'),
+      ),
+    );

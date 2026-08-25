@@ -52,23 +52,39 @@ Future<void> restaurarBackup(BuildContext context, WidgetRef ref) async {
   );
   if (seguir != true) return;
 
-  try {
-    final cuantos = await _restaurar(repo, leido);
-    messenger?.showSnackBar(
-      SnackBar(content: Text('✅ Se restauraron $cuantos registros')),
-    );
-  } catch (e) {
-    debugPrint('backup: falló la restauración ($e)');
-    messenger?.showSnackBar(
-      const SnackBar(content: Text('No se pudo restaurar el backup')),
-    );
-  }
+  final r = await _restaurar(repo, leido);
+  messenger?.showSnackBar(SnackBar(
+    content: Text(r.fallaron == 0
+        ? '✅ Se restauraron ${r.ok} registros'
+        : '✅ ${r.ok} restaurados · ${r.fallaron} no se pudieron'),
+    duration: const Duration(seconds: 5),
+  ));
 }
 
 /// Escribe todo, en el orden en que las cosas se referencian: primero el
 /// catálogo, después las clientas, y al final lo que apunta a ellas.
-Future<int> _restaurar(BusinessRepository repo, BackupLeido b) async {
+///
+/// **Una fila que falla no cancela el resto.** La primera versión abortaba al
+/// primer error y dejaba la restauración por la mitad, en silencio: entraban
+/// clientas y servicios, y los turnos y la caja no. La usuaria veía "no se
+/// pudo restaurar" sin saber que igual se habían escrito cosas.
+Future<({int ok, int fallaron})> _restaurar(
+    BusinessRepository repo, BackupLeido b) async {
   var n = 0;
+  var malas = 0;
+
+  /// Corre una escritura y sigue de largo si revienta.
+  Future<void> intentar(String que, Future<void> Function() f) async {
+    try {
+      await f();
+      n++;
+    } catch (e) {
+      malas++;
+      // Con el detalle: es lo único que permite entender después por qué una
+      // fila concreta no entró.
+      debugPrint('backup: no entró $que ($e)');
+    }
+  }
 
   // Los ids viejos son enteros de IndexedDB. Se mapea legacy → uuid una sola
   // vez y se reusa, para que `clientId` de un turno siga apuntando a la misma
@@ -78,50 +94,46 @@ Future<int> _restaurar(BusinessRepository repo, BackupLeido b) async {
       ids.putIfAbsent(legacy, () => idDesdeLegacy(repo.tenantId, legacy));
 
   for (final s in b.servicios) {
-    await repo.guardarServicio(
-      id: uuid('sv:${s.id}'),
-      nombre: s.nombre,
-      precio: s.precio,
-      duracionMin: s.duracionMin,
-      retoqueDias: s.retoqueDias,
-      mantenimientoDias: s.mantenimientoDias,
-      notas: s.notas,
-    );
-    n++;
+    await intentar('el servicio ${s.nombre}', () => repo.guardarServicio(
+          id: uuid('sv:${s.id}'),
+          nombre: s.nombre,
+          precio: s.precio,
+          duracionMin: s.duracionMin,
+          retoqueDias: s.retoqueDias,
+          mantenimientoDias: s.mantenimientoDias,
+          notas: s.notas,
+        ));
   }
 
   for (final p in b.profesionales) {
-    await repo.guardarProfesional(
-      id: uuid('p:${p.id}'),
-      nombre: p.nombre,
-      telefono: p.telefono,
-    );
-    n++;
+    await intentar('la profesional ${p.nombre}', () => repo.guardarProfesional(
+          id: uuid('p:${p.id}'),
+          nombre: p.nombre,
+          telefono: p.telefono,
+        ));
   }
 
   for (final c in b.clientas) {
-    await repo.guardarCliente(
-      id: uuid('c:${c.id}'),
-      nombre: c.nombre,
-      telefono: c.telefono,
-      email: c.email,
-      cumple: c.cumple,
-      vip: c.vip,
-      notas: c.notas,
-    );
-    n++;
+    await intentar('la clienta ${c.nombre}', () => repo.guardarCliente(
+          id: uuid('c:${c.id}'),
+          nombre: c.nombre,
+          telefono: c.telefono,
+          email: c.email,
+          cumple: c.cumple,
+          vip: c.vip,
+          notas: c.notas,
+        ));
   }
 
   for (final s in b.stock) {
-    await repo.guardarStock(
-      id: uuid('s:${s.id}'),
-      nombre: s.nombre,
-      cantidad: s.cantidad,
-      minimo: s.minimo,
-      categoria: s.categoria,
-      unidad: s.unidad,
-    );
-    n++;
+    await intentar('el producto ${s.nombre}', () => repo.guardarStock(
+          id: uuid('s:${s.id}'),
+          nombre: s.nombre,
+          cantidad: s.cantidad,
+          minimo: s.minimo,
+          categoria: s.categoria,
+          unidad: s.unidad,
+        ));
   }
 
   // Los servicios de un turno: en la app nueva vienen por id; en los archivos
@@ -133,27 +145,34 @@ Future<int> _restaurar(BusinessRepository repo, BackupLeido b) async {
   final porIdLegacy = {for (final s in b.servicios) s.id: uuid('sv:${s.id}')};
 
   for (final t in b.turnos) {
-    await repo.guardarTurno(
+    await intentar('el turno del ${t.fecha.day}/${t.fecha.month}',
+        () => repo.guardarTurno(
       id: uuid('a:${t.id}'),
       clientId: t.clientId == null ? null : uuid('c:${t.clientId}'),
       professionalId:
           t.professionalId == null ? null : uuid('p:${t.professionalId}'),
-      serviceIds: [
-        for (final ref in t.serviceIds)
-          if (porIdLegacy[ref] ?? porNombre[ref.toLowerCase()] case final id?)
-            id,
-      ],
+      // `null` = el archivo no dice nada de servicios para este turno, así
+      // que se dejan como están. Mandar una lista vacía los BORRARÍA, y eso
+      // es exactamente lo que arruinó la primera restauración.
+      serviceIds: t.serviceIds.isEmpty
+          ? null
+          : [
+              for (final ref in t.serviceIds)
+                if (porIdLegacy[ref] ??
+                    porNombre[ref.toLowerCase()] case final id?)
+                  id,
+            ],
       fecha: t.fecha,
       hora: t.hora?.toString() ?? '00:00',
       precio: t.precio.toDouble(),
       estado: t.estado.name,
       notas: t.notas,
-    );
-    n++;
+    ));
   }
 
   for (final m in b.movimientos) {
-    await repo.guardarMovimiento(
+    await intentar('el movimiento del ${m.fecha.day}/${m.fecha.month}',
+        () => repo.guardarMovimiento(
       id: uuid('tx:${m.id}'),
       tipo: m.tipo.name,
       monto: m.monto.toDouble(),
@@ -162,11 +181,10 @@ Future<int> _restaurar(BusinessRepository repo, BackupLeido b) async {
       fecha: m.fecha,
       metodo: m.metodo.name,
       clientId: m.clientId == null ? null : uuid('c:${m.clientId}'),
-    );
-    n++;
+    ));
   }
 
-  return n;
+  return (ok: n, fallaron: malas);
 }
 
 class _DialogoConfirmar extends StatelessWidget {

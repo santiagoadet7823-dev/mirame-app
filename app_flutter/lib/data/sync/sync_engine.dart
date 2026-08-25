@@ -9,6 +9,7 @@ import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../local/database.dart';
@@ -23,6 +24,10 @@ import '../remote/supabase_client.dart';
 /// `tenant_id` ni `updated_at`, así que no se puede paginar por cursor ni
 /// filtrar por salón como las demás. Se sincroniza junto con su turno cuando
 /// se implemente la edición de servicios (pendiente).
+/// Nombre interno de la tabla puente. No entra en `tablasSync` porque su pull
+/// es distinto (ver `_traerServiciosDeTurnos`).
+const _tablaServicios = 'appointment_services';
+
 const tablasSync = <String>[
   'professionals',
   'services',
@@ -204,10 +209,29 @@ class SyncEngine {
   /// Baja lo que cambió desde el último cursor de cada tabla.
   Future<int> traer(String tenantId) async {
     var total = 0;
-    for (final tabla in tablasSync) {
-      total += await _traerTabla(tenantId, tabla);
+    Object? primerError;
+
+    // Cada tabla se baja por separado y un fallo NO corta el resto.
+    //
+    // Antes era un `for` pelado, y eso significaba que una sola fila rara en
+    // `appointments` dejaba a la usuaria sin caja y sin stock: el bucle moría
+    // ahí y las tablas siguientes nunca se pedían. Se veía como "la app perdió
+    // mis movimientos", que es lo peor que puede parecer.
+    for (final tabla in [...tablasSync, _tablaServicios]) {
+      try {
+        total += tabla == _tablaServicios
+            ? await _traerServiciosDeTurnos(tenantId)
+            : await _traerTabla(tenantId, tabla);
+      } catch (e) {
+        debugPrint('sync: falló el pull de $tabla ($e)');
+        primerError ??= e;
+      }
     }
-    total += await _traerServiciosDeTurnos(tenantId);
+
+    // Se relanza DESPUÉS de intentarlas todas, para que el estado siga
+    // mostrándose como "con problemas" y se reintente, pero sin perder lo que
+    // sí se pudo bajar.
+    if (primerError != null) throw primerError;
     return total;
   }
 

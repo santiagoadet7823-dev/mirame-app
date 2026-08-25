@@ -33,13 +33,24 @@ const _appIdAndroid = String.fromEnvironment(
 /// El de la web ya existe: es el que usa el `index.html` legacy.
 const _appIdWeb = '1:998613317742:web:bc5a3c9c87f74c8a844e7f';
 
-const _apiKey = 'AIzaSyAECl9vKR2RU_PiWLWRxUHh13QDpNfvKn4';
+/// Fuera del repo por pedido del dueño, después de que el escáner de secretos
+/// de GitHub la marcara.
+///
+/// Aclaración para quien lea esto más adelante: una API key de Firebase **no
+/// es una credencial**. Identifica al proyecto y viaja dentro de cada APK y de
+/// cada página de la PWA; la seguridad la dan las reglas de Firestore y las
+/// restricciones de la key en Google Cloud. Sacarla de acá calla la alerta,
+/// pero lo que de verdad protege es restringirla por package name y por API.
+///
+/// Sin ella el push queda apagado y las notificaciones locales siguen andando.
+const _apiKey = String.fromEnvironment('FIREBASE_API_KEY');
 const _senderId = '998613317742';
 const _projectId = 'mirame-lash-studio-41ba9';
 
-/// `null` cuando falta el App ID de Android — el llamador lo trata como
+/// `null` cuando falta el App ID o la API key — el llamador lo trata como
 /// "push no configurado en este build" y sigue de largo.
-FirebaseOptions? get opcionesFirebaseAndroid => _appIdAndroid.isEmpty
+FirebaseOptions? get opcionesFirebaseAndroid =>
+    _appIdAndroid.isEmpty || _apiKey.isEmpty
     ? null
     : const FirebaseOptions(
         apiKey: _apiKey,
