@@ -79,6 +79,9 @@ class SettingsView extends ConsumerWidget {
                     ? 'Todavía no'
                     : _hora(sync.ultimoOk!),
               ),
+              // El texto del error, no solo "con problemas". Sin esto, dar
+              // soporte a distancia es adivinar.
+              if (sync.error case final e?) ('Detalle', e),
             ],
             accion: Row(
               children: [
@@ -116,38 +119,49 @@ class SettingsView extends ConsumerWidget {
         FadeSlideIn(
           delay: const Duration(milliseconds: 100),
           child: Builder(
-            builder: (ctx) => Row(
+            // DOS por fila, no cuatro. Con cuatro cada tarjeta queda en
+            // ~80 px y "Profesionales" o "Guardar backup" no entran: el texto
+            // se corta y las tarjetas parecen de tamaños distintos.
+            builder: (ctx) => Column(
               children: [
-                Expanded(
-                  child: _Acceso(
-                    emoji: '💅',
-                    titulo: 'Servicios',
-                    onTap: () => mostrarServicios(ctx),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Acceso(
+                        emoji: '💅',
+                        titulo: 'Servicios',
+                        onTap: () => mostrarServicios(ctx),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _Acceso(
+                        emoji: '👩',
+                        titulo: 'Profesionales',
+                        onTap: () => mostrarProfesionales(ctx),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _Acceso(
-                    emoji: '👩',
-                    titulo: 'Profesionales',
-                    onTap: () => mostrarProfesionales(ctx),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _Acceso(
-                    emoji: '💾',
-                    titulo: 'Guardar backup',
-                    onTap: () => exportarBackup(ctx, ref),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _Acceso(
-                    emoji: '📥',
-                    titulo: 'Restaurar',
-                    onTap: () => restaurarBackup(ctx, ref),
-                  ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Acceso(
+                        emoji: '💾',
+                        titulo: 'Guardar backup',
+                        onTap: () => exportarBackup(ctx, ref),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _Acceso(
+                        emoji: '📥',
+                        titulo: 'Restaurar',
+                        onTap: () => restaurarBackup(ctx, ref),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -256,6 +270,20 @@ class _TarjetaAvisos extends StatefulWidget {
 }
 
 class _TarjetaAvisosState extends State<_TarjetaAvisos> {
+  int _agendados = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _refrescar();
+  }
+
+  Future<void> _refrescar() async {
+    await ServicioAvisos.instancia.refrescarPermiso();
+    final n = await ServicioAvisos.instancia.cuantosAgendados();
+    if (mounted) setState(() => _agendados = n);
+  }
+
   @override
   Widget build(BuildContext context) {
     final servicio = ServicioAvisos.instancia;
@@ -271,24 +299,46 @@ class _TarjetaAvisosState extends State<_TarjetaAvisos> {
                   ? 'Activadas'
                   : 'Desactivadas'
         ),
+        // "0 agendados" con el permiso dado significa que no había nada que
+        // avisar, no que estén rotas. Son dos problemas muy distintos y sin
+        // este número no se pueden separar.
+        ('Agendados', '$_agendados'),
         // Se muestra aunque no esté configurado: es la primera pregunta al
         // dar soporte cuando alguien dice "no me llega nada".
         ('Push', Push.instancia.disponible ? 'Conectado' : 'No configurado'),
       ],
-      accion: servicio.disponible && !servicio.permitido
-          ? TextButton.icon(
-              onPressed: () async {
-                await servicio.pedirPermiso();
-                if (mounted) setState(() {});
-              },
-              icon: const Icon(Icons.notifications_active_outlined,
-                  size: 16, color: MColors.brand),
-              label: Text(
-                'Activar avisos',
-                style: sans(size: 13, weight: 600, color: MColors.brand),
-              ),
-            )
-          : null,
+      accion: !servicio.disponible
+          ? null
+          : Row(
+              children: [
+                if (!servicio.permitido)
+                  TextButton.icon(
+                    onPressed: () async {
+                      await servicio.pedirPermiso();
+                      await _refrescar();
+                    },
+                    icon: const Icon(Icons.notifications_active_outlined,
+                        size: 16, color: MColors.brand),
+                    label: Text(
+                      'Activar',
+                      style:
+                          sans(size: 13, weight: 600, color: MColors.brand),
+                    ),
+                  ),
+                TextButton.icon(
+                  onPressed: () async {
+                    await servicio.probar();
+                    await _refrescar();
+                  },
+                  icon: const Icon(Icons.play_arrow_rounded,
+                      size: 16, color: MColors.tMuted),
+                  label: Text(
+                    'Probar aviso',
+                    style: sans(size: 13, weight: 600, color: MColors.tMuted),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }
@@ -321,7 +371,14 @@ class _Acceso extends StatelessWidget {
             children: [
               Text(emoji, style: const TextStyle(fontSize: 24)),
               const SizedBox(height: 6),
-              Text(titulo, style: sans(size: 12, weight: 500)),
+              // Centrado y a dos líneas: "Guardar backup" no entra en una sola
+              // en pantallas angostas, y cortarlo se ve peor que envolverlo.
+              Text(
+                titulo,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: sans(size: 12, weight: 500),
+              ),
             ],
           ),
         ),

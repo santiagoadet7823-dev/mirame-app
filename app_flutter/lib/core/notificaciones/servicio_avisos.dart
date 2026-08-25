@@ -126,6 +126,45 @@ class ServicioAvisos {
     }
   }
 
+  /// Vuelve a preguntarle al sistema si puede notificar.
+  ///
+  /// Hace falta porque el permiso se puede dar o quitar desde los ajustes de
+  /// Android sin pasar por la app, y un estado cacheado hace que Ajustes mienta
+  /// justo cuando alguien está tratando de entender por qué no le llega nada.
+  Future<bool> refrescarPermiso() async {
+    if (!disponible) return false;
+    try {
+      permitido = await _plugin
+              .resolvePlatformSpecificImplementation<
+                  AndroidFlutterLocalNotificationsPlugin>()
+              ?.areNotificationsEnabled() ??
+          false;
+    } catch (_) {
+      // Se deja el valor anterior: no saber no es lo mismo que no poder.
+    }
+    return permitido;
+  }
+
+  /// Cuántos avisos hay agendados. Es la única forma de distinguir "no me
+  /// llegan" de "no había nada que avisar".
+  Future<int> cuantosAgendados() async {
+    if (!disponible) return 0;
+    try {
+      return (await _plugin.pendingNotificationRequests()).length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Dispara un aviso de prueba, ahora mismo.
+  Future<void> probar() => mostrarYa(AvisoProgramado(
+        id: idEstable('prueba'),
+        titulo: '🔔 Los avisos funcionan',
+        cuerpo: 'Así vas a ver los recordatorios de retoque y los turnos.',
+        cuando: DateTime.now(),
+        canal: CanalAviso.agenda,
+      ));
+
   NotificationDetails _detalles(AvisoProgramado a) => NotificationDetails(
         android: AndroidNotificationDetails(
           a.canal.id,

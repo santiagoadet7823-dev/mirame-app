@@ -81,6 +81,18 @@ class _ProgramadorAvisosState extends ConsumerState<ProgramadorAvisos> {
   }
 
   List<AvisoProgramado> _calcular() {
+    final ahora = DateTime.now();
+    // HOY y MAÑANA.
+    //
+    // Programar solo hoy tenía un agujero grande: quien abre la app a la noche
+    // ya pasó las cuatro horas de aviso, así que no queda NADA agendado y al
+    // día siguiente no le llega nada salvo que vuelva a abrirla antes de las
+    // 20:00. Con dos días siempre hay algo pendiente.
+    final manana = DateTime(ahora.year, ahora.month, ahora.day + 1);
+    return [..._delDia(ahora), ..._delDia(manana)];
+  }
+
+  List<AvisoProgramado> _delDia(DateTime ahora) {
     final turnos = [
       ...?ref.read(turnosDeHoyProvider).value,
       ...?ref.read(turnosDeMananaProvider).value,
@@ -101,7 +113,7 @@ class _ProgramadorAvisosState extends ConsumerState<ProgramadorAvisos> {
       transactions:
           (ref.read(movimientosDelMesProvider).value ?? const <db.Transaction>[])
               .map(aTransaction),
-      ahora: DateTime.now(),
+      ahora: ahora,
     );
   }
 

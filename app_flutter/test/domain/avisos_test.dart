@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mirame/domain/entities/entities.dart';
 import 'package:mirame/domain/rules/avisos.dart';
 
-/// 8 de la mañana: antes de todas las horas de aviso, así los tests ven la
-/// agenda completa.
-final ahora = DateTime(2026, 8, 24, 8);
+/// 7 de la mañana: antes de TODAS las horas de aviso —la primera es el resumen
+/// de las 8— así los tests ven la agenda completa.
+final ahora = DateTime(2026, 8, 24, 7);
 
 Client cliente(String id, String nombre, {DateTime? cumple}) =>
     Client(id: id, nombre: nombre, cumple: cumple);
@@ -116,6 +116,92 @@ void main() {
       expect(conTurnoHace(21).where((a) => a.payload == 'inicio'), hasLength(1));
       expect(conTurnoHace(23).where((a) => a.payload == 'inicio'), hasLength(1));
       expect(conTurnoHace(18).where((a) => a.payload == 'inicio'), isEmpty);
+    });
+
+    group('la jornada de hoy', () {
+      List<AvisoProgramado> conTurnosHoy(List<Appointment> turnos) =>
+          avisosDelDia(
+            clients: [cliente('c1', 'Ana'), cliente('c2', 'Bea')],
+            appointments: turnos,
+            services: const [],
+            transactions: const [],
+            ahora: ahora,
+          );
+
+      test('resume los turnos del día con hora y nombre', () {
+        final avisos = conTurnosHoy([
+          turno('a1', DateTime(2026, 8, 24),
+              clientId: 'c1', hora: const TimeOfDayValue(18, 0)),
+          turno('a2', DateTime(2026, 8, 24),
+              clientId: 'c2', hora: const TimeOfDayValue(9, 30)),
+        ]);
+        final resumen =
+            avisos.firstWhere((a) => a.titulo.startsWith('☀️'));
+        expect(resumen.titulo, contains('2 turnos'));
+        // En orden de hora, no en el que vinieron.
+        expect(resumen.cuerpo, '09:30 · Bea\n18:00 · Ana');
+        expect(resumen.cuando.hour, kHoraResumenDelDia);
+      });
+
+      test('avisa media hora antes de cada turno', () {
+        final avisos = conTurnosHoy([
+          turno('a1', DateTime(2026, 8, 24),
+              clientId: 'c1', hora: const TimeOfDayValue(18, 0)),
+        ]);
+        final previo = avisos.firstWhere((a) => a.titulo.startsWith('💅'));
+        expect(previo.cuando, DateTime(2026, 8, 24, 17, 30));
+        expect(previo.cuerpo, 'Ana · 18:00');
+      });
+
+      test('un turno sin hora no genera aviso previo', () {
+        final avisos = conTurnosHoy([
+          turno('a1', DateTime(2026, 8, 24), clientId: 'c1'),
+        ]);
+        expect(avisos.where((a) => a.titulo.startsWith('💅')), isEmpty);
+      });
+
+      test('los turnos ya hechos o cancelados no cuentan', () {
+        final avisos = conTurnosHoy([
+          turno('a1', DateTime(2026, 8, 24),
+              clientId: 'c1',
+              hora: const TimeOfDayValue(18, 0),
+              estado: TurnoEstado.done),
+          turno('a2', DateTime(2026, 8, 24),
+              clientId: 'c2',
+              hora: const TimeOfDayValue(19, 0),
+              estado: TurnoEstado.cancelled),
+        ]);
+        expect(avisos, isEmpty);
+      });
+
+      test('el aviso del turno no se programa si ya pasó su hora', () {
+        // 7:15 menos 30 minutos es antes de las 7, que es "ahora".
+        final avisos = avisosDelDia(
+          clients: [cliente('c1', 'Ana')],
+          appointments: [
+            turno('a1', DateTime(2026, 8, 24),
+                clientId: 'c1', hora: const TimeOfDayValue(7, 15)),
+          ],
+          services: const [],
+          transactions: const [],
+          ahora: ahora,
+        );
+        expect(avisos.where((a) => a.titulo.startsWith('💅')), isEmpty);
+      });
+
+      test('el id del aviso previo es por turno, no por día', () {
+        // Mover la hora tiene que PISAR el aviso viejo, no dejar los dos.
+        final a = conTurnosHoy([
+          turno('a1', DateTime(2026, 8, 24),
+              clientId: 'c1', hora: const TimeOfDayValue(18, 0)),
+        ]).firstWhere((x) => x.titulo.startsWith('💅'));
+        final b = conTurnosHoy([
+          turno('a1', DateTime(2026, 8, 24),
+              clientId: 'c1', hora: const TimeOfDayValue(19, 0)),
+        ]).firstWhere((x) => x.titulo.startsWith('💅'));
+        expect(a.id, b.id);
+        expect(a.cuando, isNot(b.cuando));
+      });
     });
 
     test('el cierre de caja no se programa si no hubo movimientos', () {
