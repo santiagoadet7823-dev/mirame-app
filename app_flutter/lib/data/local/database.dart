@@ -375,10 +375,34 @@ class MovimientosStock extends Table with _Sincronizable {
     MovimientosStock,
   ],
 )
+/// Convierte un valor suelto en el `Variable` que espera `customUpdate`.
+///
+/// `customStatement` acepta `List<dynamic>`; `customUpdate` no, y es el precio
+/// de que ademas invalide los streams.
+Variable variablePara(Object? v) {
+  if (v == null) return const Variable<String>(null);
+  if (v is int) return Variable<int>(v);
+  if (v is double) return Variable<double>(v);
+  if (v is bool) return Variable<bool>(v);
+  if (v is Uint8List) return Variable<Uint8List>(v);
+  return Variable<String>(v.toString());
+}
+
 class MirameDb extends _$MirameDb {
   MirameDb() : super(_abrir());
 
   MirameDb.paraTest(super.e);
+
+  /// La tabla de Drift que corresponde a un nombre SQL.
+  ///
+  /// Sirve para decirle a `customUpdate` qué streams invalidar. Sin esto una
+  /// escritura por SQL crudo no refresca ninguna pantalla.
+  TableInfo<Table, dynamic>? tablaPorNombre(String nombre) {
+    for (final t in allTables) {
+      if (t.actualTableName == nombre) return t;
+    }
+    return null;
+  }
 
   @override
   int get schemaVersion => 3;

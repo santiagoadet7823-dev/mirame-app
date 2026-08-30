@@ -443,10 +443,16 @@ class BusinessRepository {
   Future<void> ajustarStock(String itemId, int delta) async {
     if (delta == 0) return;
     await _db.transaction(() async {
-      await _db.customStatement(
+      await _db.customUpdate(
         'update stock_items set cantidad = max(0, cantidad + ?), '
         'updated_at = ? where id = ? and tenant_id = ?',
-        [delta, aEpoch(DateTime.now()), itemId, _tenantId],
+        variables: [
+          Variable<int>(delta),
+          Variable<int>(aEpoch(DateTime.now())),
+          Variable<String>(itemId),
+          Variable<String>(_tenantId),
+        ],
+        updates: {_db.stockItems},
       );
       await _sync.encolar(
         tenantId: _tenantId,
@@ -589,10 +595,17 @@ class BusinessRepository {
   Future<void> borrar(String tabla, String filaId) async {
     final ahora = DateTime.now();
     await _db.transaction(() async {
-      await _db.customStatement(
+      final t = _db.tablaPorNombre(tabla);
+      await _db.customUpdate(
         'update $tabla set deleted_at = ?, updated_at = ? '
         'where id = ? and tenant_id = ?',
-        [aEpoch(ahora), aEpoch(ahora), filaId, _tenantId],
+        variables: [
+          Variable<int>(aEpoch(ahora)),
+          Variable<int>(aEpoch(ahora)),
+          Variable<String>(filaId),
+          Variable<String>(_tenantId),
+        ],
+        updates: {if (t != null) t},
       );
       await _sync.encolar(
         tenantId: _tenantId,

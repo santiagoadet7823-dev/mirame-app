@@ -290,10 +290,12 @@ class SyncEngine {
     await _db.transaction(() async {
       // Los turnos de OTROS salones no se tocan: en el panel de plataforma un
       // superadmin puede tener varios abiertos.
-      await _db.customStatement(
+      await _db.customUpdate(
         'delete from appointment_services where appointment_id in '
         '(select id from appointments where tenant_id = ?)',
-        [tenantId],
+        variables: [Variable<String>(tenantId)],
+        updates: {_db.appointmentServices},
+        updateKind: UpdateKind.delete,
       );
       for (final f in filas) {
         await _aplicar('appointment_services', f as Map<String, dynamic>);
@@ -382,10 +384,14 @@ class SyncEngine {
 
     final nombres = columnas.keys.toList();
     final marcas = List.filled(nombres.length, '?').join(', ');
-    await _db.customStatement(
+    // `customInsert` y no `customStatement`: el segundo escribe pero no avisa,
+    // asi que nada de lo que bajaba del servidor refrescaba la pantalla.
+    final t = _db.tablaPorNombre(tabla);
+    await _db.customInsert(
       'insert or replace into $tabla (${nombres.join(', ')}) '
       'values ($marcas)',
-      nombres.map((n) => columnas[n]).toList(),
+      variables: [for (final n in nombres) variablePara(columnas[n])],
+      updates: {if (t != null) t},
     );
   }
 

@@ -220,10 +220,15 @@ class RopaRepository {
       // Solo puede haber un principal: si no, el formulario de venta no
       // sabría cuál elegir por defecto y elegiría uno al azar.
       if (esPrincipal) {
-        await _db.customStatement(
+        await _db.customUpdate(
           'update depositos set es_principal = 0, updated_at = ? '
           'where tenant_id = ? and id <> ?',
-          [aEpochSegundos(ahora), _tenantId, filaId],
+          variables: [
+            Variable<int>(aEpochSegundos(ahora)),
+            Variable<String>(_tenantId),
+            Variable<String>(filaId),
+          ],
+          updates: {_db.depositos},
         );
       }
       await _db.into(_db.depositos).insertOnConflictUpdate(
@@ -425,10 +430,15 @@ class RopaRepository {
               ),
             );
       } else {
-        await _db.customStatement(
+        await _db.customUpdate(
           'update stock_variantes set cantidad = max(0, cantidad + ?), '
           'updated_at = ? where id = ?',
-          [delta, aEpochSegundos(ahora), actual.id],
+          variables: [
+            Variable<int>(delta),
+            Variable<int>(aEpochSegundos(ahora)),
+            Variable<String>(actual.id),
+          ],
+          updates: {_db.stockVariantes},
         );
       }
 
@@ -850,10 +860,17 @@ class RopaRepository {
   Future<void> borrar(String tabla, String filaId) async {
     final ahora = DateTime.now();
     await _db.transaction(() async {
-      await _db.customStatement(
+      final t = _db.tablaPorNombre(tabla);
+      await _db.customUpdate(
         'update $tabla set deleted_at = ?, updated_at = ? '
         'where id = ? and tenant_id = ?',
-        [aEpochSegundos(ahora), aEpochSegundos(ahora), filaId, _tenantId],
+        variables: [
+          Variable<int>(aEpochSegundos(ahora)),
+          Variable<int>(aEpochSegundos(ahora)),
+          Variable<String>(filaId),
+          Variable<String>(_tenantId),
+        ],
+        updates: {if (t != null) t},
       );
       await _sync.encolar(
         tenantId: _tenantId,
