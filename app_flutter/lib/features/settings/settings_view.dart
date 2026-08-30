@@ -18,6 +18,11 @@ import '../../data/sync/sync_engine.dart';
 import '../../shared/widgets/version_label.dart';
 import '../auth/session_controller.dart';
 import '../shell/app_shell.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../../core/config/app_config.dart';
+import '../ropa/mi_tienda.dart';
 import '../update/update_sheet.dart';
 import 'backup_view.dart';
 import 'restaurar_backup.dart';
@@ -50,6 +55,16 @@ class SettingsView extends ConsumerWidget {
               ],
             ),
           ),
+        const SizedBox(height: 12),
+
+        // El link de la tienda va ACÁ y no solo dentro de Ropa: es lo que se
+        // manda por WhatsApp varias veces por día, y buscarlo dos pantallas
+        // adentro cada vez es exactamente el tipo de fricción que hace que se
+        // deje de usar.
+        FadeSlideIn(
+          delay: const Duration(milliseconds: 60),
+          child: _LinkTienda(slug: tenant?.slug),
+        ),
         const SizedBox(height: 12),
 
         FadeSlideIn(
@@ -379,6 +394,138 @@ class _Acceso extends StatelessWidget {
                 maxLines: 2,
                 style: sans(size: 12, weight: 500),
               ),
+            ],
+          ),
+        ),
+      );
+}
+
+/// El link de la vitrina, listo para copiar o compartir.
+class _LinkTienda extends StatelessWidget {
+  const _LinkTienda({required this.slug});
+
+  final String? slug;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = AppConfig.urlTienda(slug);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: MColors.lav50,
+        border: Border.all(color: MColors.borderLav),
+        borderRadius: BorderRadius.circular(MRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('🛍️', style: TextStyle(fontSize: 17)),
+              const SizedBox(width: 8),
+              Text('Mi tienda', style: sans(size: 14, weight: 600)),
+              const Spacer(),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => mostrarMiTienda(context),
+                child: Text('Ver QR',
+                    style:
+                        sans(size: 12, weight: 600, color: MColors.brand)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text('El link que les mandás a tus clientas',
+              style: sans(size: 11, color: MColors.tSecondary)),
+          const SizedBox(height: 11),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+            decoration: BoxDecoration(
+              color: MColors.surface,
+              borderRadius: BorderRadius.circular(MRadius.sm),
+            ),
+            child: Text(
+              url,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: sans(size: 11, color: MColors.tSecondary),
+            ),
+          ),
+          const SizedBox(height: 9),
+          Row(
+            children: [
+              Expanded(
+                child: _MiniBoton(
+                  icono: Icons.share_outlined,
+                  texto: 'Compartir',
+                  principal: true,
+                  onTap: () => SharePlus.instance.share(
+                      ShareParams(text: 'Mirá lo que tengo 👗\n$url')),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _MiniBoton(
+                  icono: Icons.copy_rounded,
+                  texto: 'Copiar',
+                  onTap: () async {
+                    await Clipboard.setData(ClipboardData(text: url));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Link copiado')),
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniBoton extends StatelessWidget {
+  const _MiniBoton({
+    required this.icono,
+    required this.texto,
+    required this.onTap,
+    this.principal = false,
+  });
+
+  final IconData icono;
+  final String texto;
+  final VoidCallback onTap;
+  final bool principal;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          decoration: BoxDecoration(
+            color: principal ? MColors.brand : MColors.surface,
+            border: Border.all(
+                color: principal ? MColors.brand : MColors.borderMd),
+            borderRadius: BorderRadius.circular(MRadius.full),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icono,
+                  size: 14,
+                  color: principal ? MColors.tWhite : MColors.tSecondary),
+              const SizedBox(width: 6),
+              Text(texto,
+                  style: sans(
+                    size: 12,
+                    weight: 600,
+                    color: principal ? MColors.tWhite : MColors.tSecondary,
+                  )),
             ],
           ),
         ),
