@@ -86,13 +86,26 @@ body{
   background:var(--bg); color:var(--tx);
   font-family:var(--sans); font-size:15px;
   -webkit-font-smoothing:antialiased;
-  min-height:100dvh; overflow-x:hidden;
+  min-height:100dvh;
 }
 button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
 a{color:inherit;text-decoration:none}
 img{display:block}
 :focus-visible{outline:2px solid var(--ac-d);outline-offset:3px;border-radius:var(--r-1)}
-.wrap{max-width:520px;margin:0 auto}
+/* El ancho acompana a la pantalla. Clavado en 520 px, cualquier pantalla
+   mas ancha dejaba la tienda como una tirita en el medio con tipografia de
+   telefono — que se lee como una pagina achicada para entrar entera. */
+.wrap{width:100%;max-width:520px;margin:0 auto}
+@media (min-width:700px){
+  .wrap{max-width:820px}
+  :root{--paso:1.08}
+}
+@media (min-width:1080px){
+  .wrap{max-width:1120px}
+  /* En un monitor, tarjetas de 150 px dan ocho columnas diminutas. Con 210 se
+     leen como un catalogo y no como un mosaico. */
+  .grid{grid-template-columns:repeat(auto-fill,minmax(min(210px,100%),1fr))}
+}
 
 @keyframes gridIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -126,15 +139,16 @@ img{display:block}
   font:600 10.5px/19px var(--sans);text-align:center;font-variant-numeric:tabular-nums}
 
 /* ══ Hero ═════════════════════════════════════════════════════════════════ */
-.hero{margin:4px 14px 0;position:relative;height:250px;border-radius:var(--r-4);
-  overflow:hidden;background:var(--bg-4)}
+.hero{margin:4px 14px 0;position:relative;height:clamp(230px,58vw,420px);
+  border-radius:var(--r-4);overflow:hidden;background:var(--bg-4)}
 .hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  object-position:22% 42%;transform:scale(1.18);animation:fadeIn var(--dur-3) var(--ease-out) both}
+  object-position:22% 42%;animation:fadeIn var(--dur-3) var(--ease-out) both}
 .hero .velo{position:absolute;inset:0;background:linear-gradient(105deg,
   rgba(250,248,245,.94) 0%,rgba(250,248,245,.78) 42%,rgba(250,248,245,.06) 78%)}
 .hero .txt{position:absolute;inset:0;padding:26px 24px;display:flex;
   flex-direction:column;justify-content:flex-end}
-.hero h1{font:400 38px/1.02 var(--sans);max-width:250px;letter-spacing:-.01em}
+.hero h1{font:400 clamp(32px,8.5vw,52px)/1.02 var(--sans);
+  max-width:min(320px,68%);letter-spacing:-.01em}
 
 /* Lo que ve un salón que todavía no tiene foto de portada. */
 .hero-tipo{margin:8px 14px 0;padding:34px 24px 30px;border-radius:var(--r-4);
@@ -148,7 +162,8 @@ img{display:block}
 .hero-tipo p{font:400 12.5px/1.55 var(--sans);color:var(--tx-3);margin:16px 0 0}
 
 /* ══ Rubros ═══════════════════════════════════════════════════════════════ */
-.rubros{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 14px 0}
+.rubros{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));
+  gap:10px;padding:14px 14px 0}
 .rubro-foto{grid-column:span 2;position:relative;height:104px;border-radius:var(--r-3);
   overflow:hidden;background:var(--bg-4);text-align:left;
   transition:transform var(--dur-1) var(--ease-out)}
@@ -191,7 +206,10 @@ img{display:block}
 .enc{display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 14px}
 .enc h2{font:400 22px/1 var(--sans)}
 .enc span{font:400 11.5px var(--sans);color:var(--tx-4);font-variant-numeric:tabular-nums}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 14px}
+/* `auto-fill` en vez de dos columnas fijas: en el telefono da dos, en una
+   tablet tres o cuatro, sin un solo breakpoint de por medio. */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr));
+  gap:20px 14px}
 .celda{position:relative;animation:gridIn var(--dur-2) var(--ease-out) both}
 .celda.ancha{grid-column:span 2}
 .tarjeta{width:100%;text-align:left;display:block;
@@ -274,7 +292,9 @@ img{display:block}
   border-top:1px solid rgba(0,0,0,.06)}
 .pie-info .rot{font:600 9.5px var(--sans);letter-spacing:.24em;text-transform:uppercase;
   color:var(--tx-4);text-align:center}
-.comofunciona{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px;margin:20px 0 0}
+.comofunciona{display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));
+  gap:16px 12px;margin:20px 0 0}
 .comofunciona div{display:flex;gap:10px;align-items:flex-start}
 .comofunciona .i{color:var(--ac-d);flex:none}
 .comofunciona p{font:400 12px/1.45 var(--sans);color:var(--tx-2)}
@@ -956,12 +976,19 @@ function abrirHoja(html) {
   $('hoja-contenido').innerHTML = html;
   $('capa').classList.add('on');
   document.body.style.overflow = 'hidden';
+  // Una entrada de historial por hoja: en Android el gesto natural para
+  // cerrar es el atrás. Sin esto la hoja se iba pero el bloqueo del body
+  // quedaba puesto, y la página no volvía a scrollear hasta recargar.
+  history.pushState({hoja: true}, '');
   // setTimeout y no rAF: con la pestaña en segundo plano el rAF no corre y la
   // hoja aparecía de golpe en vez de subir.
   setTimeout(() => $('capa').classList.add('abierta'), 20);
 }
 
-function cerrarHoja() {
+/// Cierra la hoja. Si la cerró el usuario (botón, arrastre, Escape) hay que
+/// sacar la entrada de historial; si la cerró el atrás, ya no está.
+function cerrarHoja({desdeHistorial = false} = {}) {
+  const estaba = $('capa').classList.contains('on');
   $('capa').classList.remove('abierta');
   document.body.style.overflow = '';
   clearTimeout(_sheetT);
@@ -970,7 +997,20 @@ function cerrarHoja() {
     $('hoja-contenido').innerHTML = '';
     A.sheet = null;
   }, 320);
+  if (estaba && !desdeHistorial && history.state && history.state.hoja) {
+    history.back();
+  }
 }
+
+window.addEventListener('popstate', () => {
+  if ($('capa').classList.contains('on')) cerrarHoja({desdeHistorial: true});
+});
+
+// Red de seguridad: si por lo que sea el body quedó bloqueado sin hoja
+// abierta, la página no scrollea y no hay forma de darse cuenta.
+window.addEventListener('pageshow', () => {
+  if (!$('capa').classList.contains('on')) document.body.style.overflow = '';
+});
 
 function repintarHoja() {
   $('hoja-contenido').innerHTML =
@@ -1008,7 +1048,7 @@ function repintarHoja() {
   };
   manija.addEventListener('pointerup', soltar);
   manija.addEventListener('pointercancel', soltar);
-  fondo.addEventListener('click', cerrarHoja);
+  fondo.addEventListener('click', () => cerrarHoja());
   document.addEventListener('keydown', ev => {
     if (ev.key === 'Escape' && capa.classList.contains('on')) cerrarHoja();
   });
