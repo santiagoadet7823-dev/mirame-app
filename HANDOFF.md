@@ -478,3 +478,34 @@ agotado**, así que la grilla llena y la última unidad solo se pudieron ver sem
 
 **Próximo:** fase 3 (cuentas de clienta) y fase 4 (avisos por mail). Del diseñador falta la
 imagen de preview del link como archivo y el `logo.svg` que `tokens.css` referencia.
+
+### 2026-08-30 (noche) — Tres bugs del uso real
+
+**Las cantidades por talle no se guardaban.** `_depositoId` se resolvía en
+`initState` leyendo `depositosProvider`, que es `autoDispose` y que la pantalla
+que abre el formulario no mira: en ese momento no había emitido, `.value` daba
+null, y el repositorio —sin depósito— se salteaba el stock **en silencio**.
+Ahora el depósito se resuelve al guardar y, si el salón no creó ninguno, se crea
+uno. Con tests: `test/data/stock_prenda_test.dart`.
+
+**Solo se veía una foto por prenda.** Se guardaban todas —había tres en la
+base— pero el formulario leía `portadasProvider`. Y el `orden` se reiniciaba en
+0 en cada tanda, así que la portada pasaba a ser cualquiera; en la base había
+dos fotos con orden 0, renumeradas.
+
+**El selector de depósito se escondía con menos de dos depósitos**, que es el
+caso real.
+
+**La tienda se veía "con zoom al máximo" y sin scroll.** Dos causas: el ancho
+clavado en 520 px (en cualquier pantalla más ancha queda como una tirita con
+tipografía de teléfono, que se lee como una página achicada), y el botón atrás
+de Android, que se llevaba la hoja pero dejaba el `body` bloqueado con
+`overflow:hidden` — la página no volvía a scrollear hasta recargar. Ahora la
+grilla se llena sola de 2 a 5 columnas y cada hoja empuja una entrada de
+historial.
+
+Cargados el WhatsApp (`+54 9 3877545466`) y el Instagram del salón. **Falta la
+dirección**, que se carga desde "Mi tienda".
+
+**Publicado:** APK 1.14.1 y la PWA. **Próximo:** fases 3 y 4 del plan de la
+tienda (cuentas de clienta y avisos por mail).
