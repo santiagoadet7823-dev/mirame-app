@@ -16,6 +16,7 @@ import '../../data/repositories/ropa_repository.dart';
 import '../../domain/rules/formatting.dart';
 import '../../domain/rules/rotacion.dart';
 import '../shell/vistas_comunes.dart';
+import 'escaner.dart';
 import 'fotos.dart';
 import 'ropa_view.dart';
 
@@ -33,10 +34,14 @@ Future<void> abrirFormularioProducto(
 
 /// Una variante mientras se edita, antes de guardarse.
 class _VarianteEnEdicion {
-  _VarianteEnEdicion({this.id, this.talle, this.color});
+  _VarianteEnEdicion({this.id, this.talle, this.color, this.stock = 0});
   final String? id;
   String? talle;
   String? color;
+
+  /// Cuántas unidades hay de este talle y color. Es un ABSOLUTO: la usuaria ve
+  /// el número que tiene y lo corrige; el repositorio calcula la diferencia.
+  int stock;
 }
 
 class _FormProducto extends ConsumerStatefulWidget {
@@ -65,6 +70,14 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
   late var _pctPropio = widget.producto?.pctSalon != null;
 
   String? _proveedorId;
+
+  /// Dónde entra —o de dónde sale— la mercadería que se carga acá.
+  ///
+  /// Es del PRODUCTO y no de cada variante: repartir los talles de una misma
+  /// prenda entre depósitos distintos es una transferencia, no un alta, y
+  /// meterla en este formulario lo convertiría en uno de logística.
+  String? _depositoId;
+  late var _rubro = widget.producto?.rubro ?? 'ropa';
   late var _publicado = widget.producto?.publicado ?? false;
   late var _destacado = widget.producto?.destacado ?? false;
 
@@ -79,11 +92,17 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
     super.initState();
     final p = widget.producto;
     _proveedorId = p?.proveedorId;
+    _depositoId = _depositoPrincipal();
 
     if (p != null) {
       final v = ref.read(variantesProvider).value?[p.id] ?? const [];
-      _variantes.addAll(v.map((x) =>
-          _VarianteEnEdicion(id: x.id, talle: x.talle, color: x.color)));
+      final stock = ref.read(stockRopaProvider).value ?? const {};
+      _variantes.addAll(v.map((x) => _VarianteEnEdicion(
+            id: x.id,
+            talle: x.talle,
+            color: x.color,
+            stock: stock[x.id] ?? 0,
+          )));
     }
     // Una prenda siempre tiene al menos una variante: es lo que se vende y lo
     // que lleva el stock. Sin ninguna, el producto no se podría cargar.
@@ -104,6 +123,49 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
       c.dispose();
     }
     super.dispose();
+  }
+
+  /// Dónde está esta mercadería. Solo se muestra si hay más de un depósito:
+  /// con uno solo, preguntarlo es un campo que siempre tiene la misma
+  /// respuesta.
+  Widget _selectorDeposito() {
+    final deps = ref.watch(depositosProvider).value ?? const [];
+    if (deps.length < 2) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<String?>(
+        initialValue: _depositoId,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: 'En qué depósito está',
+          labelStyle: MText.menor,
+          filled: true,
+          fillColor: MColors.bg2,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(MRadius.md),
+            borderSide: const BorderSide(color: MColors.border),
+          ),
+        ),
+        items: [
+          for (final d in deps)
+            DropdownMenuItem(
+              value: d.id,
+              child: Text(d.esPrincipal ? '${d.nombre} (principal)' : d.nombre),
+            ),
+        ],
+        onChanged: (v) => setState(() => _depositoId = v),
+      ),
+    );
+  }
+
+  /// El depósito donde entra la mercadería nueva.
+  String? _depositoPrincipal() {
+    final deps = ref.read(depositosProvider).value ?? const [];
+    if (deps.isEmpty) return null;
+    return deps
+        .firstWhere((d) => d.esPrincipal, orElse: () => deps.first)
+        .id;
   }
 
   Future<void> _agregarFoto(bool camara) async {
@@ -153,14 +215,17 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
         pctSalon: _pctPropio
             ? (num.tryParse(_pct.text.replaceAll(',', '.')) ?? 0)
             : null,
+        rubro: _rubro,
+        depositoId: _depositoId,
         publicado: _publicado,
         destacado: _destacado,
         variantes: [
           for (final v in variantes)
-            (
+            VarianteParaGuardar(
               id: v.id,
               talle: (v.talle?.trim().isEmpty ?? true) ? null : v.talle!.trim(),
               color: (v.color?.trim().isEmpty ?? true) ? null : v.color!.trim(),
+              stock: v.stock,
             ),
         ],
       );
@@ -217,7 +282,21 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
         _fotos(),
         const SizedBox(height: 6),
 
-        _seccion('LA PRENDA'),
+        _seccion('QUÉ ES'),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: FilaFiltros(
+            opciones: const [
+              ('ropa', '👗 Ropa'),
+              ('arbell', '💄 Arbell'),
+              ('insumos', '🧴 Insumos'),
+            ],
+            activo: _rubro,
+            onElegir: (v) => setState(() => _rubro = v),
+          ),
+        ),
+
+        _seccion('EL PRODUCTO'),
         CampoTexto(controlador: _nombre, etiqueta: 'Nombre'),
         Row(
           children: [
@@ -231,7 +310,38 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: CampoTexto(controlador: _codigo, etiqueta: 'Código'),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: CampoTexto(
+                        controlador: _codigo, etiqueta: 'Código'),
+                  ),
+                  // Escanear el código de fábrica evita tipear trece dígitos y
+                  // evita el error de tipearlos mal, que es peor: el producto
+                  // queda cargado con un código que no es de nadie.
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () async {
+                      final c = await escanearCodigo(context);
+                      if (c != null && mounted) {
+                        setState(() => _codigo.text = c);
+                      }
+                    },
+                    child: Container(
+                      width: 46,
+                      height: 46,
+                      margin: const EdgeInsets.only(left: 6, bottom: 12),
+                      decoration: BoxDecoration(
+                        color: MColors.bg2,
+                        border: Border.all(color: MColors.border),
+                        borderRadius: BorderRadius.circular(MRadius.md),
+                      ),
+                      child: const Icon(Icons.qr_code_scanner_rounded,
+                          size: 20, color: MColors.tSecondary),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -267,8 +377,27 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
         _seccion('REPARTO'),
         _reparto(proveedores),
 
-        _seccion('TALLES Y COLORES'),
+        _seccion(_rubro == 'ropa' ? 'TALLES Y CANTIDADES' : 'PRESENTACIONES'),
+        _selectorDeposito(),
         _listaVariantes(),
+
+        if (_depositoId == null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: MColors.warningBg,
+                border: Border.all(color: MColors.warningBorder),
+                borderRadius: BorderRadius.circular(MRadius.sm),
+              ),
+              child: Text(
+                'Todavía no tenés ningún depósito, así que las cantidades no '
+                'se van a guardar. Creá uno en Proveedores → Depósitos.',
+                style: sans(size: 12, color: MColors.warningText),
+              ),
+            ),
+          ),
 
         _seccion('EN LA TIENDA'),
         SwitchListTile.adaptive(
@@ -508,6 +637,17 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
                       onCambio: (v) => _variantes[i].color = v,
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 66,
+                    child: _campoChico(
+                      valor: '${_variantes[i].stock}',
+                      etiqueta: 'Cant.',
+                      numerico: true,
+                      onCambio: (v) =>
+                          _variantes[i].stock = int.tryParse(v) ?? 0,
+                    ),
+                  ),
                   // La única fila no se puede quitar: sin variantes no hay
                   // nada que vender ni dónde contar el stock.
                   if (_variantes.length > 1)
@@ -544,10 +684,12 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
     required String? valor,
     required String etiqueta,
     required ValueChanged<String> onCambio,
+    bool numerico = false,
   }) =>
       TextFormField(
         initialValue: valor,
         onChanged: onCambio,
+        keyboardType: numerico ? TextInputType.number : null,
         style: sans(size: 13),
         decoration: InputDecoration(
           labelText: etiqueta,

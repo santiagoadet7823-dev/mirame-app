@@ -27,7 +27,7 @@ void main() {
       proveedorId: proveedorId,
       precio: precio,
       pctSalon: pctSalon,
-      variantes: [(id: null, talle: 'M', color: 'Negro')],
+      variantes: [const VarianteParaGuardar(talle: 'M', color: 'Negro')],
     );
     final v = await repo.verVariantes().first;
     final vid = v.firstWhere((x) => x.productoId == pid).id;
@@ -165,9 +165,9 @@ void main() {
     // Una venta vieja apunta a ella y tiene que seguir siendo legible.
     final pid = await repo.guardarProducto(
       nombre: 'Remera',
-      variantes: [
-        (id: null, talle: 'S', color: null),
-        (id: null, talle: 'M', color: null),
+      variantes: const [
+        VarianteParaGuardar(talle: 'S'),
+        VarianteParaGuardar(talle: 'M'),
       ],
     );
     var vs = (await repo.verVariantes().first)
@@ -178,7 +178,7 @@ void main() {
     await repo.guardarProducto(
       id: pid,
       nombre: 'Remera',
-      variantes: [(id: vs.first.id, talle: 'S', color: null)],
+      variantes: [VarianteParaGuardar(id: vs.first.id, talle: 'S')],
     );
 
     vs = (await repo.verVariantes().first)
@@ -277,7 +277,7 @@ void main() {
       final otro = await repo.guardarProveedor(nombre: 'Otro', pctSalon: 50);
       final pid = await repo.guardarProducto(
         nombre: 'Ajena', proveedorId: otro, precio: 10000, pctSalon: 50,
-        variantes: [(id: null, talle: 'U', color: null)],
+        variantes: [const VarianteParaGuardar(talle: 'U')],
       );
       final vOtro = (await repo.verVariantes().first)
           .firstWhere((v) => v.productoId == pid).id;
@@ -299,6 +299,87 @@ void main() {
       );
       expect(d.filas, hasLength(1));
       expect(d.total, 14000, reason: 'solo lo suyo');
+    });
+  });
+
+  group('stock al cargar el producto', () {
+    test('la cantidad del formulario se guarda como stock', () async {
+      final pid = await repo.guardarProducto(
+        nombre: 'Remera',
+        depositoId: depositoId,
+        variantes: const [
+          VarianteParaGuardar(talle: 'S', stock: 3),
+          VarianteParaGuardar(talle: 'M', stock: 5),
+        ],
+      );
+      final vs = (await repo.verVariantes().first)
+          .where((v) => v.productoId == pid).toList();
+      final stock = await repo.verStockPorVariante().first;
+      expect(stock[vs.firstWhere((v) => v.talle == 'S').id], 3);
+      expect(stock[vs.firstWhere((v) => v.talle == 'M').id], 5);
+    });
+
+    test('editar la cantidad aplica la DIFERENCIA, no pisa el valor', () async {
+      // Es lo que evita que editar la prenda desde el telefono borre las
+      // ventas que el otro dispositivo cargo mientras tanto.
+      final pid = await repo.guardarProducto(
+        nombre: 'Remera',
+        depositoId: depositoId,
+        variantes: const [VarianteParaGuardar(talle: 'S', stock: 10)],
+      );
+      final vid = (await repo.verVariantes().first)
+          .firstWhere((v) => v.productoId == pid).id;
+
+      await repo.guardarProducto(
+        id: pid,
+        nombre: 'Remera',
+        depositoId: depositoId,
+        variantes: [VarianteParaGuardar(id: vid, talle: 'S', stock: 7)],
+      );
+
+      expect((await repo.verStockPorVariante().first)[vid], 7);
+      // Y queda el rastro del ajuste: +10 al crear, -3 al corregir.
+      final movs = await (db.select(db.movimientosStock)
+            ..where((m) => m.varianteId.equals(vid))
+            ..orderBy([(m) => OrderingTerm.asc(m.createdAt)]))
+          .get();
+      expect(movs.map((m) => m.delta).toList(), [10, -3]);
+    });
+
+    test('sin stock declarado no toca el inventario', () async {
+      final pid = await repo.guardarProducto(
+        nombre: 'Remera',
+        depositoId: depositoId,
+        variantes: const [VarianteParaGuardar(talle: 'S', stock: 4)],
+      );
+      final vid = (await repo.verVariantes().first)
+          .firstWhere((v) => v.productoId == pid).id;
+
+      // Editar solo el nombre no puede resetear el stock a cero.
+      await repo.guardarProducto(
+        id: pid,
+        nombre: 'Remera nueva',
+        depositoId: depositoId,
+        variantes: [VarianteParaGuardar(id: vid, talle: 'S')],
+      );
+      expect((await repo.verStockPorVariante().first)[vid], 4);
+    });
+
+    test('el stock va al deposito elegido, no siempre al principal', () async {
+      final otro = await repo.guardarDeposito(nombre: 'Casa');
+      final pid = await repo.guardarProducto(
+        nombre: 'Remera',
+        depositoId: otro,
+        variantes: const [VarianteParaGuardar(talle: 'S', stock: 6)],
+      );
+      final vid = (await repo.verVariantes().first)
+          .firstWhere((v) => v.productoId == pid).id;
+
+      final filas = await (db.select(db.stockVariantes)
+            ..where((x) => x.varianteId.equals(vid)))
+          .get();
+      expect(filas.single.depositoId, otro);
+      expect(filas.single.cantidad, 6);
     });
   });
 

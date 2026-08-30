@@ -76,6 +76,7 @@ class RopaView extends ConsumerStatefulWidget {
 class _RopaViewState extends ConsumerState<RopaView> {
   final _busqueda = TextEditingController();
   String _filtro = 'todos';
+  String _rubro = 'todo';
 
   @override
   void dispose() {
@@ -104,6 +105,7 @@ class _RopaViewState extends ConsumerState<RopaView> {
         final enCodigo = (p.codigo ?? '').toLowerCase().contains(texto);
         if (!enNombre && !enCodigo) return false;
       }
+      if (_rubro != 'todo' && p.rubro != _rubro) return false;
       return switch (_filtro) {
         'publicados' => p.publicado,
         'sin_publicar' => !p.publicado,
@@ -128,7 +130,7 @@ class _RopaViewState extends ConsumerState<RopaView> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Ropa', style: serif(size: 24, weight: 500)),
+                Text('Productos', style: serif(size: 24, weight: 500)),
                 Row(
                   children: [
                     GestureDetector(
@@ -168,7 +170,23 @@ class _RopaViewState extends ConsumerState<RopaView> {
               onCambio: (_) => setState(() {}),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
+          // El rubro primero y el estado despues: se piensa "quiero ver la
+          // ropa" antes que "quiero ver lo que no publique".
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 60),
+            child: FilaFiltros(
+              opciones: const [
+                ('todo', 'Todo'),
+                ('ropa', '👗 Ropa'),
+                ('arbell', '💄 Arbell'),
+                ('insumos', '🧴 Insumos'),
+              ],
+              activo: _rubro,
+              onElegir: (v) => setState(() => _rubro = v),
+            ),
+          ),
+          const SizedBox(height: 6),
           FadeSlideIn(
             delay: const Duration(milliseconds: 70),
             child: FilaFiltros(

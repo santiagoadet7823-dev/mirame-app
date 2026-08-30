@@ -5845,6 +5845,13 @@ class $ProductosTable extends Productos
   late final GeneratedColumn<double> pctSalon = GeneratedColumn<double>(
       'pct_salon', aliasedName, true,
       type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _rubroMeta = const VerificationMeta('rubro');
+  @override
+  late final GeneratedColumn<String> rubro = GeneratedColumn<String>(
+      'rubro', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('ropa'));
   static const VerificationMeta _publicadoMeta =
       const VerificationMeta('publicado');
   @override
@@ -5879,6 +5886,7 @@ class $ProductosTable extends Productos
         codigo,
         precio,
         pctSalon,
+        rubro,
         publicado,
         destacado
       ];
@@ -5949,6 +5957,10 @@ class $ProductosTable extends Productos
       context.handle(_pctSalonMeta,
           pctSalon.isAcceptableOrUnknown(data['pct_salon']!, _pctSalonMeta));
     }
+    if (data.containsKey('rubro')) {
+      context.handle(
+          _rubroMeta, rubro.isAcceptableOrUnknown(data['rubro']!, _rubroMeta));
+    }
     if (data.containsKey('publicado')) {
       context.handle(_publicadoMeta,
           publicado.isAcceptableOrUnknown(data['publicado']!, _publicadoMeta));
@@ -5990,6 +6002,8 @@ class $ProductosTable extends Productos
           .read(DriftSqlType.double, data['${effectivePrefix}precio'])!,
       pctSalon: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}pct_salon']),
+      rubro: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}rubro'])!,
       publicado: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}publicado'])!,
       destacado: attachedDatabase.typeMapping
@@ -6021,6 +6035,12 @@ class Producto extends DataClass implements Insertable<Producto> {
 
   /// Pisa el del proveedor cuando este producto tiene otro acuerdo.
   final double? pctSalon;
+
+  /// `ropa` | `arbell` | `insumos`. El salón no vende solo ropa.
+  ///
+  /// Texto y no enum a propósito: agregar un rubro nuevo no puede exigir una
+  /// migración de esquema.
+  final String rubro;
   final bool publicado;
   final bool destacado;
   const Producto(
@@ -6036,6 +6056,7 @@ class Producto extends DataClass implements Insertable<Producto> {
       this.codigo,
       required this.precio,
       this.pctSalon,
+      required this.rubro,
       required this.publicado,
       required this.destacado});
   @override
@@ -6065,6 +6086,7 @@ class Producto extends DataClass implements Insertable<Producto> {
     if (!nullToAbsent || pctSalon != null) {
       map['pct_salon'] = Variable<double>(pctSalon);
     }
+    map['rubro'] = Variable<String>(rubro);
     map['publicado'] = Variable<bool>(publicado);
     map['destacado'] = Variable<bool>(destacado);
     return map;
@@ -6095,6 +6117,7 @@ class Producto extends DataClass implements Insertable<Producto> {
       pctSalon: pctSalon == null && nullToAbsent
           ? const Value.absent()
           : Value(pctSalon),
+      rubro: Value(rubro),
       publicado: Value(publicado),
       destacado: Value(destacado),
     );
@@ -6116,6 +6139,7 @@ class Producto extends DataClass implements Insertable<Producto> {
       codigo: serializer.fromJson<String?>(json['codigo']),
       precio: serializer.fromJson<double>(json['precio']),
       pctSalon: serializer.fromJson<double?>(json['pctSalon']),
+      rubro: serializer.fromJson<String>(json['rubro']),
       publicado: serializer.fromJson<bool>(json['publicado']),
       destacado: serializer.fromJson<bool>(json['destacado']),
     );
@@ -6136,6 +6160,7 @@ class Producto extends DataClass implements Insertable<Producto> {
       'codigo': serializer.toJson<String?>(codigo),
       'precio': serializer.toJson<double>(precio),
       'pctSalon': serializer.toJson<double?>(pctSalon),
+      'rubro': serializer.toJson<String>(rubro),
       'publicado': serializer.toJson<bool>(publicado),
       'destacado': serializer.toJson<bool>(destacado),
     };
@@ -6154,6 +6179,7 @@ class Producto extends DataClass implements Insertable<Producto> {
           Value<String?> codigo = const Value.absent(),
           double? precio,
           Value<double?> pctSalon = const Value.absent(),
+          String? rubro,
           bool? publicado,
           bool? destacado}) =>
       Producto(
@@ -6169,6 +6195,7 @@ class Producto extends DataClass implements Insertable<Producto> {
         codigo: codigo.present ? codigo.value : this.codigo,
         precio: precio ?? this.precio,
         pctSalon: pctSalon.present ? pctSalon.value : this.pctSalon,
+        rubro: rubro ?? this.rubro,
         publicado: publicado ?? this.publicado,
         destacado: destacado ?? this.destacado,
       );
@@ -6188,6 +6215,7 @@ class Producto extends DataClass implements Insertable<Producto> {
       codigo: data.codigo.present ? data.codigo.value : this.codigo,
       precio: data.precio.present ? data.precio.value : this.precio,
       pctSalon: data.pctSalon.present ? data.pctSalon.value : this.pctSalon,
+      rubro: data.rubro.present ? data.rubro.value : this.rubro,
       publicado: data.publicado.present ? data.publicado.value : this.publicado,
       destacado: data.destacado.present ? data.destacado.value : this.destacado,
     );
@@ -6208,6 +6236,7 @@ class Producto extends DataClass implements Insertable<Producto> {
           ..write('codigo: $codigo, ')
           ..write('precio: $precio, ')
           ..write('pctSalon: $pctSalon, ')
+          ..write('rubro: $rubro, ')
           ..write('publicado: $publicado, ')
           ..write('destacado: $destacado')
           ..write(')'))
@@ -6228,6 +6257,7 @@ class Producto extends DataClass implements Insertable<Producto> {
       codigo,
       precio,
       pctSalon,
+      rubro,
       publicado,
       destacado);
   @override
@@ -6246,6 +6276,7 @@ class Producto extends DataClass implements Insertable<Producto> {
           other.codigo == this.codigo &&
           other.precio == this.precio &&
           other.pctSalon == this.pctSalon &&
+          other.rubro == this.rubro &&
           other.publicado == this.publicado &&
           other.destacado == this.destacado);
 }
@@ -6263,6 +6294,7 @@ class ProductosCompanion extends UpdateCompanion<Producto> {
   final Value<String?> codigo;
   final Value<double> precio;
   final Value<double?> pctSalon;
+  final Value<String> rubro;
   final Value<bool> publicado;
   final Value<bool> destacado;
   final Value<int> rowid;
@@ -6279,6 +6311,7 @@ class ProductosCompanion extends UpdateCompanion<Producto> {
     this.codigo = const Value.absent(),
     this.precio = const Value.absent(),
     this.pctSalon = const Value.absent(),
+    this.rubro = const Value.absent(),
     this.publicado = const Value.absent(),
     this.destacado = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -6296,6 +6329,7 @@ class ProductosCompanion extends UpdateCompanion<Producto> {
     this.codigo = const Value.absent(),
     this.precio = const Value.absent(),
     this.pctSalon = const Value.absent(),
+    this.rubro = const Value.absent(),
     this.publicado = const Value.absent(),
     this.destacado = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -6315,6 +6349,7 @@ class ProductosCompanion extends UpdateCompanion<Producto> {
     Expression<String>? codigo,
     Expression<double>? precio,
     Expression<double>? pctSalon,
+    Expression<String>? rubro,
     Expression<bool>? publicado,
     Expression<bool>? destacado,
     Expression<int>? rowid,
@@ -6332,6 +6367,7 @@ class ProductosCompanion extends UpdateCompanion<Producto> {
       if (codigo != null) 'codigo': codigo,
       if (precio != null) 'precio': precio,
       if (pctSalon != null) 'pct_salon': pctSalon,
+      if (rubro != null) 'rubro': rubro,
       if (publicado != null) 'publicado': publicado,
       if (destacado != null) 'destacado': destacado,
       if (rowid != null) 'rowid': rowid,
@@ -6351,6 +6387,7 @@ class ProductosCompanion extends UpdateCompanion<Producto> {
       Value<String?>? codigo,
       Value<double>? precio,
       Value<double?>? pctSalon,
+      Value<String>? rubro,
       Value<bool>? publicado,
       Value<bool>? destacado,
       Value<int>? rowid}) {
@@ -6367,6 +6404,7 @@ class ProductosCompanion extends UpdateCompanion<Producto> {
       codigo: codigo ?? this.codigo,
       precio: precio ?? this.precio,
       pctSalon: pctSalon ?? this.pctSalon,
+      rubro: rubro ?? this.rubro,
       publicado: publicado ?? this.publicado,
       destacado: destacado ?? this.destacado,
       rowid: rowid ?? this.rowid,
@@ -6412,6 +6450,9 @@ class ProductosCompanion extends UpdateCompanion<Producto> {
     if (pctSalon.present) {
       map['pct_salon'] = Variable<double>(pctSalon.value);
     }
+    if (rubro.present) {
+      map['rubro'] = Variable<String>(rubro.value);
+    }
     if (publicado.present) {
       map['publicado'] = Variable<bool>(publicado.value);
     }
@@ -6439,6 +6480,7 @@ class ProductosCompanion extends UpdateCompanion<Producto> {
           ..write('codigo: $codigo, ')
           ..write('precio: $precio, ')
           ..write('pctSalon: $pctSalon, ')
+          ..write('rubro: $rubro, ')
           ..write('publicado: $publicado, ')
           ..write('destacado: $destacado, ')
           ..write('rowid: $rowid')
@@ -14420,6 +14462,7 @@ typedef $$ProductosTableCreateCompanionBuilder = ProductosCompanion Function({
   Value<String?> codigo,
   Value<double> precio,
   Value<double?> pctSalon,
+  Value<String> rubro,
   Value<bool> publicado,
   Value<bool> destacado,
   Value<int> rowid,
@@ -14437,6 +14480,7 @@ typedef $$ProductosTableUpdateCompanionBuilder = ProductosCompanion Function({
   Value<String?> codigo,
   Value<double> precio,
   Value<double?> pctSalon,
+  Value<String> rubro,
   Value<bool> publicado,
   Value<bool> destacado,
   Value<int> rowid,
@@ -14486,6 +14530,9 @@ class $$ProductosTableFilterComposer
 
   ColumnFilters<double> get pctSalon => $composableBuilder(
       column: $table.pctSalon, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get rubro => $composableBuilder(
+      column: $table.rubro, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get publicado => $composableBuilder(
       column: $table.publicado, builder: (column) => ColumnFilters(column));
@@ -14539,6 +14586,9 @@ class $$ProductosTableOrderingComposer
   ColumnOrderings<double> get pctSalon => $composableBuilder(
       column: $table.pctSalon, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get rubro => $composableBuilder(
+      column: $table.rubro, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<bool> get publicado => $composableBuilder(
       column: $table.publicado, builder: (column) => ColumnOrderings(column));
 
@@ -14591,6 +14641,9 @@ class $$ProductosTableAnnotationComposer
   GeneratedColumn<double> get pctSalon =>
       $composableBuilder(column: $table.pctSalon, builder: (column) => column);
 
+  GeneratedColumn<String> get rubro =>
+      $composableBuilder(column: $table.rubro, builder: (column) => column);
+
   GeneratedColumn<bool> get publicado =>
       $composableBuilder(column: $table.publicado, builder: (column) => column);
 
@@ -14633,6 +14686,7 @@ class $$ProductosTableTableManager extends RootTableManager<
             Value<String?> codigo = const Value.absent(),
             Value<double> precio = const Value.absent(),
             Value<double?> pctSalon = const Value.absent(),
+            Value<String> rubro = const Value.absent(),
             Value<bool> publicado = const Value.absent(),
             Value<bool> destacado = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -14650,6 +14704,7 @@ class $$ProductosTableTableManager extends RootTableManager<
             codigo: codigo,
             precio: precio,
             pctSalon: pctSalon,
+            rubro: rubro,
             publicado: publicado,
             destacado: destacado,
             rowid: rowid,
@@ -14667,6 +14722,7 @@ class $$ProductosTableTableManager extends RootTableManager<
             Value<String?> codigo = const Value.absent(),
             Value<double> precio = const Value.absent(),
             Value<double?> pctSalon = const Value.absent(),
+            Value<String> rubro = const Value.absent(),
             Value<bool> publicado = const Value.absent(),
             Value<bool> destacado = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -14684,6 +14740,7 @@ class $$ProductosTableTableManager extends RootTableManager<
             codigo: codigo,
             precio: precio,
             pctSalon: pctSalon,
+            rubro: rubro,
             publicado: publicado,
             destacado: destacado,
             rowid: rowid,

@@ -214,6 +214,12 @@ class Productos extends Table with _Sincronizable {
 
   /// Pisa el del proveedor cuando este producto tiene otro acuerdo.
   RealColumn get pctSalon => real().nullable()();
+
+  /// `ropa` | `arbell` | `insumos`. El salón no vende solo ropa.
+  ///
+  /// Texto y no enum a propósito: agregar un rubro nuevo no puede exigir una
+  /// migración de esquema.
+  TextColumn get rubro => text().withDefault(const Constant('ropa'))();
   BoolColumn get publicado => boolean().withDefault(const Constant(false))();
   BoolColumn get destacado => boolean().withDefault(const Constant(false))();
 }
@@ -375,7 +381,7 @@ class MirameDb extends _$MirameDb {
   MirameDb.paraTest(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -421,6 +427,11 @@ class MirameDb extends _$MirameDb {
               await m.createTable(t);
             }
             await _indicesRopa(this);
+          }
+          // v3 · rubro. Las prendas que ya estaban son ropa, que es el default
+          // de la columna: no hay nada que rellenar a mano.
+          if (desde < 3) {
+            await m.addColumn(productos, productos.rubro);
           }
         },
         beforeOpen: (details) async {

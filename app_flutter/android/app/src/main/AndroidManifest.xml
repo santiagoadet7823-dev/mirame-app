@@ -6,6 +6,14 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <!-- Auto-updater: instalar el APK descargado desde GitHub Releases. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <!-- Fotos de las prendas y escaneo del codigo de barras. La galeria NO
+         necesita permiso: image_picker usa el selector del sistema. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- La app funciona sin camara (se puede elegir de la galeria y tipear el
+         codigo), asi que no se exige el hardware: exigirlo la sacaria de Play
+         para tablets sin camara trasera. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+
     <!-- Recordatorios de retoque y de turno del dia siguiente. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Instalacion sin confirmacion en Android 12+. Es de nivel normal: no

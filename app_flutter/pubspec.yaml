@@ -5,7 +5,7 @@ publish_to: none
 # versionName + versionCode salen de acá. El versionCode (después del +)
 # SIEMPRE sube en 1 y NUNCA baja: Android rechaza instalar uno menor y eso
 # deja a la flota trabada sin arreglo remoto. Usar scripts/bump-version.sh.
-version: 1.12.0+23
+version: 1.13.0+24
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -61,6 +61,10 @@ dependencies:
   # sin eso el free tier de 1 GB se agota en ~300 fotos y la tienda tarda una
   # eternidad con datos moviles. La alternativa en Dart puro tarda segundos por
   # foto en un telefono de gama media.
+  # Escanear el codigo de barras del producto. Es el sucesor mantenido de
+  # qr_code_scanner (archivado) y usa MLKit en Android: lee EAN-13, UPC y QR
+  # sin configuracion.
+  mobile_scanner: ^7.1.4
   image_picker: ^1.2.0
   flutter_image_compress: ^2.4.0
   flutter_svg: ^2.3.0           # los 12 iconos del original

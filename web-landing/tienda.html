@@ -49,6 +49,18 @@
   header h1{font-family:"Cormorant Garamond",Georgia,serif;font-size:32px;font-weight:600;line-height:1.05}
   header .sub{font-size:10px;letter-spacing:3px;color:var(--t3);text-transform:uppercase;margin-top:6px}
 
+  /* Solapas de rubro: mas grandes que los filtros de categoria porque son la
+     decision principal — "vengo a ver ropa" o "vengo a ver los productos". */
+  .rubros{display:flex;gap:6px;padding:0 0 14px}
+  .rubro{
+    flex:1;padding:11px 8px;border-radius:var(--r);text-align:center;
+    border:1px solid var(--border-md);background:var(--surface);
+    font-size:12px;font-weight:500;color:var(--t2);cursor:pointer;
+    transition:all .18s var(--ease);
+  }
+  .rubro.on{background:var(--brand-bg);border-color:var(--border-lav);color:var(--brand);font-weight:600}
+  .rubro .e{display:block;font-size:17px;margin-bottom:3px}
+
   .filtros{display:flex;gap:7px;overflow-x:auto;padding:0 0 14px;scrollbar-width:none}
   .filtros::-webkit-scrollbar{display:none}
   .pill{
@@ -171,6 +183,7 @@
 </header>
 
 <div class="wrap">
+  <div class="rubros" id="rubros"></div>
   <div class="filtros" id="filtros"></div>
   <div id="lista"><div class="cargando">Buscando prendas…</div></div>
 </div>
@@ -200,6 +213,15 @@ const KEY_SB = '__SUPABASE_KEY__';
 const TIENDA = new URLSearchParams(location.search).get('t') || 'mirame';
 
 let PRODUCTOS = [], VARIANTES = {}, FOTOS = {}, CARRITO = [], FILTRO = 'todo';
+let RUBRO = 'todo';
+
+// Los rubros que puede tener un salón. El nombre visible vive acá y no en la
+// base para poder cambiarlo sin tocar los productos ya cargados.
+const RUBROS = {
+  ropa:    {e: '👗', t: 'Ropa'},
+  arbell:  {e: '💄', t: 'Arbell'},
+  insumos: {e: '🧴', t: 'Insumos'},
+};
 let WA = null;
 
 const $ = id => document.getElementById(id);
@@ -223,14 +245,15 @@ async function cargar() {
     if (!prods.length) {
       $('titulo').textContent = 'Tienda';
       $('lista').innerHTML =
-        '<div class="vacio"><div class="e">👗</div><p>Todavía no hay prendas publicadas</p></div>';
+        '<div class="vacio"><div class="e">🛍️</div><p>Todavía no hay productos publicados</p></div>';
       return;
     }
 
     PRODUCTOS = prods;
     document.title = 'Tienda';
     $('titulo').textContent = 'Tienda';
-    $('sub').textContent = prods.length + (prods.length === 1 ? ' prenda' : ' prendas');
+    $('sub').textContent =
+      prods.length + (prods.length === 1 ? ' producto' : ' productos');
 
     const ids = prods.map(p => p.id);
     // Una sola consulta para variantes y otra para fotos, con `in`: pedir por
@@ -243,6 +266,7 @@ async function cargar() {
     for (const v of vars) (VARIANTES[v.producto_id] ??= []).push(v);
     for (const f of fotos) (FOTOS[f.producto_id] ??= []).push(f);
 
+    pintarRubros();
     pintarFiltros();
     pintar();
   } catch (e) {
@@ -252,11 +276,43 @@ async function cargar() {
   }
 }
 
+const iconoDe = p => (RUBROS[p.rubro || 'ropa'] || RUBROS.ropa).e;
+
 const stockDe = p => (VARIANTES[p.id] || []).reduce((a, v) => a + (v.disponible || 0), 0);
 
+// Solo se muestran las solapas de los rubros que ESTE salón usa. Una tienda
+// que solo vende ropa no tiene por qué mostrar dos solapas vacías.
+function pintarRubros() {
+  const usados = [...new Set(PRODUCTOS.map(p => p.rubro || 'ropa'))]
+    .filter(r => RUBROS[r]);
+  if (usados.length < 2) { $('rubros').innerHTML = ''; return; }
+
+  $('rubros').innerHTML = [['todo', {e: '✨', t: 'Todo'}],
+    ...usados.map(r => [r, RUBROS[r]])]
+    .map(([k, v]) => `
+      <div class="rubro ${RUBRO === k ? 'on' : ''}" onclick="verRubro('${esc(k)}')">
+        <span class="e">${v.e}</span>${esc(v.t)}
+      </div>`).join('');
+}
+
+function verRubro(k) {
+  RUBRO = k;
+  // El filtro de categoría se resetea: las categorías de ropa no tienen nada
+  // que ver con las de insumos, y arrastrar una dejaría la grilla vacía sin
+  // que se entienda por qué.
+  FILTRO = 'todo';
+  pintarRubros();
+  pintarFiltros();
+  pintar();
+}
+
+/// Los productos del rubro activo.
+const delRubro = () =>
+  PRODUCTOS.filter(p => RUBRO === 'todo' || (p.rubro || 'ropa') === RUBRO);
+
 function pintarFiltros() {
-  const cats = [...new Set(PRODUCTOS.map(p => p.categoria).filter(Boolean))];
-  if (!cats.length) return;
+  const cats = [...new Set(delRubro().map(p => p.categoria).filter(Boolean))];
+  if (!cats.length) { $('filtros').innerHTML = ''; return; }
   $('filtros').innerHTML =
     [['todo', 'Todo'], ...cats.map(c => [c, c])]
       .map(([k, t]) =>
@@ -267,7 +323,12 @@ function pintarFiltros() {
 function filtrar(k) { FILTRO = k; pintarFiltros(); pintar(); }
 
 function pintar() {
-  const vis = PRODUCTOS.filter(p => FILTRO === 'todo' || p.categoria === FILTRO);
+  const vis = delRubro().filter(p => FILTRO === 'todo' || p.categoria === FILTRO);
+  if (!vis.length) {
+    $('lista').innerHTML =
+      '<div class="vacio"><div class="e">🔍</div><p>No hay nada acá todavía</p></div>';
+    return;
+  }
   $('lista').innerHTML = '<div class="grid">' + vis.map(p => {
     const foto = (FOTOS[p.id] || [])[0];
     const sin = stockDe(p) <= 0;
@@ -277,14 +338,16 @@ function pintar() {
       <div class="card" onclick="abrir('${p.id}')">
         <div class="foto">
           ${foto ? `<img src="${esc(foto.path)}" alt="${esc(p.nombre)}" loading="lazy">`
-                 : '<div class="vacia">👗</div>'}
+                 : `<div class="vacia">${iconoDe(p)}</div>`}
           ${p.destacado && !sin ? '<div class="destacada">✨ Nuevo</div>' : ''}
           ${sin ? '<div class="agotado"><span>Agotado</span></div>' : ''}
         </div>
         <div class="info">
           <div class="nom">${esc(p.nombre)}</div>
           <div class="precio">${plata(p.precio)}</div>
-          ${talles.length ? `<div class="talles">Talles ${talles.map(esc).join(' · ')}</div>` : ''}
+          ${talles.length ? `<div class="talles">${
+              (p.rubro || 'ropa') === 'ropa' ? 'Talles ' : ''
+            }${talles.map(esc).join(' · ')}</div>` : ''}
         </div>
       </div>`;
   }).join('') + '</div>';
@@ -302,7 +365,7 @@ function abrir(id) {
     <div class="fotos">
       ${fotos.length ? fotos.map(f =>
           `<img src="${esc(f.path)}" alt="${esc(ACTUAL.nombre)}">`).join('')
-        : '<div class="foto"><div class="vacia">👗</div></div>'}
+        : `<div class="foto"><div class="vacia">${iconoDe(ACTUAL)}</div></div>`}
     </div>
     <div class="cuerpo">
       ${ACTUAL.codigo ? `<div class="cod">${esc(ACTUAL.codigo)}</div>` : ''}
@@ -364,7 +427,7 @@ function alCarrito() {
 function pintarBarra() {
   const n = CARRITO.reduce((a, l) => a + l.cantidad, 0);
   $('barra').classList.toggle('on', n > 0);
-  $('carritoN').textContent = n + (n === 1 ? ' prenda' : ' prendas');
+  $('carritoN').textContent = n + (n === 1 ? ' producto' : ' productos');
   $('carritoTot').textContent =
     plata(CARRITO.reduce((a, l) => a + l.precio * l.cantidad, 0));
 }
@@ -401,7 +464,7 @@ function verCarrito() {
 
       <button class="btn" id="btnRes" onclick="reservar()">Reservar por 48 horas</button>
       <p style="font-size:11px;color:var(--t3);text-align:center;margin-top:10px;line-height:1.5">
-        Te guardamos las prendas 48 horas.<br>Después te escribimos para coordinar.
+        Te lo guardamos 48 horas.<br>Después te escribimos para coordinar.
       </p>
       <button class="btn sec" onclick="cerrar()">Seguir mirando</button>
     </div>`;
@@ -415,7 +478,8 @@ async function reservar() {
   const nombre = $('fNombre').value.trim();
   const tel = $('fTel').value.trim();
   if (!nombre) {
-    $('errBox').innerHTML = '<div class="err">Poné tu nombre así sabemos para quién guardarlas</div>';
+    $('errBox').innerHTML =
+      '<div class="err">Poné tu nombre así sabemos para quién guardarlo</div>';
     return;
   }
 
@@ -447,7 +511,7 @@ async function reservar() {
         <div style="font-size:46px;margin:10px 0">🎉</div>
         <h2>¡Listo, ${esc(nombre)}!</h2>
         <div class="ok" style="margin-top:16px">
-          Guardamos tus prendas por 48 horas.<br>Tu código es
+          Te lo guardamos por 48 horas.<br>Tu código es
           <b>${esc(codigo)}</b>
         </div>
         ${WA ? `<a href="https://wa.me/${WA}?text=${msg}" class="btn wa"

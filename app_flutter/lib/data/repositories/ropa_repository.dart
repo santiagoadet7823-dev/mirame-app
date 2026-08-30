@@ -267,9 +267,11 @@ class RopaRepository {
     String? codigo,
     num precio = 0,
     num? pctSalon,
+    String rubro = 'ropa',
     bool publicado = false,
     bool destacado = false,
-    List<({String? id, String? talle, String? color})>? variantes,
+    List<VarianteParaGuardar>? variantes,
+    String? depositoId,
   }) async {
     final filaId = id ?? nuevoId();
     final ahora = DateTime.now();
@@ -286,6 +288,7 @@ class RopaRepository {
               codigo: Value(codigo),
               precio: Value(precio.toDouble()),
               pctSalon: Value(pctSalon?.toDouble()),
+              rubro: Value(rubro),
               publicado: Value(publicado),
               destacado: Value(destacado),
               updatedAt: Value(ahora),
@@ -306,6 +309,7 @@ class RopaRepository {
           'codigo': codigo,
           'precio': precio,
           'pct_salon': pctSalon,
+          'rubro': rubro,
           'publicado': publicado,
           'destacado': destacado,
           'updated_at': ahora.toUtc().toIso8601String(),
@@ -356,6 +360,26 @@ class RopaRepository {
             'updated_at': ahora.toUtc().toIso8601String(),
           },
         );
+
+        // El stock va por DELTA aunque el formulario muestre un absoluto: si
+        // se escribiera el valor tal cual, editar una prenda desde el teléfono
+        // pisaría las ventas que el otro dispositivo cargó mientras tanto.
+        if (v.stock != null && depositoId != null) {
+          final actual = await (_db.select(_db.stockVariantes)
+                ..where((x) =>
+                    x.varianteId.equals(vid) &
+                    x.depositoId.equals(depositoId)))
+              .getSingleOrNull();
+          final diferencia = v.stock! - (actual?.cantidad ?? 0);
+          if (diferencia != 0) {
+            await ajustarStock(
+              varianteId: vid,
+              depositoId: depositoId,
+              delta: diferencia,
+              motivo: dom.MotivoStock.ingreso,
+            );
+          }
+        }
       }
     });
     return filaId;
@@ -833,6 +857,28 @@ class RopaRepository {
       );
     });
   }
+}
+
+/// Una variante al guardarla.
+///
+/// Es una clase y no un record a propósito: un record es estructural, así que
+/// agregarle un campo rompe TODOS los llamadores a la vez aunque ese campo sea
+/// opcional. Pasó al sumar el stock.
+class VarianteParaGuardar {
+  const VarianteParaGuardar({this.id, this.talle, this.color, this.stock});
+
+  /// `null` = variante nueva.
+  final String? id;
+  final String? talle;
+  final String? color;
+
+  /// Cuántas unidades tienen que QUEDAR, no un delta: el formulario muestra un
+  /// número y la usuaria lo corrige. La diferencia se calcula en el
+  /// repositorio y se aplica como delta, que es lo que el motor de sync sabe
+  /// resolver cuando dos dispositivos tocan lo mismo.
+  ///
+  /// `null` = no tocar el stock.
+  final int? stock;
 }
 
 /// Lo que se está por vender, antes de calcular el reparto.
