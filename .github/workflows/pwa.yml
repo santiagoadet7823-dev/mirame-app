@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths:
       - 'app_flutter/**'
+      - 'web-landing/**'
       - '.github/workflows/pwa.yml'
   workflow_dispatch:
 
