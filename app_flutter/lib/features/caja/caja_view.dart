@@ -81,7 +81,6 @@ class _SelectorMes extends StatelessWidget {
       );
 }
 
-String nombreMes(DateTime d) => '${monthName(d.month)} ${d.year}';
 
 class CajaView extends ConsumerStatefulWidget {
   const CajaView({super.key});

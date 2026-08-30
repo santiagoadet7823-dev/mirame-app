@@ -126,3 +126,9 @@ String greeting(DateTime now) {
   if (now.hour < 18) return 'Buenas tardes 🌸';
   return 'Buenas noches 🌙';
 }
+
+/// `Agosto 2026`. Lo usan el selector de mes de Caja y el de liquidaciones.
+///
+/// Vive acá y no en una vista porque lo necesitan dos pantallas distintas, y
+/// que una importe a la otra las ataría sin razon.
+String nombreMes(DateTime d) => '${monthName(d.month)} ${d.year}';

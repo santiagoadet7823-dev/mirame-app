@@ -6,6 +6,7 @@ import 'package:mirame/data/repositories/business_repository.dart';
 import 'package:mirame/data/repositories/ropa_repository.dart';
 import 'package:mirame/data/sync/sync_engine.dart';
 import 'package:mirame/domain/entities/ropa.dart' as dom;
+import 'package:mirame/domain/rules/consignacion.dart';
 
 void main() {
   late MirameDb db;
@@ -190,6 +191,115 @@ void main() {
         .get();
     expect(todas, hasLength(2), reason: 'la fila sigue en la base');
     expect(todas.where((v) => v.deletedAt != null), hasLength(1));
+  });
+
+  group('liquidación', () {
+    test('junta lo del proveedor con su detalle', () async {
+      final vid = await prenda(nombre: 'Vestido');
+      await repo.registrarVenta(
+        depositoId: depositoId,
+        items: [ItemParaVender(varianteId: vid, precioUnit: 20000, pctSalon: 30)],
+      );
+
+      final d = await repo.armarLiquidacion(
+        destinatarioId: proveedorId,
+        destinatarioNombre: 'Prov',
+        tipo: dom.LiquidacionTipo.proveedor,
+        desde: DateTime.now().subtract(const Duration(days: 1)),
+        hasta: DateTime.now().add(const Duration(days: 1)),
+      );
+
+      expect(d.total, 14000);
+      expect(d.filas.single.prenda, 'Vestido');
+      // El porcentaje del PROVEEDOR es el complemento del salón.
+      expect(d.filas.single.pct, 70);
+      expect(d.filas.single.variante, 'M · Negro');
+    });
+
+    test('una prenda ya liquidada NO vuelve a aparecer', () async {
+      // Es el error más caro que puede cometer este módulo: pagar dos veces la
+      // misma prenda, y nadie lo nota hasta que faltan los números.
+      final vid = await prenda(nombre: 'Vestido');
+      await repo.registrarVenta(
+        depositoId: depositoId,
+        items: [ItemParaVender(varianteId: vid, precioUnit: 20000, pctSalon: 30)],
+      );
+
+      final desde = DateTime.now().subtract(const Duration(days: 1));
+      final hasta = DateTime.now().add(const Duration(days: 1));
+      Future<DetalleLiquidacion> calcular() => repo.armarLiquidacion(
+            destinatarioId: proveedorId,
+            destinatarioNombre: 'Prov',
+            tipo: dom.LiquidacionTipo.proveedor,
+            desde: desde,
+            hasta: hasta,
+          );
+
+      final primera = await calcular();
+      expect(primera.total, 14000);
+
+      await repo.cerrarLiquidacion(
+          detalle: primera, destinatarioId: proveedorId);
+
+      final segunda = await calcular();
+      expect(segunda.total, 0, reason: 'ya se pagó');
+      expect(segunda.filas, isEmpty);
+    });
+
+    test('pagarle al proveedor sale de la caja como EGRESO', () async {
+      // Al vender entró el total; acá sale su parte. Si no se registrara, la
+      // caja mostraría toda la venta como ganancia del salón.
+      final vid = await prenda(nombre: 'Vestido');
+      await repo.registrarVenta(
+        depositoId: depositoId,
+        items: [ItemParaVender(varianteId: vid, precioUnit: 20000, pctSalon: 30)],
+      );
+      final d = await repo.armarLiquidacion(
+        destinatarioId: proveedorId,
+        destinatarioNombre: 'Prov',
+        tipo: dom.LiquidacionTipo.proveedor,
+        desde: DateTime.now().subtract(const Duration(days: 1)),
+        hasta: DateTime.now().add(const Duration(days: 1)),
+      );
+      await repo.cerrarLiquidacion(detalle: d, destinatarioId: proveedorId);
+
+      final movs = await (db.select(db.transactions)).get();
+      final egreso = movs.where((m) => m.tipo == 'expense').single;
+      expect(egreso.monto, 14000);
+      expect(egreso.categoria, 'ropa-proveedor');
+
+      // Y el neto de la caja es exactamente lo que le queda al salón.
+      final ingreso = movs.where((m) => m.tipo == 'income').single;
+      expect(ingreso.monto - egreso.monto, 6000);
+    });
+
+    test('no mezcla proveedores', () async {
+      final otro = await repo.guardarProveedor(nombre: 'Otro', pctSalon: 50);
+      final pid = await repo.guardarProducto(
+        nombre: 'Ajena', proveedorId: otro, precio: 10000, pctSalon: 50,
+        variantes: [(id: null, talle: 'U', color: null)],
+      );
+      final vOtro = (await repo.verVariantes().first)
+          .firstWhere((v) => v.productoId == pid).id;
+      await repo.ajustarStock(
+          varianteId: vOtro, depositoId: depositoId, delta: 3);
+
+      final mio = await prenda(nombre: 'Mia');
+      await repo.registrarVenta(depositoId: depositoId, items: [
+        ItemParaVender(varianteId: mio, precioUnit: 20000, pctSalon: 30),
+        ItemParaVender(varianteId: vOtro, precioUnit: 10000, pctSalon: 50),
+      ]);
+
+      final d = await repo.armarLiquidacion(
+        destinatarioId: proveedorId,
+        destinatarioNombre: 'Prov',
+        tipo: dom.LiquidacionTipo.proveedor,
+        desde: DateTime.now().subtract(const Duration(days: 1)),
+        hasta: DateTime.now().add(const Duration(days: 1)),
+      );
+      expect(d.filas, hasLength(1));
+      expect(d.total, 14000, reason: 'solo lo suyo');
+    });
   });
 
   test('solo un depósito puede ser el principal', () async {

@@ -21,6 +21,7 @@ import '../../domain/rules/formatting.dart';
 import '../auth/session_controller.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
+import 'liquidaciones_view.dart';
 import 'mi_tienda.dart';
 import 'producto_form.dart';
 import 'venta_form.dart';
@@ -136,6 +137,14 @@ class _RopaViewState extends ConsumerState<RopaView> {
                       child: Text('Mi tienda',
                           style: sans(
                               size: 13, weight: 600, color: MColors.brand)),
+                    ),
+                    const SizedBox(width: 16),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => mostrarLiquidaciones(context),
+                      child: Text('Liquidar',
+                          style: sans(
+                              size: 13, weight: 600, color: MColors.tMuted)),
                     ),
                     const SizedBox(width: 16),
                     GestureDetector(

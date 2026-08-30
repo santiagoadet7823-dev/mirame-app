@@ -5,7 +5,7 @@ publish_to: none
 # versionName + versionCode salen de acá. El versionCode (después del +)
 # SIEMPRE sube en 1 y NUNCA baja: Android rechaza instalar uno menor y eso
 # deja a la flota trabada sin arreglo remoto. Usar scripts/bump-version.sh.
-version: 1.10.1+21
+version: 1.11.0+22
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

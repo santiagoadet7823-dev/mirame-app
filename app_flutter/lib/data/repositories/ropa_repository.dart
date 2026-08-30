@@ -577,6 +577,179 @@ class RopaRepository {
   }
 
 
+
+  /// Arma el comprobante de un proveedor o de un vendedor para un período.
+  ///
+  /// Solo entran ítems **sin liquidar**: el `liquidacion_id` es lo que evita
+  /// pagar dos veces la misma prenda, que es el error más caro que puede
+  /// cometer este módulo y el que nadie nota hasta que faltan los números.
+  Future<DetalleLiquidacion> armarLiquidacion({
+    required String destinatarioId,
+    required String destinatarioNombre,
+    required dom.LiquidacionTipo tipo,
+    required DateTime desde,
+    required DateTime hasta,
+  }) async {
+    final items = await itemsSinLiquidar(desde: desde, hasta: hasta);
+    if (items.isEmpty) {
+      return armarDetalle(
+        destinatario: destinatarioNombre,
+        tipo: tipo,
+        desde: desde,
+        hasta: hasta,
+        filas: const [],
+      );
+    }
+
+    // Se resuelve a qué producto pertenece cada ítem para poder filtrar por
+    // proveedor y para escribir en el comprobante el código y el talle: sin
+    // eso, el papel dice "prenda" y no sirve para auditar nada.
+    final variantes = {
+      for (final v in await _db.select(_db.productoVariantes).get()) v.id: v
+    };
+    final productos = {
+      for (final p in await _db.select(_db.productos).get()) p.id: p
+    };
+    final ventas = {
+      for (final v in await _db.select(_db.ventas).get()) v.id: v
+    };
+
+    final filas = <FilaLiquidacion>[];
+    for (final i in items) {
+      final variante = i.varianteId == null ? null : variantes[i.varianteId];
+      final producto =
+          variante == null ? null : productos[variante.productoId];
+
+      final esDeEste = switch (tipo) {
+        dom.LiquidacionTipo.proveedor =>
+          producto?.proveedorId == destinatarioId,
+        dom.LiquidacionTipo.vendedor =>
+          ventas[i.ventaId]?.vendedorId == destinatarioId,
+      };
+      if (!esDeEste) continue;
+
+      final monto = tipo == dom.LiquidacionTipo.proveedor
+          ? i.montoProveedor
+          : i.montoVendedor;
+      if (monto == 0) continue;
+
+      filas.add(FilaLiquidacion(
+        itemId: i.id,
+        fecha: fechaDesdeTextoSql(ventas[i.ventaId]?.fecha ?? ''),
+        prenda: producto?.nombre ?? i.descripcion ?? 'Prenda',
+        codigo: producto?.codigo,
+        variante: variante == null
+            ? null
+            : [variante.talle, variante.color]
+                .where((x) => x != null && x.isNotEmpty)
+                .join(' · '),
+        cantidad: i.cantidad,
+        precioUnit: i.precioUnit,
+        // El porcentaje que se le aplicó, no el que tiene hoy: es lo que
+        // permite explicar el número sin discutir.
+        pct: tipo == dom.LiquidacionTipo.proveedor
+            ? 100 - i.pctSalon
+            : i.pctVendedor,
+        monto: monto,
+      ));
+    }
+
+    return armarDetalle(
+      destinatario: destinatarioNombre,
+      tipo: tipo,
+      desde: desde,
+      hasta: hasta,
+      filas: filas,
+    );
+  }
+
+  /// Cierra la liquidación: la guarda y marca sus ítems como pagados.
+  ///
+  /// Va en UNA transacción. Si se guardara la liquidación y fallara el marcado
+  /// de los ítems, esas prendas volverían a aparecer como pendientes en el
+  /// próximo período y se pagarían dos veces.
+  Future<String> cerrarLiquidacion({
+    required DetalleLiquidacion detalle,
+    required String destinatarioId,
+  }) async {
+    final filaId = nuevoId();
+    final ahora = DateTime.now();
+
+    await _db.transaction(() async {
+      await _db.into(_db.liquidaciones).insert(
+            LiquidacionesCompanion.insert(
+              id: filaId,
+              tenantId: _tenantId,
+              tipo: detalle.tipo.name,
+              destinatarioId: destinatarioId,
+              periodoDesde: claveFecha(detalle.desde),
+              periodoHasta: claveFecha(detalle.hasta),
+              total: Value(detalle.total.toDouble()),
+              estado: const Value('pagada'),
+              pagadaAt: Value(ahora),
+              updatedAt: Value(ahora),
+            ),
+          );
+      await _sync.encolar(
+        tenantId: _tenantId,
+        tabla: 'liquidaciones',
+        filaId: filaId,
+        operacion: 'upsert',
+        payload: {
+          'id': filaId,
+          'tenant_id': _tenantId,
+          'tipo': detalle.tipo.name,
+          'destinatario_id': destinatarioId,
+          'periodo_desde': claveFecha(detalle.desde),
+          'periodo_hasta': claveFecha(detalle.hasta),
+          'total': detalle.total,
+          'estado': 'pagada',
+          'pagada_at': ahora.toUtc().toIso8601String(),
+          'updated_at': ahora.toUtc().toIso8601String(),
+        },
+      );
+
+      for (final f in detalle.filas) {
+        await (_db.update(_db.ventaItems)..where((i) => i.id.equals(f.itemId)))
+            .write(VentaItemsCompanion(
+          liquidacionId: Value(filaId),
+          updatedAt: Value(ahora),
+        ));
+        await _sync.encolar(
+          tenantId: _tenantId,
+          tabla: 'venta_items',
+          filaId: f.itemId,
+          operacion: 'upsert',
+          payload: {
+            'id': f.itemId,
+            'liquidacion_id': filaId,
+            'updated_at': ahora.toUtc().toIso8601String(),
+          },
+        );
+      }
+
+      // Pagarle al proveedor es plata que SALE. Se registra como egreso para
+      // que la caja cuadre: al vender entró el total, acá sale su parte.
+      if (detalle.total > 0 &&
+          detalle.tipo == dom.LiquidacionTipo.proveedor) {
+        await _negocio.guardarMovimiento(
+          tipo: 'expense',
+          monto: detalle.total.toDouble(),
+          fecha: ahora,
+          descripcion: 'Liquidación · ${detalle.destinatario}',
+          categoria: 'ropa-proveedor',
+        );
+      }
+    });
+    return filaId;
+  }
+
+  Stream<List<Liquidacione>> verLiquidaciones() =>
+      (_db.select(_db.liquidaciones)
+            ..where((l) => l.tenantId.equals(_tenantId) & l.deletedAt.isNull())
+            ..orderBy([(l) => OrderingTerm.desc(l.createdAt)]))
+          .watch();
+
   /// Guarda una foto. Si `path` viene vacio, queda pendiente de subir.
   ///
   /// Las fotos son lo unico del modulo que NO funciona offline de punta a
