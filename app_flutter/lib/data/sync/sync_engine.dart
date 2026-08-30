@@ -35,6 +35,21 @@ const tablasSync = <String>[
   'appointments',
   'transactions',
   'stock_items',
+  // Ropa. El orden importa: los productos tienen que existir antes que sus
+  // variantes, y las variantes antes que su stock, o el pull escribe filas
+  // que apuntan a nada.
+  'proveedores',
+  'depositos',
+  'productos',
+  'producto_variantes',
+  'stock_variantes',
+  'producto_fotos',
+  'ventas',
+  'venta_items',
+  'reservas',
+  'reserva_items',
+  'liquidaciones',
+  'movimientos_stock',
 ];
 
 enum EstadoSync { inactivo, sincronizando, sinRed, error }
@@ -178,6 +193,17 @@ class SyncEngine {
         await sb.rpc('ajustar_stock', params: {
           'p_item': fila.filaId,
           'p_delta': payload['delta'],
+        });
+      case 'delta_variante':
+        // El stock de ropa NO usa last-write-wins, por la misma razon que el
+        // del salon: dos ventas offline de la misma prenda resueltas por LWW
+        // descuentan una sola.
+        await sb.rpc('ajustar_stock_variante', params: {
+          'p_variante': payload['variante_id'],
+          'p_deposito': payload['deposito_id'],
+          'p_delta': payload['delta'],
+          'p_motivo': payload['motivo'],
+          'p_ref': payload['referencia_id'],
         });
       case 'servicios':
         // Reemplazo completo de la tabla puente de un turno: primero se borra
@@ -335,7 +361,7 @@ class SyncEngine {
   /// El servidor las manda en ISO: hay que convertirlas o la fila queda
   /// ilegible y la próxima lectura lanza `FormatException`.
   static const _columnasFecha = {'created_at', 'updated_at', 'deleted_at',
-      'cumple'};
+      'cumple', 'vence_at', 'pagada_at'};
 
   Future<void> _aplicar(String tabla, Map<String, dynamic> fila) async {
     final columnas = <String, dynamic>{};

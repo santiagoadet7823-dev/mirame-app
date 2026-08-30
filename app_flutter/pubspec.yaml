@@ -50,6 +50,12 @@ dependencies:
   # usa el selector del sistema (SAF), asi que no hace falta pedir acceso a
   # los archivos del telefono.
   file_selector: ^1.0.3
+  # Liquidacion en PDF para mandarle al proveedor. Es Dart puro (no arrastra
+  # nada nativo) y genera el archivo en memoria; despues se comparte con
+  # share_plus, que ya esta. Se elige  solo y NO : printing trae
+  # un plugin nativo por plataforma que solo hace falta para mandar a una
+  # impresora, y acá el PDF va por WhatsApp.
+  pdf: ^3.11.3
   flutter_svg: ^2.3.0           # los 12 iconos del original
   # QR de invitacion. Pinta con CustomPainter, sin assets ni red: pesa ~40 KB
   # y respeta la regla de no meter librerias pesadas.

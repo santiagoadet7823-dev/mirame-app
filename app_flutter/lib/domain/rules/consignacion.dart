@@ -14,6 +14,8 @@
 ///    alguien que no contrató.
 library;
 
+import '../entities/ropa.dart';
+
 /// Lo que le toca a cada uno en un ítem vendido.
 class RepartoItem {
   const RepartoItem({
@@ -172,3 +174,82 @@ Liquidacion liquidar<T>({
 /// `0.1 + 0.2` da `0.30000000000000004`, y sumado sobre cien ventas eso se
 /// convierte en una diferencia real en la liquidación.
 num _redondear(num n) => (n * 100).round() / 100;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Detalle para el comprobante
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Una línea del comprobante de liquidación.
+///
+/// Lleva TODO lo necesario para que el proveedor pueda auditarla sin la app:
+/// qué prenda, cuándo se vendió, a cuánto, qué porcentaje se aplicó y cuánto
+/// le toca. Un comprobante que solo diga "te debo $180.000" no sirve para
+/// resolver una discusión, que es justo para lo que se usa.
+class FilaLiquidacion {
+  const FilaLiquidacion({
+    required this.itemId,
+    required this.fecha,
+    required this.prenda,
+    required this.cantidad,
+    required this.precioUnit,
+    required this.pct,
+    required this.monto,
+    this.codigo,
+    this.variante,
+  });
+
+  final String itemId;
+  final DateTime fecha;
+  final String prenda;
+  final String? codigo;
+
+  /// `M · Negro`
+  final String? variante;
+  final int cantidad;
+  final num precioUnit;
+
+  /// El porcentaje que se le aplicó, congelado al momento de la venta.
+  final num pct;
+  final num monto;
+}
+
+class DetalleLiquidacion {
+  const DetalleLiquidacion({
+    required this.destinatario,
+    required this.tipo,
+    required this.desde,
+    required this.hasta,
+    required this.filas,
+    required this.total,
+  });
+
+  final String destinatario;
+  final LiquidacionTipo tipo;
+  final DateTime desde;
+  final DateTime hasta;
+  final List<FilaLiquidacion> filas;
+  final num total;
+
+  int get prendas => filas.fold(0, (a, f) => a + f.cantidad);
+}
+
+/// Arma el comprobante a partir de las filas ya resueltas.
+DetalleLiquidacion armarDetalle({
+  required String destinatario,
+  required LiquidacionTipo tipo,
+  required DateTime desde,
+  required DateTime hasta,
+  required Iterable<FilaLiquidacion> filas,
+}) {
+  // De la más vieja a la más nueva: así se lee como un extracto bancario, que
+  // es la forma en que la gente espera revisar una cuenta.
+  final lista = filas.toList()..sort((a, b) => a.fecha.compareTo(b.fecha));
+  return DetalleLiquidacion(
+    destinatario: destinatario,
+    tipo: tipo,
+    desde: desde,
+    hasta: hasta,
+    filas: lista,
+    total: _redondear(lista.fold<num>(0, (a, f) => a + f.monto)),
+  );
+}

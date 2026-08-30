@@ -173,6 +173,174 @@ class AccessCache extends Table {
   Set<Column> get primaryKey => {clave};
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ROPA — consignación
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Quien entrega la mercadería a consignación.
+class Proveedores extends Table with _Sincronizable {
+  TextColumn get nombre => text()();
+  TextColumn get telefono => text().nullable()();
+  TextColumn get email => text().nullable()();
+
+  /// Porcentaje que se queda EL SALÓN. Es el default de sus productos.
+  RealColumn get pctSalon => real().withDefault(const Constant(30))();
+
+  /// Si el salón hace un descuento, ¿lo absorbe solo o lo comparte el
+  /// proveedor? Lo habitual en consignación es que lo absorba el salón.
+  BoolColumn get descuentoLoAbsorbeSalon =>
+      boolean().withDefault(const Constant(true))();
+  TextColumn get notas => text().nullable()();
+  BoolColumn get activo => boolean().withDefault(const Constant(true))();
+}
+
+class Depositos extends Table with _Sincronizable {
+  TextColumn get nombre => text()();
+  TextColumn get direccion => text().nullable()();
+  BoolColumn get esPrincipal => boolean().withDefault(const Constant(false))();
+}
+
+class Productos extends Table with _Sincronizable {
+  TextColumn get proveedorId => text().nullable()();
+  TextColumn get nombre => text()();
+  TextColumn get descripcion => text().nullable()();
+  TextColumn get categoria => text().nullable()();
+
+  /// Código corto tipo `MIR-042`, para buscarla al instante y para que la
+  /// clienta la nombre por WhatsApp sin describirla.
+  TextColumn get codigo => text().nullable()();
+  RealColumn get precio => real().withDefault(const Constant(0))();
+
+  /// Pisa el del proveedor cuando este producto tiene otro acuerdo.
+  RealColumn get pctSalon => real().nullable()();
+  BoolColumn get publicado => boolean().withDefault(const Constant(false))();
+  BoolColumn get destacado => boolean().withDefault(const Constant(false))();
+}
+
+/// Talle × color. Es lo que de verdad se vende y se cuenta.
+class ProductoVariantes extends Table with _Sincronizable {
+  TextColumn get productoId => text()();
+  TextColumn get talle => text().nullable()();
+  TextColumn get color => text().nullable()();
+  TextColumn get sku => text().nullable()();
+}
+
+/// Cuánto hay de cada variante EN CADA DEPÓSITO.
+class StockVariantes extends Table with _Sincronizable {
+  TextColumn get varianteId => text()();
+  TextColumn get depositoId => text()();
+  IntColumn get cantidad => integer().withDefault(const Constant(0))();
+}
+
+class ProductoFotos extends Table with _Sincronizable {
+  TextColumn get productoId => text()();
+
+  /// Foto de un color puntual. Null = del producto en general.
+  TextColumn get varianteId => text().nullable()();
+
+  /// Ruta en el bucket `productos` de Supabase Storage.
+  TextColumn get path => text()();
+  IntColumn get orden => integer().withDefault(const Constant(0))();
+
+  /// La foto vive primero en el teléfono y se sube después. Mientras esto sea
+  /// true, la ficha muestra "falta subir" en vez de una imagen rota: una
+  /// imagen no se puede encolar como una fila de texto.
+  BoolColumn get pendienteDeSubir =>
+      boolean().withDefault(const Constant(false))();
+
+  /// Dónde está el archivo local mientras no se subió.
+  TextColumn get rutaLocal => text().nullable()();
+}
+
+class Ventas extends Table with _Sincronizable {
+  TextColumn get depositoId => text().nullable()();
+
+  /// Quién vendió. Null = la dueña desde su propia cuenta.
+  TextColumn get vendedorId => text().nullable()();
+
+  /// Alimenta el "total gastado" que ya muestra la ficha de clienta.
+  TextColumn get clientId => text().nullable()();
+  TextColumn get fecha => text()(); // YYYY-MM-DD local
+  RealColumn get total => real().withDefault(const Constant(0))();
+  RealColumn get descuento => real().withDefault(const Constant(0))();
+  TextColumn get metodo => text().withDefault(const Constant('efectivo'))();
+
+  /// `completada` | `anulada`
+  TextColumn get estado => text().withDefault(const Constant('completada'))();
+  TextColumn get notas => text().nullable()();
+}
+
+/// Los porcentajes van CONGELADOS acá.
+///
+/// Guardar solo una referencia al proveedor haría que cambiarle el porcentaje
+/// recalculara ventas viejas, y las liquidaciones ya pagadas dejarían de
+/// cuadrar. Es el mismo error de fondo que el legacy cometía al vincular los
+/// servicios de un turno por NOMBRE.
+class VentaItems extends Table with _Sincronizable {
+  TextColumn get ventaId => text()();
+  TextColumn get varianteId => text().nullable()();
+
+  /// Denormalizado a propósito: si mañana se borra el producto, la venta vieja
+  /// tiene que seguir siendo legible.
+  TextColumn get descripcion => text().nullable()();
+  IntColumn get cantidad => integer().withDefault(const Constant(1))();
+  RealColumn get precioUnit => real().withDefault(const Constant(0))();
+  RealColumn get pctSalon => real().withDefault(const Constant(0))();
+  RealColumn get pctVendedor => real().withDefault(const Constant(0))();
+  RealColumn get montoProveedor => real().withDefault(const Constant(0))();
+  RealColumn get montoSalon => real().withDefault(const Constant(0))();
+  RealColumn get montoVendedor => real().withDefault(const Constant(0))();
+
+  /// Se marca al incluirlo en una liquidación, para no pagarlo dos veces.
+  TextColumn get liquidacionId => text().nullable()();
+}
+
+class Reservas extends Table with _Sincronizable {
+  TextColumn get codigo => text()();
+  TextColumn get nombre => text()();
+  TextColumn get telefono => text().nullable()();
+
+  /// `pendiente` | `confirmada` | `entregada` | `cancelada`
+  TextColumn get estado => text().withDefault(const Constant('pendiente'))();
+  DateTimeColumn get venceAt => dateTime()();
+  TextColumn get notas => text().nullable()();
+}
+
+class ReservaItems extends Table with _Sincronizable {
+  TextColumn get reservaId => text()();
+  TextColumn get varianteId => text()();
+  IntColumn get cantidad => integer().withDefault(const Constant(1))();
+}
+
+class Liquidaciones extends Table with _Sincronizable {
+  /// `proveedor` | `vendedor`
+  TextColumn get tipo => text()();
+  TextColumn get destinatarioId => text()();
+  TextColumn get periodoDesde => text()();
+  TextColumn get periodoHasta => text()();
+  RealColumn get total => real().withDefault(const Constant(0))();
+
+  /// `borrador` | `pagada`
+  TextColumn get estado => text().withDefault(const Constant('borrador'))();
+  DateTimeColumn get pagadaAt => dateTime().nullable()();
+  TextColumn get notas => text().nullable()();
+}
+
+/// La fuente de verdad del inventario. `StockVariantes.cantidad` es el saldo;
+/// esto es el detalle de cómo se llegó a ese número.
+class MovimientosStock extends Table with _Sincronizable {
+  TextColumn get varianteId => text()();
+  TextColumn get depositoId => text()();
+  IntColumn get delta => integer()();
+
+  /// `ingreso` | `venta` | `devolucion_proveedor` | `transferencia` |
+  /// `ajuste` | `anulacion`
+  TextColumn get motivo => text()();
+  TextColumn get referenciaId => text().nullable()();
+  TextColumn get notas => text().nullable()();
+}
+
 @DriftDatabase(
   tables: [
     Professionals,
@@ -186,6 +354,19 @@ class AccessCache extends Table {
     Outbox,
     SyncState,
     AccessCache,
+    // Ropa
+    Proveedores,
+    Depositos,
+    Productos,
+    ProductoVariantes,
+    StockVariantes,
+    ProductoFotos,
+    Ventas,
+    VentaItems,
+    Reservas,
+    ReservaItems,
+    Liquidaciones,
+    MovimientosStock,
   ],
 )
 class MirameDb extends _$MirameDb {
@@ -194,7 +375,7 @@ class MirameDb extends _$MirameDb {
   MirameDb.paraTest(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -223,12 +404,53 @@ class MirameDb extends _$MirameDb {
             'create index if not exists ix_outbox_pendiente '
             'on outbox (tenant_id, reintentar_at)',
           );
+          await _indicesRopa(this);
+        },
+        // v2 · módulo de ropa. Las tablas se crean vacías: no hay datos que
+        // migrar porque la funcionalidad no existía.
+        onUpgrade: (m, desde, hasta) async {
+          if (desde < 2) {
+            // El tipo va explicito: sin el, Dart infiere el supertipo comun
+            // (`_Sincronizable`, el mixin) en vez de `TableInfo`, y
+            // `createTable` no lo acepta.
+            for (final t in <TableInfo<Table, dynamic>>[
+              proveedores, depositos, productos, productoVariantes,
+              stockVariantes, productoFotos, ventas, ventaItems,
+              reservas, reservaItems, liquidaciones, movimientosStock,
+            ]) {
+              await m.createTable(t);
+            }
+            await _indicesRopa(this);
+          }
         },
         beforeOpen: (details) async {
           // Sin esto SQLite ignora las foreign keys en silencio.
           await customStatement('PRAGMA foreign_keys = ON');
         },
       );
+}
+
+/// Índices del módulo de ropa. Se llaman desde `onCreate` y desde `onUpgrade`
+/// para que una instalación nueva y una actualizada terminen igual — que se
+/// desincronicen es un clásico que solo aparece cuando la base ya creció.
+Future<void> _indicesRopa(MirameDb db) async {
+  const ix = [
+    'create index if not exists ix_prod_tenant on productos (tenant_id) '
+        'where deleted_at is null',
+    'create index if not exists ix_var_prod on producto_variantes '
+        '(producto_id) where deleted_at is null',
+    'create index if not exists ix_stockvar on stock_variantes '
+        '(variante_id, deposito_id)',
+    'create index if not exists ix_fotos_prod on producto_fotos '
+        '(producto_id, orden) where deleted_at is null',
+    'create index if not exists ix_ventas_fecha on ventas (tenant_id, fecha) '
+        'where deleted_at is null',
+    'create index if not exists ix_vitems_venta on venta_items (venta_id)',
+    'create index if not exists ix_mov_var on movimientos_stock (variante_id)',
+  ];
+  for (final s in ix) {
+    await db.customStatement(s);
+  }
 }
 
 QueryExecutor _abrir() => driftDatabase(
