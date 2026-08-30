@@ -13,6 +13,7 @@ import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
 import '../../data/local/database.dart' as db;
 import '../../data/repositories/ropa_repository.dart';
+import '../../domain/rules/formatting.dart';
 import '../../domain/rules/rotacion.dart';
 import '../shell/vistas_comunes.dart';
 import 'fotos.dart';
@@ -56,6 +57,12 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
           ? ''
           : widget.producto!.precio.round().toString());
   late final _codigo = TextEditingController(text: widget.producto?.codigo);
+  late final _pct = TextEditingController(
+      text: widget.producto?.pctSalon?.round().toString() ?? '');
+
+  /// `false` = usa el del proveedor. Se decide con un switch en vez de dejar
+  /// el campo vacío: un campo en blanco no dice si es "sin definir" o "cero".
+  late var _pctPropio = widget.producto?.pctSalon != null;
 
   String? _proveedorId;
   late var _publicado = widget.producto?.publicado ?? false;
@@ -93,7 +100,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
 
   @override
   void dispose() {
-    for (final c in [_nombre, _descripcion, _precio, _codigo]) {
+    for (final c in [_nombre, _descripcion, _precio, _codigo, _pct]) {
       c.dispose();
     }
     super.dispose();
@@ -140,6 +147,12 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
             _descripcion.text.trim().isEmpty ? null : _descripcion.text.trim(),
         codigo: _codigo.text.trim().isEmpty ? null : _codigo.text.trim(),
         precio: precio,
+        // `null` = hereda el del proveedor. Es lo que permite cambiarle el
+        // acuerdo a un proveedor y que se aplique a todas sus prendas menos
+        // las que tengan trato propio.
+        pctSalon: _pctPropio
+            ? (num.tryParse(_pct.text.replaceAll(',', '.')) ?? 0)
+            : null,
         publicado: _publicado,
         destacado: _destacado,
         variantes: [
@@ -213,6 +226,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
                 controlador: _precio,
                 etiqueta: 'Precio',
                 teclado: TextInputType.number,
+                onCambio: (_) => setState(() {}),
               ),
             ),
             const SizedBox(width: 12),
@@ -250,6 +264,9 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
         CampoTexto(
             controlador: _descripcion, etiqueta: 'Descripción', lineas: 2),
 
+        _seccion('REPARTO'),
+        _reparto(proveedores),
+
         _seccion('TALLES Y COLORES'),
         _listaVariantes(),
 
@@ -279,6 +296,86 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
       ],
     );
   }
+
+  /// El porcentaje: el del proveedor, o uno propio de esta prenda.
+  Widget _reparto(List<db.Proveedore> proveedores) {
+    final prov =
+        proveedores.where((p) => p.id == _proveedorId).firstOrNull;
+    final pctProveedor = prov?.pctSalon ?? 100;
+    final pct = _pctPropio
+        ? (num.tryParse(_pct.text.replaceAll(',', '.')) ?? 0)
+        : pctProveedor;
+    final precio = num.tryParse(_precio.text.replaceAll(',', '.')) ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile.adaptive(
+          value: _pctPropio,
+          onChanged: (v) => setState(() {
+            _pctPropio = v;
+            // Al activarlo arranca del valor del proveedor: es el punto de
+            // partida obvio y evita que quede en cero por descuido.
+            if (v && _pct.text.isEmpty) {
+              _pct.text = pctProveedor.round().toString();
+            }
+          }),
+          contentPadding: EdgeInsets.zero,
+          title: Text('Esta prenda tiene otro trato', style: sans(size: 13)),
+          subtitle: Text(
+            _pctPropio
+                ? 'Solo para esta prenda'
+                : prov == null
+                    ? 'Sin proveedor: te queda todo'
+                    : 'Usa el ${pctProveedor.round()}% de ${prov.nombre}',
+            style: sans(size: 11, color: MColors.tMuted),
+          ),
+        ),
+        if (_pctPropio)
+          CampoTexto(
+            controlador: _pct,
+            etiqueta: 'Te queda a vos (%)',
+            teclado: TextInputType.number,
+            onCambio: (_) => setState(() {}),
+          ),
+        // El reparto con plata real. Con porcentajes sueltos es muy fácil
+        // cargar el del proveedor donde iba el propio, y eso no se nota hasta
+        // la primera liquidación.
+        if (precio > 0)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: MColors.lav50,
+                border: Border.all(color: MColors.borderLav),
+                borderRadius: BorderRadius.circular(MRadius.sm),
+              ),
+              child: Column(
+                children: [
+                  _linea('Para el proveedor',
+                      precio * (100 - pct.clamp(0, 100)) / 100),
+                  const SizedBox(height: 5),
+                  _linea('Queda en casa', precio * pct.clamp(0, 100) / 100,
+                      fuerte: true),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _linea(String etiqueta, num monto, {bool fuerte = false}) => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(etiqueta,
+              style: sans(size: 12, color: MColors.tSecondary)),
+          Text(formatMoney(monto),
+              style: sans(size: 13, weight: fuerte ? 700 : 500)),
+        ],
+      );
 
   Widget _seccion(String texto) => Padding(
         padding: const EdgeInsets.only(top: 6, bottom: 10),

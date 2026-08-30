@@ -9,9 +9,18 @@
 /// 1. El **proveedor** cobra su parte del precio de venta. Entregó la
 ///    mercadería y su corte está cerrado de antemano.
 /// 2. Lo que queda es del **salón**.
-/// 3. Si vendió un **vendedor**, su comisión sale de la parte del salón, no
-///    del total: el proveedor ya cobró lo suyo y no tiene por qué financiar a
-///    alguien que no contrató.
+/// 3. Si vendió un **vendedor**, su comisión también se mide **sobre el precio
+///    de venta**, y sale de la parte del salón — el proveedor ya cobró lo suyo
+///    y no financia a alguien que no contrató.
+///
+/// **Los tres porcentajes son sobre la venta y suman 100.** Es como se habla
+/// el acuerdo en la práctica: *"el proveedor me da el 15%, yo le doy el 10 al
+/// revendedor y me quedo con el 5"*. Con `pctSalon: 15` y `pctVendedor: 10`,
+/// de $20.000 salen $17.000 · $2.000 · $1.000.
+///
+/// La primera versión medía la comisión sobre la parte del salón. Con esos
+/// mismos números daba $300 en vez de $2.000, y para expresar el acuerdo real
+/// había que cargar un 66,67% que no se parece a nada de lo que se habla.
 library;
 
 import '../entities/ropa.dart';
@@ -49,8 +58,11 @@ class RepartoItem {
 
 /// Calcula el reparto de un ítem.
 ///
-/// [pctSalon] es el porcentaje que se queda el salón (el resto es del
-/// proveedor). [pctVendedor] se aplica **sobre la parte del salón**.
+/// [pctSalon] es lo que NO se lleva el proveedor: la parte que queda en la
+/// casa, comisión del vendedor incluida. [pctVendedor] es la porción de esa
+/// parte que se lleva quien vendió, medida **también sobre la venta**.
+///
+/// Con `pctSalon: 15` y `pctVendedor: 10`, al salón le quedan 5 puntos.
 ///
 /// [descuentoLoAbsorbeSalon] decide de dónde sale una rebaja:
 ///   · `true`  (lo normal en consignación) — el proveedor cobra su porcentaje
@@ -77,18 +89,22 @@ RepartoItem repartirItem({
   final neto = bruto - desc;
 
   final pS = pctSalon.clamp(0, 100) / 100;
-  final pV = pctVendedor.clamp(0, 100) / 100;
+  // La comisión no puede superar lo que queda en la casa: con un vendedor al
+  // 20% y un proveedor que deja 15, el salón pagaría de su bolsillo por cada
+  // venta. Se recorta y el tope se avisa en el formulario.
+  final pV = pctVendedor.clamp(0, pctSalon.clamp(0, 100)) / 100;
 
   // Sobre qué monto cobra el proveedor.
   final baseProveedor = descuentoLoAbsorbeSalon ? bruto : neto;
   final proveedor = _redondear(baseProveedor * (1 - pS));
 
-  // Lo que queda para el salón, del neto real.
-  final quedaEnCasa = neto - proveedor;
-  // La comisión sale de la parte del salón. Si esa parte es negativa (un
-  // descuento se comió la ganancia), el vendedor NO paga por ese error: cobra
-  // sobre cero, no una comisión negativa.
-  final vendedor = _redondear((quedaEnCasa > 0 ? quedaEnCasa : 0) * pV);
+  // La comisión se mide sobre lo que se cobró de verdad. Si hubo descuento,
+  // el vendedor cobra sobre el precio final: vendió por menos.
+  //
+  // Sale de la parte del salón, no del total. Y si un descuento ya dejó esa
+  // parte en negativo, el vendedor NO paga por un error que no cometió: cobra
+  // su comisión igual, y la pérdida queda a la vista en el número del salón.
+  final vendedor = _redondear(neto * pV);
 
   return RepartoItem(
     bruto: bruto,

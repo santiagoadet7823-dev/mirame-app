@@ -24,17 +24,43 @@ void main() {
     });
   });
 
-  group('la comisión del vendedor sale de la parte del salón', () {
+  group('los tres porcentajes son sobre la venta y suman 100', () {
+    test('el acuerdo real: proveedor 85, vendedor 10, salón 5', () {
+      // Tal cual se habla: "el proveedor me da el 15%, yo le doy el 10 al
+      // revendedor y me quedo con el 5".
+      final r = repartirItem(
+          precioUnitario: 20000, pctSalon: 15, pctVendedor: 10);
+      expect(r.proveedor, 17000);
+      expect(r.vendedor, 2000);
+      expect(r.salon, 1000);
+      expect(r.cuadra, isTrue);
+    });
+
+    test('sin vendedor, al salón le quedan sus 15 puntos enteros', () {
+      final r = repartirItem(precioUnitario: 20000, pctSalon: 15);
+      expect(r.proveedor, 17000);
+      expect(r.salon, 3000);
+      expect(r.vendedor, 0);
+    });
+
     test('el proveedor cobra lo mismo con o sin vendedor', () {
-      final sin = repartirItem(precioUnitario: 20000, pctSalon: 30);
+      final sin = repartirItem(precioUnitario: 20000, pctSalon: 15);
       final con = repartirItem(
-          precioUnitario: 20000, pctSalon: 30, pctVendedor: 20);
+          precioUnitario: 20000, pctSalon: 15, pctVendedor: 10);
       expect(con.proveedor, sin.proveedor,
           reason: 'el proveedor no financia a alguien que no contrató');
-      // 20% de los \$6.000 del salón.
-      expect(con.vendedor, 1200);
-      expect(con.salon, 4800);
-      expect(con.cuadra, isTrue);
+      // Lo que gana el vendedor sale de la parte del salón, no del total.
+      expect(sin.salon - con.salon, con.vendedor);
+    });
+
+    test('una comisión mayor a la parte del salón se recorta', () {
+      // Un vendedor al 20% con un proveedor que deja 15 haría que el salón
+      // pague de su bolsillo en cada venta.
+      final r = repartirItem(
+          precioUnitario: 20000, pctSalon: 15, pctVendedor: 20);
+      expect(r.vendedor, 3000, reason: 'tope: los 15 puntos de la casa');
+      expect(r.salon, 0);
+      expect(r.cuadra, isTrue);
     });
   });
 
@@ -71,14 +97,28 @@ void main() {
       expect(r.cuadra, isTrue);
     });
 
-    test('con el salón en negativo, el vendedor NO cobra comisión negativa', () {
+    test('el vendedor cobra sobre lo que se cobró de verdad', () {
+      // Con descuento vendió por menos, así que su comisión baja: 10% de
+      // 18.000, no de 20.000.
+      final r = repartirItem(
+          precioUnitario: 20000,
+          descuento: 2000,
+          pctSalon: 15,
+          pctVendedor: 10);
+      expect(r.vendedor, 1800);
+      expect(r.cuadra, isTrue);
+    });
+
+    test('con el salón en pérdida, el vendedor igual cobra', () {
+      // No paga por un descuento que no decidió. La pérdida queda a la vista
+      // en el número del salón, que es donde tiene que verse.
       final r = repartirItem(
           precioUnitario: 20000,
           descuento: 8000,
-          pctSalon: 30,
-          pctVendedor: 20);
-      expect(r.vendedor, 0, reason: 'no paga por un descuento que no decidió');
-      expect(r.salon, -2000);
+          pctSalon: 15,
+          pctVendedor: 10);
+      expect(r.vendedor, 1200);
+      expect(r.salon, lessThan(0));
       expect(r.cuadra, isTrue);
     });
 

@@ -277,7 +277,7 @@ class _FormProveedorState extends ConsumerState<_FormProveedor> {
         ),
         CampoTexto(
           controlador: _pct,
-          etiqueta: 'Porcentaje que te queda a vos (%)',
+          etiqueta: 'Porcentaje que te deja a vos (%)',
           teclado: TextInputType.number,
           onCambio: (_) => setState(() {}),
         ),
