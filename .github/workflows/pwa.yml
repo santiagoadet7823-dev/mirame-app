@@ -69,6 +69,28 @@ jobs:
       - name: Copiar la landing de descarga
         run: cp ../web-landing/descargar.html build/web/descargar.html
 
+      # La vitrina tambien vive fuera de Flutter, y por la misma razon: una
+      # clienta que abre el link con datos moviles espera ver ropa, no
+      # descargar una app de gestion.
+      #
+      # Las claves se inyectan aca en vez de quedar en el archivo: son las
+      # mismas publicas que ya viajan dentro del bundle de la PWA, pero
+      # teniendolas en un solo lugar no hay dos copias que se desincronicen.
+      - name: Publicar la tienda
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          test -n "$SUPABASE_URL" || { echo "Falta el secret SUPABASE_URL"; exit 1; }
+          test -n "$SUPABASE_PUBLISHABLE_KEY" || { echo "Falta SUPABASE_PUBLISHABLE_KEY"; exit 1; }
+          sed -e "s|__SUPABASE_URL__|$SUPABASE_URL|g" \
+              -e "s|__SUPABASE_KEY__|$SUPABASE_PUBLISHABLE_KEY|g" \
+              ../web-landing/tienda.html > build/web/tienda.html
+          # Si quedo algun marcador sin reemplazar, la vitrina saldria rota y
+          # nadie se enteraria hasta que una clienta la abra.
+          ! grep -q "__SUPABASE_" build/web/tienda.html || {
+            echo "Quedaron marcadores sin reemplazar en tienda.html"; exit 1; }
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: app_flutter/build/web

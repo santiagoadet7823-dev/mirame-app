@@ -34,6 +34,7 @@ import '../../domain/rules/formatting.dart';
 import '../../domain/entities/entities.dart';
 import '../../domain/rules/reminders.dart';
 import '../../domain/rules/stock.dart';
+import '../ropa/mi_tienda.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
 import '../stock/stock_view.dart';
@@ -276,7 +277,7 @@ class DashboardView extends ConsumerWidget {
                 detalle: 'Compartir link',
                 fondo: MColors.lav50,
                 borde: MColors.borderLav,
-                onTap: () => NavegadorShell.ir(context, Vistas.ropa),
+                onTap: () => mostrarMiTienda(context),
               ),
             ],
           ),

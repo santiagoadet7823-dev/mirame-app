@@ -54,6 +54,17 @@ abstract final class AppConfig {
     return slug == null || slug.isEmpty ? pagina : '$pagina?salon=$slug';
   }
 
+  /// El link de la vitrina que la duena le manda a sus clientas.
+  ///
+  /// Apunta a `tienda.html`, que es HTML plano y abre en ~1 segundo. Mandar
+  /// a la raiz —la PWA— haria que una clienta con datos moviles descargue
+  /// varios MB de app de gestion para ver un vestido.
+  static String urlTienda(String? slug) {
+    final base = urlPublica.endsWith('/') ? urlPublica : '$urlPublica/';
+    final pagina = '${base}tienda.html';
+    return slug == null || slug.isEmpty ? pagina : '$pagina?t=$slug';
+  }
+
   static bool get configurado =>
       supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty;
 

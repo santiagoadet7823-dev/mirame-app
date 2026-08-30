@@ -21,6 +21,7 @@ import '../../domain/rules/formatting.dart';
 import '../auth/session_controller.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
+import 'mi_tienda.dart';
 import 'producto_form.dart';
 import 'venta_form.dart';
 import 'proveedores_view.dart';
@@ -127,14 +128,24 @@ class _RopaViewState extends ConsumerState<RopaView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Ropa', style: serif(size: 24, weight: 500)),
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => mostrarProveedores(context),
-                  child: Text(
-                    'Proveedores',
-                    style:
-                        sans(size: 13, weight: 600, color: MColors.brand),
-                  ),
+                Row(
+                  children: [
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => mostrarMiTienda(context),
+                      child: Text('Mi tienda',
+                          style: sans(
+                              size: 13, weight: 600, color: MColors.brand)),
+                    ),
+                    const SizedBox(width: 16),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => mostrarProveedores(context),
+                      child: Text('Proveedores',
+                          style: sans(
+                              size: 13, weight: 600, color: MColors.tMuted)),
+                    ),
+                  ],
                 ),
               ],
             ),
