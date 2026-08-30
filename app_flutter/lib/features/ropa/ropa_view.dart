@@ -66,6 +66,21 @@ final portadasProvider =
   return repo.verPortadas();
 });
 
+/// Todas las fotos de cada producto, en orden. El formulario necesita la lista
+/// completa: con solo la portada parecia que no se podia cargar mas de una.
+final fotosProvider =
+    StreamProvider.autoDispose<Map<String, List<db.ProductoFoto>>>((ref) {
+  final repo = ref.watch(ropaRepoProvider);
+  if (repo == null) return Stream.value(const {});
+  return repo.verFotos().map((filas) {
+    final out = <String, List<db.ProductoFoto>>{};
+    for (final f in filas) {
+      (out[f.productoId] ??= <db.ProductoFoto>[]).add(f);
+    }
+    return out;
+  });
+});
+
 class RopaView extends ConsumerStatefulWidget {
   const RopaView({super.key});
 

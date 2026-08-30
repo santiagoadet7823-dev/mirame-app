@@ -125,12 +125,14 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
     super.dispose();
   }
 
-  /// Dónde está esta mercadería. Solo se muestra si hay más de un depósito:
-  /// con uno solo, preguntarlo es un campo que siempre tiene la misma
-  /// respuesta.
+  /// Dónde está esta mercadería.
+  ///
+  /// Se muestra con UNO solo también: esconderlo hasta que hubiera dos dejaba
+  /// a la usuaria sin manera de ver ni cambiar dónde entra el stock, que es
+  /// justo lo que vino a mirar.
   Widget _selectorDeposito() {
     final deps = ref.watch(depositosProvider).value ?? const [];
-    if (deps.length < 2) return const SizedBox.shrink();
+    if (deps.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -233,8 +235,14 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
       // La prenda ya está guardada; las fotos se suben después. Si falla la
       // subida quedan pendientes y la ficha lo dice — pero la prenda NO se
       // pierde por no tener señal.
-      for (var i = 0; i < _fotosNuevas.length; i++) {
-        final local = _fotosNuevas[i];
+      //
+      // El orden arranca después de las que ya estaban. Reiniciándolo en 0,
+      // agregar una segunda tanda de fotos chocaba con la primera y la portada
+      // pasaba a ser cualquiera.
+      final previas = ref.read(fotosProvider).value?[id] ?? const [];
+      var orden = previas.fold<int>(-1, (a, f) => f.orden > a ? f.orden : a) + 1;
+
+      for (final local in _fotosNuevas) {
         final url = await subirFoto(
           rutaLocal: local,
           tenantId: repo.tenantId,
@@ -244,7 +252,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
           productoId: id,
           path: url ?? '',
           rutaLocal: local,
-          orden: i,
+          orden: orden++,
         );
       }
 
@@ -521,37 +529,88 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
   Widget _fotos() {
     final yaCargadas = widget.producto == null
         ? const <db.ProductoFoto>[]
-        : (ref.watch(portadasProvider).value?[widget.producto!.id] == null
-            ? const <db.ProductoFoto>[]
-            : [ref.watch(portadasProvider).value![widget.producto!.id]!]);
+        : (ref.watch(fotosProvider).value?[widget.producto!.id] ??
+            const <db.ProductoFoto>[]);
+    final total = yaCargadas.length + _fotosNuevas.length;
 
-    return SizedBox(
-      height: 92,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          _botonFoto(
-              icono: Icons.photo_camera_outlined,
-              texto: 'Cámara',
-              onTap: () => _agregarFoto(true)),
-          _botonFoto(
-              icono: Icons.image_outlined,
-              texto: 'Galería',
-              onTap: () => _agregarFoto(false)),
-          for (final f in yaCargadas)
-            _miniatura(
-              hijo: f.pendienteDeSubir && f.rutaLocal != null
-                  ? Image.file(File(f.rutaLocal!), fit: BoxFit.cover)
-                  : Image.network(f.path, fit: BoxFit.cover),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 92,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _botonFoto(
+                  icono: Icons.photo_camera_outlined,
+                  texto: 'Cámara',
+                  onTap: () => _agregarFoto(true)),
+              _botonFoto(
+                  icono: Icons.image_outlined,
+                  texto: 'Galería',
+                  onTap: () => _agregarFoto(false)),
+              for (final f in yaCargadas)
+                _miniatura(
+                  hijo: f.pendienteDeSubir && f.rutaLocal != null
+                      ? Image.file(File(f.rutaLocal!), fit: BoxFit.cover)
+                      : Image.network(f.path, fit: BoxFit.cover),
+                  onQuitar: () => _quitarFotoGuardada(f),
+                ),
+              for (var i = 0; i < _fotosNuevas.length; i++)
+                _miniatura(
+                  hijo: Image.file(File(_fotosNuevas[i]), fit: BoxFit.cover),
+                  onQuitar: () => setState(() => _fotosNuevas.removeAt(i)),
+                ),
+            ],
+          ),
+        ),
+        if (total > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 7, left: 2),
+            child: Text(
+              total == 1
+                  ? 'La primera es la que se ve en la tienda. Podés sumar más.'
+                  : '$total fotos. La primera es la portada; en la ficha se '
+                      'pasan de a una.',
+              style: sans(size: 11, color: MColors.tMuted),
             ),
-          for (var i = 0; i < _fotosNuevas.length; i++)
-            _miniatura(
-              hijo: Image.file(File(_fotosNuevas[i]), fit: BoxFit.cover),
-              onQuitar: () => setState(() => _fotosNuevas.removeAt(i)),
-            ),
+          ),
+      ],
+    );
+  }
+
+  /// Sacar una foto ya guardada. Pregunta primero: es lo unico de esta
+  /// pantalla que no se puede deshacer.
+  Future<void> _quitarFotoGuardada(db.ProductoFoto f) async {
+    final si = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: MColors.surface,
+        title: Text('¿Sacar la foto?', style: serif(size: 20, weight: 600)),
+        content: Text('No se puede deshacer desde la app.',
+            style: MText.cuerpoSec),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Cancelar', style: MText.menor),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('Sacar',
+                style: sans(
+                    size: 13, weight: 600, color: MColors.dangerText)),
+          ),
         ],
       ),
     );
+    if (si != true) return;
+
+    final repo = ref.read(ropaRepoProvider);
+    if (repo == null) return;
+    await repo.borrar('producto_fotos', f.id);
+    // El archivo del bucket va despues del borrado logico: si falla, queda un
+    // huerfano ocupando lugar, pero la foto ya no se ve. Al reves seria peor.
+    if (f.path.isNotEmpty) await borrarFotoRemota(f.path);
   }
 
   Widget _botonFoto({
