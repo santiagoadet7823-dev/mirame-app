@@ -14,6 +14,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config/app_config.dart';
+import '../../data/repositories/access_repository.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
 import '../auth/session_controller.dart';
@@ -27,11 +28,52 @@ Future<void> mostrarMiTienda(BuildContext context) => showModalBottomSheet(
       builder: (_) => const _MiTienda(),
     );
 
-class _MiTienda extends ConsumerWidget {
+class _MiTienda extends ConsumerStatefulWidget {
   const _MiTienda();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_MiTienda> createState() => _MiTiendaState();
+}
+
+class _MiTiendaState extends ConsumerState<_MiTienda> {
+  late final _tel = TextEditingController(
+      text: ref.read(tenantActivoProvider)?.telefono ?? '');
+  var _guardando = false;
+
+  @override
+  void dispose() {
+    _tel.dispose();
+    super.dispose();
+  }
+
+  Future<void> _guardarTelefono() async {
+    final tenant = ref.read(tenantActivoProvider);
+    if (tenant == null) return;
+    setState(() => _guardando = true);
+    try {
+      await const AccessRepository().guardarTelefono(tenant.id, _tel.text);
+      // Sin esto el Tenant en memoria sigue con el teléfono viejo y la pantalla
+      // mostraría el aviso de "falta el WhatsApp" recién guardado.
+      await ref.read(sessionProvider.notifier).refrescar();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('WhatsApp guardado')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('No se pudo guardar. Fijate si tenés internet.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _guardando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final tenant = ref.watch(tenantActivoProvider);
     final productos = ref.watch(productosProvider).value ?? const [];
     final publicados = productos.where((p) => p.publicado).length;
@@ -139,6 +181,52 @@ class _MiTienda extends ConsumerWidget {
                 onTap: () => launchUrl(Uri.parse(url),
                     mode: LaunchMode.externalApplication),
               ),
+
+              const SizedBox(height: 12),
+              const EtiquetaSeccion('TU WHATSAPP'),
+              Text(
+                'Es el número que ven tus clientas en la tienda para '
+                'escribirte. Sin esto no tienen cómo.',
+                style: sans(size: 12, color: MColors.tSecondary),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: CampoTexto(
+                      controlador: _tel,
+                      etiqueta: 'Con código de área, sin el 15',
+                      teclado: TextInputType.phone,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 96,
+                    child: _Boton(
+                      icono: Icons.check_rounded,
+                      texto: _guardando ? '…' : 'Guardar',
+                      principal: true,
+                      onTap: _guardando ? () {} : _guardarTelefono,
+                    ),
+                  ),
+                ],
+              ),
+              if ((tenant?.telefono ?? '').trim().isEmpty)
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  padding: const EdgeInsets.all(13),
+                  decoration: BoxDecoration(
+                    color: MColors.warningBg,
+                    border: Border.all(color: MColors.warningBorder),
+                    borderRadius: BorderRadius.circular(MRadius.sm),
+                  ),
+                  child: Text(
+                    'Todavía no cargaste tu WhatsApp, así que en la tienda no '
+                    'aparece el botón para escribirte.',
+                    style: sans(size: 12, color: MColors.warningText),
+                  ),
+                ),
 
               const SizedBox(height: 20),
               const EtiquetaSeccion('QUÉ SE VE'),

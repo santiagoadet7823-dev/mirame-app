@@ -139,6 +139,7 @@ tuyo y del revendedor. Requiere que cada uno entre a la app una vez para que exi
 | 01 | `01-migracion-flutter-supabase.md` | aprobado | Plan maestro de la migración HTML → Flutter + Supabase multi-tenant |
 | 03 | `03-distribucion-pwa-y-apk.md` | implementado | PWA en Pages, releases por tag, invitación por QR y la diferencia real con la OTA de DisT-At |
 | 02 | `02-empaquetado-apk.md` | implementado | Rama anticipada de la Fase 8: keystore, firma, iconos y deep link para probar en un teléfono real |
+| 04 | `03-tienda-diseno.md` | implementado (fase 0) | Diagnóstico de la vitrina, arreglos de identidad y WhatsApp, y el brief de diseño (`12-BRIEF-TIENDA.md`) |
 
 > El contenido de `planes/` es local. Este índice es lo único que se versiona.
 > Al crear un plan nuevo, agregar la fila acá.
@@ -374,3 +375,52 @@ instanciar subsets estáticos con `fonttools` — no está instalado en la máqu
 - Confirmado con el usuario: **Google Drive queda fuera** — Supabase es el respaldo remoto. Ya era
   la decisión registrada en `05-OFFLINE-SYNC.md` §10.
 - **Próximo:** crear el primer tenant, o arrancar el motor de sync.
+
+### 2026-08-30 — La vitrina: diagnóstico, arreglos y brief
+
+Se abrió la tienda publicada en un teléfono y se miró como la mira una clienta. Lo que
+había: el título decía **"Tienda"** —sin nombre ni logo—, un solo producto con media
+pantalla vacía debajo, la foto de una remera con la bolsa de plástico puesta, y encima el
+cartel rojo de **Agotado** como el elemento más fuerte de la pantalla. Sin ninguna forma de
+escribirle a nadie.
+
+**Tres cosas rotas, arregladas (fase 0):**
+
+- **El botón de WhatsApp nunca aparecía.** `tienda.html` declaraba `let WA = null` y nada se
+  lo asignaba jamás, así que el bloque condicionado a `WA` no se mostró ni una vez desde que
+  existe la tienda.
+- **La vitrina no sabía cómo se llamaba el salón.** Vista nueva `tienda_salon`
+  (`slug`, `nombre`, `telefono`), con `security_invoker` como las otras tres.
+- **El link no tenía preview.** `og:image` + `og:title`/`description` reales, con
+  `tienda-preview.jpg` provisorio generado acá y la URL absoluta inyectada por `pwa.yml`.
+
+**Un agujero real que apareció de paso:** `anon` tenía `select` sobre **todas** las columnas
+de `tenants`, y desde que existe la policy `tenants_vitrina` eso sí devolvía filas — un
+anónimo podía pedir `?select=creado_por,plan` y ver quién dio de alta cada salón y qué plan
+paga. Es la misma trampa ya documentada para `productos`: el `grant` por columna no sirve si
+no se **revoca** antes. Corregido y verificado con `set role anon`.
+
+**Otras dos de la misma pasada:**
+
+- La primera pintada era una cascada visible: el encabezado decía "1 producto" mientras el
+  cuerpo todavía decía "Buscando prendas…". Ahora las dos consultas salen juntas y hay
+  esqueletos del tamaño exacto de las tarjetas.
+- La tienda no tenía **ningún** bloque `prefers-reduced-motion`, cuando la app lo respeta en
+  todas sus animaciones.
+
+**El teléfono se carga desde "Mi tienda"** (`AccessRepository.guardarTelefono`, RLS
+`tenants_owner_update`). El normalizador `telefonoWa` tuvo dos bugs que se cazaron probando
+formatos reales: no sacaba el **15** —que se marca solo dentro del país y rompe el link— y
+no agregaba el **9** de celular, que casi nadie escribe y wa.me necesita. Verificado con
+seis formatos argentinos, todos convergen al mismo número.
+
+**El brief está en `12-BRIEF-TIENDA.md`**, publicado además como página compartible. Decide
+tres cosas: la tienda es pieza aparte y se rediseña entera; la marca va **por salón**
+(`--marca-nombre` / `--marca-acento` / `--marca-logo`, porque hoy el lavanda está quemado y
+el segundo salón abriría con los colores de Candela); y el modo oscuro se descarta a
+propósito, no por olvido.
+
+**Próximo:** la entrega del diseñador. Lo que queda pendiente del lado técnico es el preview
+por salón o por producto, que necesita una Edge Function — las `og:` no se pueden armar desde
+el cliente porque el crawler de WhatsApp no ejecuta JavaScript.
+

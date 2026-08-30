@@ -13,6 +13,20 @@ import '../remote/supabase_client.dart';
 class AccessRepository {
   const AccessRepository();
 
+  /// Guarda el teléfono del salón, que es lo que la vitrina usa para el
+  /// botón de WhatsApp.
+  ///
+  /// Escribe directo contra Supabase y no por el outbox: `tenants` no es una
+  /// tabla de negocio ni vive en Drift, se lee una vez al entrar. La RLS
+  /// `tenants_owner_update` deja hacerlo solo al owner del salón.
+  Future<void> guardarTelefono(String tenantId, String? telefono) async {
+    final limpio = telefono?.trim();
+    await sb
+        .from('tenants')
+        .update({'telefono': (limpio?.isEmpty ?? true) ? null : limpio})
+        .eq('id', tenantId);
+  }
+
   /// Carga perfil, membresías, salones y licencias del usuario logueado.
   ///
   /// Lanza si no hay red o si el servidor falla: el llamador decide si cae al

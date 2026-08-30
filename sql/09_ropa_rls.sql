@@ -171,6 +171,16 @@ with (security_invoker = true) as
   join public.tienda_productos p on p.id = f.producto_id
   where f.deleted_at is null;
 
+-- La vitrina también necesita saber a qué salón pertenece: el nombre para el
+-- título y el teléfono para el botón de WhatsApp. Sin esto la página se llama
+-- "Tienda" a secas y el botón de WhatsApp no se muestra nunca, porque la
+-- variable que lo condiciona se queda en null.
+create or replace view public.tienda_salon
+with (security_invoker = true) as
+  select t.slug as tienda, t.nombre, t.telefono
+  from public.tenants t
+  where t.estado in ('trial','activo');
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- ⚠️ PERMISOS POR COLUMNA — hay que REVOCAR antes de conceder
 --
@@ -200,12 +210,22 @@ revoke select on public.producto_fotos from anon;
 grant select (id, tenant_id, producto_id, variante_id, path, orden, deleted_at)
   on public.producto_fotos to anon;
 
+-- `tenants` cae en la misma trampa, y ahí ya estaba pasando: desde que existe
+-- la policy `tenants_vitrina`, el grant heredado le devolvía a cualquier
+-- anónimo el resultado de
+--   /rest/v1/tenants?select=creado_por,plan
+-- es decir, quién dio de alta cada salón y qué plan paga.
+-- `id` y `estado` se conceden porque las vistas `security_invoker` los usan
+-- para el join y para el where, corriendo como el llamador.
+revoke select on public.tenants from anon;
+grant select (id, nombre, slug, telefono, estado) on public.tenants to anon;
+
 -- El teléfono del salón y quién lo creó no son de la vitrina.
 revoke select on public.tenants from anon;
 grant select (id, slug, nombre, estado) on public.tenants to anon;
 
 grant select on public.tienda_productos, public.tienda_variantes,
-                public.tienda_fotos to anon, authenticated;
+                public.tienda_fotos, public.tienda_salon to anon, authenticated;
 
 -- Y las FILAS: solo lo publicado, de un salón operativo.
 drop policy if exists productos_vitrina on public.productos;

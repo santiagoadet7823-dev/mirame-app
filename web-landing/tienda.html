@@ -18,9 +18,20 @@
   se pueden leer ni apuntándole directo a la tabla (ver sql/09_ropa_rls.sql).
 -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="Tienda">
-<meta property="og:description" content="Mirá las prendas disponibles">
+<meta property="og:title" content="Mirá lo que hay disponible">
+<meta property="og:description" content="Elegí lo que te guste y te lo guardamos 48 horas.">
+<meta property="og:image" content="__SITE_URL__tienda-preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<!--
+  Estas `og:` son ESTÁTICAS y no pueden dejar de serlo desde acá: el
+  crawler de WhatsApp no ejecuta JavaScript, así que no ve nada de lo que
+  arma `cargar()`. Por eso tampoco llevan el nombre del salón — la página
+  es multi-salón y quemarlo haría que el segundo comparta el nombre del
+  primero. El preview por salón o por producto necesita una Edge Function
+  que sirva el HTML con las meta ya escritas (ver 12-BRIEF-TIENDA.md).
+-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap">
@@ -46,6 +57,9 @@
   .wrap{max-width:560px;margin:0 auto;padding:20px 16px}
 
   header{text-align:center;padding:26px 16px 18px}
+  /* Los precios son plata y van en cifras de ancho fijo, como manda el
+     design system. Sin esto los números bailan de tarjeta en tarjeta. */
+  .precio,.tot{font-variant-numeric:tabular-nums}
   header h1{font-family:"Cormorant Garamond",Georgia,serif;font-size:32px;font-weight:600;line-height:1.05}
   header .sub{font-size:10px;letter-spacing:3px;color:var(--t3);text-transform:uppercase;margin-top:6px}
 
@@ -60,6 +74,16 @@
   }
   .rubro.on{background:var(--brand-bg);border-color:var(--border-lav);color:var(--brand);font-weight:600}
   .rubro .e{display:block;font-size:17px;margin-bottom:3px}
+
+  /* Escribir a una persona no puede estar solo al final de una reserva: es
+     la salida para todo el que mira y tiene una pregunta. */
+  .wa-link{
+    display:inline-flex;align-items:center;gap:7px;margin-top:12px;
+    padding:8px 16px;border-radius:var(--r-full);text-decoration:none;
+    border:1px solid var(--border-md);background:var(--surface);
+    font-size:12px;font-weight:500;color:var(--t2);
+  }
+  .wa-link .p{width:7px;height:7px;border-radius:50%;background:#25d366}
 
   .filtros{display:flex;gap:7px;overflow-x:auto;padding:0 0 14px;scrollbar-width:none}
   .filtros::-webkit-scrollbar{display:none}
@@ -172,7 +196,27 @@
   .err{background:var(--danger-bg);border:1px solid #fecdd3;color:var(--danger);
     padding:12px;border-radius:var(--r);font-size:12px;margin-bottom:10px}
 
-  .cargando{text-align:center;padding:70px;color:var(--t3);font-size:13px}
+  /* Tarjetas fantasma del MISMO tamaño que las reales. Sirven para dos
+     cosas: que no haya salto de layout cuando llegan los datos, y que el
+     cuerpo no diga "buscando" mientras el encabezado ya canta cuántos
+     productos hay. */
+  .sk{background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--r);overflow:hidden}
+  .sk .f{aspect-ratio:3/4;background:var(--bg2)}
+  .sk .l{height:9px;border-radius:5px;background:var(--bg2);margin:11px 11px 0}
+  .sk .l.corta{width:55%;margin-bottom:14px}
+  .sk .f,.sk .l{animation:latido 1.4s ease-in-out infinite}
+  @keyframes latido{0%,100%{opacity:1}50%{opacity:.55}}
+
+  /* La app respeta `disableAnimations` en todas sus animaciones; la
+     vitrina no puede ser la excepción. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:.01ms !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -180,12 +224,13 @@
 <header>
   <h1 id="titulo">Cargando…</h1>
   <div class="sub" id="sub"></div>
+  <div id="contacto"></div>
 </header>
 
 <div class="wrap">
   <div class="rubros" id="rubros"></div>
   <div class="filtros" id="filtros"></div>
-  <div id="lista"><div class="cargando">Buscando prendas…</div></div>
+  <div id="lista"></div>
 </div>
 
 <!-- Ficha de la prenda -->
@@ -222,6 +267,8 @@ const RUBROS = {
   arbell:  {e: '💄', t: 'Arbell'},
   insumos: {e: '🧴', t: 'Insumos'},
 };
+// El WhatsApp del salón, en dígitos. Sale de `tienda_salon`; si el salón no
+// cargó su teléfono, no se ofrece contacto en vez de ofrecer un link roto.
 let WA = null;
 
 const $ = id => document.getElementById(id);
@@ -237,23 +284,87 @@ async function api(recurso, query) {
   return r.json();
 }
 
+/// Tarjetas fantasma mientras llegan los datos.
+const esqueleto = (n) => '<div class="grid">' + Array.from({length: n}, () => `
+  <div class="sk"><div class="f"></div><div class="l"></div>
+    <div class="l corta"></div></div>`).join('') + '</div>';
+
+/// El teléfono como lo quiere wa.me: solo dígitos, en formato
+/// internacional. Para Argentina eso es `549` + característica + número.
+///
+/// Ella lo va a escribir como lo marca: "387 15 540 0000". Ese `15` se
+/// usa solo dentro del país y rompe el link; el `9` de celular, al revés,
+/// hace falta y casi nadie lo escribe. Devuelve null ante la duda: mejor
+/// no ofrecer el botón que ofrecer uno que no lleva a ningún lado.
+function telefonoWa(bruto) {
+  if (!bruto) return null;
+  const crudo = String(bruto).trim();
+  let d = crudo.replace(/\D/g, '');
+  if (!d) return null;
+
+  // Un internacional explicito de otro pais se respeta tal cual: la
+  // plataforma es argentina, pero no tiene por que serlo el salon.
+  if (crudo.startsWith('+') && !d.startsWith('54')) {
+    return d.length >= 8 ? d : null;
+  }
+
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.startsWith('54')) d = d.slice(2);
+  if (d.startsWith('0')) d = d.slice(1);          // 0 de larga distancia
+  if (d.length > 10 && d.startsWith('9')) d = d.slice(1);
+
+  // El 15 va pegado despues de la caracteristica, que en Argentina tiene
+  // 2, 3 o 4 digitos. Sacarlo deja los 10 que espera wa.me.
+  if (d.length === 12) {
+    for (const i of [2, 3, 4]) {
+      if (d.slice(i, i + 2) === '15') { d = d.slice(0, i) + d.slice(i + 2); break; }
+    }
+  }
+
+  return d.length === 10 ? '549' + d : null;
+}
+
+function pintarContacto() {
+  if (!WA) return;
+  const msg = encodeURIComponent('¡Hola! Te escribo por la tienda');
+  $('contacto').innerHTML = `
+    <a class="wa-link" href="https://wa.me/${WA}?text=${msg}">
+      <span class="p"></span>Escribinos por WhatsApp</a>`;
+}
+
 async function cargar() {
+  $('lista').innerHTML = esqueleto(4);
   try {
-    const prods = await api('tienda_productos',
-      `tienda=eq.${encodeURIComponent(TIENDA)}&select=*&order=destacado.desc,created_at.desc`);
+    // Las dos consultas salen JUNTAS. En cascada, el encabezado se
+    // actualizaba primero y quedaba diciendo "1 producto" mientras el
+    // cuerpo todavía decía que estaba buscando.
+    const [prods, salones] = await Promise.all([
+      api('tienda_productos',
+        `tienda=eq.${encodeURIComponent(TIENDA)}&select=*&order=destacado.desc,created_at.desc`),
+      api('tienda_salon',
+        `tienda=eq.${encodeURIComponent(TIENDA)}&select=*&limit=1`),
+    ]);
+
+    const salon = salones[0];
+    const nombre = salon?.nombre || 'Tienda';
+    document.title = nombre;
+    $('titulo').textContent = nombre;
+    WA = telefonoWa(salon?.telefono);
+    pintarContacto();
 
     if (!prods.length) {
-      $('titulo').textContent = 'Tienda';
+      $('sub').textContent = '';
       $('lista').innerHTML =
         '<div class="vacio"><div class="e">🛍️</div><p>Todavía no hay productos publicados</p></div>';
       return;
     }
 
     PRODUCTOS = prods;
-    document.title = 'Tienda';
-    $('titulo').textContent = 'Tienda';
     $('sub').textContent =
       prods.length + (prods.length === 1 ? ' producto' : ' productos');
+    // Ahora sí sabemos cuántas tarjetas van: el esqueleto pasa a tener la
+    // forma exacta de la grilla que viene, así no hay salto al cambiarlo.
+    $('lista').innerHTML = esqueleto(Math.min(prods.length, 6));
 
     const ids = prods.map(p => p.id);
     // Una sola consulta para variantes y otra para fotos, con `in`: pedir por

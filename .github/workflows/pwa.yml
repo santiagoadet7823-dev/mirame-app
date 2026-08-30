@@ -83,12 +83,18 @@ jobs:
         run: |
           test -n "$SUPABASE_URL" || { echo "Falta el secret SUPABASE_URL"; exit 1; }
           test -n "$SUPABASE_PUBLISHABLE_KEY" || { echo "Falta SUPABASE_PUBLISHABLE_KEY"; exit 1; }
+          # El og:image tiene que ser absoluto: el crawler de WhatsApp no
+          # resuelve rutas relativas y sin imagen el link sale como un
+          # rectangulo gris, que es por donde entra TODO el trafico.
+          SITIO="https://${{ github.repository_owner }}.github.io/mirame-app/"
           sed -e "s|__SUPABASE_URL__|$SUPABASE_URL|g" \
               -e "s|__SUPABASE_KEY__|$SUPABASE_PUBLISHABLE_KEY|g" \
+              -e "s|__SITE_URL__|$SITIO|g" \
               ../web-landing/tienda.html > build/web/tienda.html
+          cp ../web-landing/tienda-preview.jpg build/web/tienda-preview.jpg
           # Si quedo algun marcador sin reemplazar, la vitrina saldria rota y
           # nadie se enteraria hasta que una clienta la abra.
-          ! grep -q "__SUPABASE_" build/web/tienda.html || {
+          ! grep -qE "__(SUPABASE|SITE)_" build/web/tienda.html || {
             echo "Quedaron marcadores sin reemplazar en tienda.html"; exit 1; }
 
       - uses: actions/upload-pages-artifact@v3
