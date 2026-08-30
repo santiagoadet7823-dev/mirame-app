@@ -7,6 +7,7 @@
 library;
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Con prefijo: Drift genera clases con los MISMOS nombres (`Producto`,
@@ -364,6 +365,12 @@ class RopaRepository {
         // El stock va por DELTA aunque el formulario muestre un absoluto: si
         // se escribiera el valor tal cual, editar una prenda desde el teléfono
         // pisaría las ventas que el otro dispositivo cargó mientras tanto.
+        // Sin deposito no hay donde poner el stock. Antes se salteaba sin
+        // decir nada y la usuaria veia sus cantidades desaparecer; ahora el
+        // formulario garantiza uno, y si igual falta se avisa.
+        if (v.stock != null && depositoId == null) {
+          debugPrint('ropa: se descarto el stock de $vid — no hay deposito');
+        }
         if (v.stock != null && depositoId != null) {
           final actual = await (_db.select(_db.stockVariantes)
                 ..where((x) =>

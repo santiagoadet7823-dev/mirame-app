@@ -92,7 +92,9 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
     super.initState();
     final p = widget.producto;
     _proveedorId = p?.proveedorId;
-    _depositoId = _depositoPrincipal();
+    // El deposito NO se resuelve aca: `depositosProvider` es autoDispose y en
+    // `initState` todavia no emitio, asi que devolvia null y el stock se
+    // perdia en silencio. Se resuelve al guardar.
 
     if (p != null) {
       final v = ref.read(variantesProvider).value?[p.id] ?? const [];
@@ -134,6 +136,14 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
     final deps = ref.watch(depositosProvider).value ?? const [];
     if (deps.isEmpty) return const SizedBox.shrink();
 
+    // El provider emite despues del primer build, asi que la preseleccion se
+    // hace aca y no en `initState`.
+    if (_depositoId == null || !deps.any((d) => d.id == _depositoId)) {
+      _depositoId = deps
+          .firstWhere((d) => d.esPrincipal, orElse: () => deps.first)
+          .id;
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String?>(
@@ -168,6 +178,21 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
     return deps
         .firstWhere((d) => d.esPrincipal, orElse: () => deps.first)
         .id;
+  }
+
+  /// Dónde va a entrar el stock, garantizado.
+  ///
+  /// Si el salón todavía no creó ningún depósito se crea uno acá. Antes, sin
+  /// depósito, las cantidades que la usuaria escribía se descartaban sin
+  /// decirle nada — y "depósito" es un concepto que no necesita hasta que
+  /// tiene dos lugares.
+  Future<String?> _asegurarDeposito() async {
+    final elegido = _depositoId ?? _depositoPrincipal();
+    if (elegido != null) return elegido;
+
+    final repo = ref.read(ropaRepoProvider);
+    if (repo == null) return null;
+    return repo.guardarDeposito(nombre: 'Principal', esPrincipal: true);
   }
 
   Future<void> _agregarFoto(bool camara) async {
@@ -218,7 +243,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
             ? (num.tryParse(_pct.text.replaceAll(',', '.')) ?? 0)
             : null,
         rubro: _rubro,
-        depositoId: _depositoId,
+        depositoId: await _asegurarDeposito(),
         publicado: _publicado,
         destacado: _destacado,
         variantes: [
@@ -388,24 +413,6 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
         _seccion(_rubro == 'ropa' ? 'TALLES Y CANTIDADES' : 'PRESENTACIONES'),
         _selectorDeposito(),
         _listaVariantes(),
-
-        if (_depositoId == null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: MColors.warningBg,
-                border: Border.all(color: MColors.warningBorder),
-                borderRadius: BorderRadius.circular(MRadius.sm),
-              ),
-              child: Text(
-                'Todavía no tenés ningún depósito, así que las cantidades no '
-                'se van a guardar. Creá uno en Proveedores → Depósitos.',
-                style: sans(size: 12, color: MColors.warningText),
-              ),
-            ),
-          ),
 
         _seccion('EN LA TIENDA'),
         SwitchListTile.adaptive(
