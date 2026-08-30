@@ -17,14 +17,21 @@ import '../../domain/rules/consignacion.dart';
 import '../../domain/rules/period.dart';
 import '../local/database.dart';
 import '../sync/sync_engine.dart';
-import 'business_repository.dart' show businessRepoProvider, nuevoId;
+import 'business_repository.dart'
+    show BusinessRepository, businessRepoProvider, nuevoId;
 
 class RopaRepository {
-  const RopaRepository(this._db, this._sync, this._tenantId);
+  const RopaRepository(this._db, this._sync, this._tenantId, this._negocio);
 
   final MirameDb _db;
   final SyncEngine _sync;
   final String _tenantId;
+
+  /// Se usa para que una venta impacte en la caja SIN que la pantalla tenga
+  /// que acordarse de cargarla. Si eso dependiera de la UI, el dia que se
+  /// agregue una segunda forma de vender (el vendedor desde su telefono) la
+  /// mitad de las ventas no llegaria a la caja.
+  final BusinessRepository _negocio;
 
   String get tenantId => _tenantId;
 
@@ -547,6 +554,24 @@ class RopaRepository {
           );
         }
       }
+
+      // La venta impacta en la caja por el TOTAL, no por la parte del salon.
+      //
+      // Es lo que refleja la plata de verdad: ella cobra todo y despues le
+      // paga al proveedor, y ese pago se registra como egreso al liquidar.
+      // Anotar solo su parte haria que la caja no cuadre con el efectivo que
+      // tiene en la mano al cerrar el dia.
+      if (total > 0) {
+        await _negocio.guardarMovimiento(
+          tipo: 'income',
+          monto: total.toDouble(),
+          fecha: dia,
+          descripcion: notas ?? 'Venta de ropa',
+          categoria: 'ropa',
+          metodo: metodo,
+          clientId: clientId,
+        );
+      }
     });
     return ventaId;
   }
@@ -687,6 +712,6 @@ final ropaRepoProvider = Provider<RopaRepository?>((ref) {
   // salón activo: si esa lógica viviera en dos lugares, un día discreparían.
   final base = ref.watch(businessRepoProvider);
   if (base == null) return null;
-  return RopaRepository(
-      ref.watch(dbProvider), ref.watch(syncEngineProvider), base.tenantId);
+  return RopaRepository(ref.watch(dbProvider), ref.watch(syncEngineProvider),
+      base.tenantId, base);
 });

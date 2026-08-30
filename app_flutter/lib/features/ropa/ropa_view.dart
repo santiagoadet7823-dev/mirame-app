@@ -22,6 +22,7 @@ import '../auth/session_controller.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
 import 'producto_form.dart';
+import 'venta_form.dart';
 import 'proveedores_view.dart';
 
 final proveedoresProvider =
@@ -115,9 +116,7 @@ class _RopaViewState extends ConsumerState<RopaView> {
       floatingActionButton: puedeEscribir
           ? Padding(
               padding: const EdgeInsets.only(right: 2, bottom: 8),
-              child: FabMirame(
-                onTap: () => abrirFormularioProducto(context, ref),
-              ),
+              child: FabMirame(onTap: () => _queHago(context, ref)),
             )
           : null,
       body: ListView(
@@ -211,6 +210,92 @@ class _RopaViewState extends ConsumerState<RopaView> {
       ),
     );
   }
+}
+
+/// El + ofrece las dos cosas que se hacen acá. Vender va primero porque pasa
+/// muchas más veces que cargar una prenda nueva.
+Future<void> _queHago(BuildContext context, WidgetRef ref) async {
+  final r = await showModalBottomSheet<String>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => Container(
+      decoration: const BoxDecoration(
+        color: MColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(MRadius.xl)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _Opcion(
+              emoji: '💵',
+              titulo: 'Vender',
+              detalle: 'Cargar una venta',
+              onTap: () => Navigator.of(ctx).pop('venta'),
+            ),
+            const SizedBox(height: 10),
+            _Opcion(
+              emoji: '👗',
+              titulo: 'Nueva prenda',
+              detalle: 'Sumar al catálogo',
+              onTap: () => Navigator.of(ctx).pop('prenda'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+  if (r == null || !context.mounted) return;
+  if (r == 'venta') {
+    await abrirVenta(context);
+  } else {
+    await abrirFormularioProducto(context, ref);
+  }
+}
+
+class _Opcion extends StatelessWidget {
+  const _Opcion({
+    required this.emoji,
+    required this.titulo,
+    required this.detalle,
+    required this.onTap,
+  });
+
+  final String emoji;
+  final String titulo;
+  final String detalle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+          decoration: BoxDecoration(
+            color: MColors.bg2,
+            border: Border.all(color: MColors.border),
+            borderRadius: BorderRadius.circular(MRadius.md),
+          ),
+          child: Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 22)),
+              const SizedBox(width: 13),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(titulo, style: sans(size: 14, weight: 600)),
+                  Text(detalle,
+                      style: sans(size: 11, color: MColors.tMuted)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
 }
 
 class _TarjetaPrenda extends StatelessWidget {
