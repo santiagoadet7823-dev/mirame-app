@@ -3,8 +3,12 @@
 /// **La compresión no es una optimización, es un requisito.** Una foto de
 /// cámara son 3–4 MB. Sin comprimir, el free tier de 1 GB se agota en unas 300
 /// fotos y —peor— la vitrina que la clienta abre con datos móviles tarda una
-/// eternidad. A 1200 px y calidad 80 queda en ~150 KB: entran unas 6.000 y
-/// carga al instante.
+/// eternidad.
+///
+/// Se guarda en **WebP**, no en JPEG: a 1200 px y calidad 80 la misma foto pasa
+/// de ~150 KB a ~50 KB, y la vitrina tiene un techo de un segundo con datos
+/// móviles. Es solo Android — este archivo entero usa `dart:io` y no corre en
+/// la PWA.
 library;
 
 import 'dart:io';
@@ -43,23 +47,25 @@ Future<String?> elegirYComprimir({required bool desdeCamara}) async {
     if (x == null) return null;
 
     final dir = await getApplicationDocumentsDirectory();
-    final destino =
-        '${dir.path}/fotos/${DateTime.now().microsecondsSinceEpoch}.jpg';
+    final base = '${dir.path}/fotos/${DateTime.now().microsecondsSinceEpoch}';
     await Directory('${dir.path}/fotos').create(recursive: true);
 
     final comprimida = await FlutterImageCompress.compressAndGetFile(
       x.path,
-      destino,
+      '$base.webp',
       quality: kCalidad,
       minWidth: kLadoMaximo,
       minHeight: kLadoMaximo,
-      format: CompressFormat.jpeg,
+      format: CompressFormat.webp,
     );
 
     // Si la compresión falla (formato raro, poca memoria) se usa el original:
     // una foto pesada es mejor que no poder cargar la prenda.
+    //
+    // Va con extensión .jpg y no .webp a propósito: el original ES un jpg, y
+    // subirlo diciendo que es webp lo dejaría roto en la vitrina.
     if (comprimida == null) {
-      final copia = await File(x.path).copy(destino);
+      final copia = await File(x.path).copy('$base.jpg');
       return copia.path;
     }
     return comprimida.path;
@@ -87,12 +93,16 @@ Future<String?> subirFoto({
     final nombre = rutaLocal.split(Platform.pathSeparator).last;
     final ruta = '$tenantId/$productoId/$nombre';
 
+    // El tipo sale de la extensión y no de una constante: la compresión
+    // devuelve webp, pero el camino de respaldo devuelve el jpg original.
+    final tipo = nombre.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+
     final storage = Supabase.instance.client.storage.from(kBucketProductos);
     await storage.upload(
       ruta,
       archivo,
-      fileOptions: const FileOptions(
-        contentType: 'image/jpeg',
+      fileOptions: FileOptions(
+        contentType: tipo,
         // Un año: la ruta lleva un timestamp único, así que el archivo nunca
         // cambia de contenido. Sin esto la vitrina vuelve a bajar las mismas
         // fotos en cada visita.

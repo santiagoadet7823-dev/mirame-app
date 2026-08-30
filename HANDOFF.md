@@ -140,6 +140,7 @@ tuyo y del revendedor. Requiere que cada uno entre a la app una vez para que exi
 | 03 | `03-distribucion-pwa-y-apk.md` | implementado | PWA en Pages, releases por tag, invitación por QR y la diferencia real con la OTA de DisT-At |
 | 02 | `02-empaquetado-apk.md` | implementado | Rama anticipada de la Fase 8: keystore, firma, iconos y deep link para probar en un teléfono real |
 | 04 | `03-tienda-diseno.md` | implementado (fase 0) | Diagnóstico de la vitrina, arreglos de identidad y WhatsApp, y el brief de diseño (`12-BRIEF-TIENDA.md`) |
+| 05 | `04-tienda-implementacion.md` | fases 1 y 2 implementadas | La entrega del diseñador portada al HTML plano; cuentas de clienta y mails quedan para las fases 3 y 4 |
 
 > El contenido de `planes/` es local. Este índice es lo único que se versiona.
 > Al crear un plan nuevo, agregar la fila acá.
@@ -424,3 +425,56 @@ propósito, no por olvido.
 por salón o por producto, que necesita una Edge Function — las `og:` no se pueden armar desde
 el cliente porque el crawler de WhatsApp no ejecuta JavaScript.
 
+### 2026-08-30 (tarde) — La entrega del diseñador, implementada
+
+Llegó el trabajo sobre `12-BRIEF-TIENDA.md`: `tokens.css` con las variables de marca, los 13
+íconos a especificación, las once fotos reales convertidas (los hero a 75 KB contra el techo
+de 120) y un prototipo navegable en React. **El prototipo no se copia, se porta**: la tienda
+es un HTML plano sin build.
+
+**Corrigió una premisa del brief, y tenía razón.** Yo había escrito que las fotos eran
+perchas contra una pared — lo saqué del único producto que existía al redactarlo. Las once
+que le pasaron son flat-lays sobre una manta crema casi idéntica al `#ede9e2` de la paleta.
+Así que la tarjeta no disimula el recorte: lo **continúa**, con un paspartú de ese crema.
+También midió el contraste que yo había marcado como dudoso: `#9c9088` sobre `#faf8f5` da
+2,93:1 y no pasa AA. Ahora es decorativo, y el texto usa `#6b6259` — medido acá en **5,63:1**.
+
+**Decisiones tomadas con el usuario:** alcance completo (incluidas cuentas y mails, que van
+en las fases 3 y 4); se acepta el cambio de tipografía a **Great Vibes + Jost** derivadas del
+logo, con el wordmark tipográfico; y la casilla de avisos **queda pre-tildada** — decisión
+del usuario con el riesgo de la Ley 25.326 a la vista, a mitigar con el registro de
+consentimiento de la fase 4.
+
+**Fase 1 — la vidriera.** Tokens inline, wordmark armado desde `tienda_salon.nombre`, los 13
+íconos inline reemplazando **todos** los emojis, paspartú y aspecto 1:1, ritmo de grilla
+derivado del índice (si dependiera de los datos bailaría en cada carga), escalera
+30·70·110·150·190·220, fotos que entran por opacidad al decodificar, y la hoja pasada de
+`@keyframes` a `transform` con arrastre que cierra por 140 px **o por velocidad**. Siete
+estados, favoritos en `localStorage`, y la reserva con **fecha concreta** salteando domingos.
+
+Se agregó un estado que el port no tenía y el diseñador sí había diseñado: **una sola
+prenda**, presentada grande. Es el estado real de la tienda hoy, y con la prenda agotada el
+texto cambia a "Por ahora no queda nada" en vez de mentir con "Recién entró".
+
+**Fase 2 — la base.** `variante_reservada()` y la columna `reservado` en `tienda_variantes`:
+`stock_disponible()` ya restaba las reservas, así que una prenda tomada por otra clienta se
+leía como agotada. Son dos cosas distintas para quien mira. Y `direccion` / `instagram` en
+`tenants`, editables desde "Mi tienda" — quemarlas en el HTML habría hecho que el segundo
+salón saliera con la dirección del primero.
+
+**Las fotos ahora suben en WebP** (`fotos.dart`), que es lo que sostiene el techo de un
+segundo. El camino de respaldo sigue guardando `.jpg` y el `contentType` sale de la
+extensión: subir el jpg original diciendo que es webp lo dejaba roto en la vitrina.
+
+**Un bug que apareció de paso:** el cache de acceso no guardaba el teléfono. Con los campos
+nuevos, abrir "Mi tienda" sin señal los habría mostrado vacíos y guardar desde ahí habría
+**borrado la dirección real**. Ahora los tres viajan al cache.
+
+**Verificado** con un banco de pruebas local que intercepta `fetch` y siembra 14 productos:
+los tres estados de stock, sin foto, sin resultados, tienda vacía, error y una sola prenda;
+cero `div` con onclick, cero emojis, ningún área táctil por debajo de 44×44, y el flujo
+completo hasta el código de reserva. Contra datos reales la tienda tiene **un producto
+agotado**, así que la grilla llena y la última unidad solo se pudieron ver sembrados.
+
+**Próximo:** fase 3 (cuentas de clienta) y fase 4 (avisos por mail). Del diseñador falta la
+imagen de preview del link como archivo y el `logo.svg` que `tokens.css` referencia.

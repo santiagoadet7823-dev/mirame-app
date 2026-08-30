@@ -156,10 +156,24 @@ with (security_invoker = true) as
   where p.deleted_at is null and p.publicado = true
     and t.estado in ('trial','activo');
 
+-- "Reservado" y "agotado" son dos cosas distintas para quien mira: una no
+-- vuelve, la otra puede volver mañana. Pero `stock_disponible()` ya resta las
+-- reservas vigentes, así que una prenda tomada se leía como agotada.
+--
+-- Devuelve solo un booleano a propósito: no dice quién reservó ni cuántas.
+create or replace function public.variante_reservada(p_variante uuid)
+returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce((select sum(cantidad)::int from public.stock_variantes
+                   where variante_id = p_variante and deleted_at is null), 0) > 0
+     and public.stock_disponible(p_variante) = 0;
+$$;
+
 create or replace view public.tienda_variantes
 with (security_invoker = true) as
   select v.id, v.producto_id, v.talle, v.color,
-         public.stock_disponible(v.id) as disponible
+         public.stock_disponible(v.id) as disponible,
+         public.variante_reservada(v.id) as reservado
   from public.producto_variantes v
   join public.tienda_productos p on p.id = v.producto_id
   where v.deleted_at is null;
@@ -175,9 +189,15 @@ with (security_invoker = true) as
 -- título y el teléfono para el botón de WhatsApp. Sin esto la página se llama
 -- "Tienda" a secas y el botón de WhatsApp no se muestra nunca, porque la
 -- variable que lo condiciona se queda en null.
+-- La dirección y el Instagram los muestra el pie de la vitrina. Sin esto
+-- habría que quemarlos en el HTML, que es multi-salón: el segundo salón
+-- saldría con la dirección del primero.
+alter table public.tenants add column if not exists direccion text;
+alter table public.tenants add column if not exists instagram text;
+
 create or replace view public.tienda_salon
 with (security_invoker = true) as
-  select t.slug as tienda, t.nombre, t.telefono
+  select t.slug as tienda, t.nombre, t.telefono, t.direccion, t.instagram
   from public.tenants t
   where t.estado in ('trial','activo');
 
@@ -218,7 +238,8 @@ grant select (id, tenant_id, producto_id, variante_id, path, orden, deleted_at)
 -- `id` y `estado` se conceden porque las vistas `security_invoker` los usan
 -- para el join y para el where, corriendo como el llamador.
 revoke select on public.tenants from anon;
-grant select (id, nombre, slug, telefono, estado) on public.tenants to anon;
+grant select (id, nombre, slug, telefono, estado, direccion, instagram)
+  on public.tenants to anon;
 
 -- El teléfono del salón y quién lo creó no son de la vitrina.
 revoke select on public.tenants from anon;
@@ -226,6 +247,7 @@ grant select (id, slug, nombre, estado) on public.tenants to anon;
 
 grant select on public.tienda_productos, public.tienda_variantes,
                 public.tienda_fotos, public.tienda_salon to anon, authenticated;
+grant execute on function public.variante_reservada(uuid) to anon, authenticated;
 
 -- Y las FILAS: solo lo publicado, de un salón operativo.
 drop policy if exists productos_vitrina on public.productos;

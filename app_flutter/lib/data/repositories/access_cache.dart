@@ -53,6 +53,11 @@ class AccessCache {
             'slug': t.slug,
             'estado': t.estado.name,
             'plan': t.plan,
+            // Sin estos tres, "Mi tienda" abierta sin senal mostraba los
+            // campos vacios y al guardar borraba la direccion real.
+            'telefono': t.telefono,
+            'direccion': t.direccion,
+            'instagram': t.instagram,
           },
       ],
       'licenses': [

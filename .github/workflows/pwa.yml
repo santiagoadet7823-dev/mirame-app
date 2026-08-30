@@ -93,6 +93,10 @@ jobs:
               -e "s|__SITE_URL__|$SITIO|g" \
               ../web-landing/tienda.html > build/web/tienda.html
           cp ../web-landing/tienda-preview.jpg build/web/tienda-preview.jpg
+          # Los hero de la portada. Los iconos NO se copian: van
+          # inline en el HTML, asi que un archivo suelto seria una
+          # segunda fuente de verdad que se desincroniza.
+          cp ../web-landing/hero-blazer.webp build/web/
           # Si quedo algun marcador sin reemplazar, la vitrina saldria rota y
           # nadie se enteraria hasta que una clienta la abra.
           ! grep -qE "__(SUPABASE|SITE)_" build/web/tienda.html || {

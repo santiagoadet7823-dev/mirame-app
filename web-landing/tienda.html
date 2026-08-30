@@ -10,12 +10,20 @@
 
   Es HTML plano a propósito, igual que `descargar.html`. El build web de
   Flutter pesa varios MB: alguien que toca un link con datos móviles espera
-  ver ropa, no descargar una app de gestión. Acá se ve la primera foto en
-  ~1 segundo.
+  ver ropa, no descargar una app de gestión.
 
   Lee de Supabase con la clave publicable, contra las vistas `tienda_*`, que
   exponen SOLO columnas de vitrina. El porcentaje del salón y el proveedor no
   se pueden leer ni apuntándole directo a la tabla (ver sql/09_ropa_rls.sql).
+
+  El diseño es la entrega del diseñador sobre `12-BRIEF-TIENDA.md`. Los tokens
+  salen de su `tokens.css` y los íconos de su `iconos/`. Dos cosas que parecen
+  detalle y no lo son:
+    · blanco puro en ningún lado — es lo que delata cada sombra despareja de
+      una foto de celular;
+    · el paspartú crema alrededor de la foto no es adorno. Las fotos son
+      flat-lays sobre una manta de ese mismo crema, así que el marco las
+      continúa en vez de recortarlas.
 -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Mirá lo que hay disponible">
@@ -25,229 +33,385 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <!--
-  Estas `og:` son ESTÁTICAS y no pueden dejar de serlo desde acá: el
-  crawler de WhatsApp no ejecuta JavaScript, así que no ve nada de lo que
-  arma `cargar()`. Por eso tampoco llevan el nombre del salón — la página
-  es multi-salón y quemarlo haría que el segundo comparta el nombre del
-  primero. El preview por salón o por producto necesita una Edge Function
-  que sirva el HTML con las meta ya escritas (ver 12-BRIEF-TIENDA.md).
+  Estas `og:` son ESTÁTICAS y no pueden dejar de serlo desde acá: el crawler de
+  WhatsApp no ejecuta JavaScript, así que no ve nada de lo que arma `cargar()`.
+  Por eso tampoco llevan el nombre del salón — la página es multi-salón y
+  quemarlo haría que el segundo comparta el nombre del primero. El preview por
+  salón o por producto necesita una Edge Function que sirva el HTML con las
+  meta ya escritas (ver 12-BRIEF-TIENDA.md).
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Jost:wght@300;400;500;600;700&display=swap">
 <style>
-  :root{
-    --bg:#faf8f5; --bg2:#f4f1ec; --surface:#fff;
-    --brand:#8b77ec; --brand-bg:#f5f3ff; --border-lav:#ddd6fb;
-    --nude:#fdf0ec; --nude-b:#f0c4b8;
-    --t:#1a1612; --t2:#5c5248; --t3:#9c9088; --t4:#c4bdb5;
-    --border:rgba(0,0,0,.07); --border-md:rgba(0,0,0,.11);
-    --danger:#9f1239; --danger-bg:#fff1f2;
-    --ok:#166534; --ok-bg:#f0fdf4;
-    --r:14px; --r-lg:20px; --r-full:999px;
-    --sh:0 1px 2px rgba(0,0,0,.04);
-    --ease:cubic-bezier(.4,0,.2,1);
-  }
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  body{
-    background:var(--bg); color:var(--t);
-    font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
-    min-height:100dvh; padding-bottom:88px;
-  }
-  .wrap{max-width:560px;margin:0 auto;padding:20px 16px}
+/* ══ Tokens — de `tokens.css` del diseñador ═══════════════════════════════ */
+:root{
+  /* La única que cambia por salón. */
+  --marca-acento:#8b77ec;
 
-  header{text-align:center;padding:26px 16px 18px}
-  /* Los precios son plata y van en cifras de ancho fijo, como manda el
-     design system. Sin esto los números bailan de tarjeta en tarjeta. */
-  .precio,.tot{font-variant-numeric:tabular-nums}
-  header h1{font-family:"Cormorant Garamond",Georgia,serif;font-size:32px;font-weight:600;line-height:1.05}
-  header .sub{font-size:10px;letter-spacing:3px;color:var(--t3);text-transform:uppercase;margin-top:6px}
+  --ac:var(--marca-acento);
+  --ac-d:#7459d9;   /* texto sobre crema: AA */
+  --ac-l:#ede9fd;   /* chips, pastillas */
+  --ac-xl:#f5f3ff;  /* fondos de bloque */
 
-  /* Solapas de rubro: mas grandes que los filtros de categoria porque son la
-     decision principal — "vengo a ver ropa" o "vengo a ver los productos". */
-  .rubros{display:flex;gap:6px;padding:0 0 14px}
-  .rubro{
-    flex:1;padding:11px 8px;border-radius:var(--r);text-align:center;
-    border:1px solid var(--border-md);background:var(--surface);
-    font-size:12px;font-weight:500;color:var(--t2);cursor:pointer;
-    transition:all .18s var(--ease);
-  }
-  .rubro.on{background:var(--brand-bg);border-color:var(--border-lav);color:var(--brand);font-weight:600}
-  .rubro .e{display:block;font-size:17px;margin-bottom:3px}
+  /* Chasis neutro cálido — de la plataforma, no cambia entre salones. */
+  --bg:#faf8f5; --bg-2:#f4f1ec;
+  --bg-3:#ede9e2;   /* paspartú de la tarjeta */
+  --bg-4:#e6e1d8;   /* hueco de la foto */
 
-  /* Escribir a una persona no puede estar solo al final de una reserva: es
-     la salida para todo el que mira y tiene una pregunta. */
-  .wa-link{
-    display:inline-flex;align-items:center;gap:7px;margin-top:12px;
-    padding:8px 16px;border-radius:var(--r-full);text-decoration:none;
-    border:1px solid var(--border-md);background:var(--surface);
-    font-size:12px;font-weight:500;color:var(--t2);
-  }
-  .wa-link .p{width:7px;height:7px;border-radius:50%;background:#25d366}
+  --tx:#1a1612; --tx-2:#3d362f; --tx-3:#5c5248;
+  --tx-4:#6b6259;   /* mínimo para texto: 4,9:1 sobre --bg */
+  --tx-deco:#9c9088;/* SOLO hairlines e íconos decorativos — no pasa AA */
+  --tx-claro:#c4bdb5;
 
-  .filtros{display:flex;gap:7px;overflow-x:auto;padding:0 0 14px;scrollbar-width:none}
-  .filtros::-webkit-scrollbar{display:none}
-  .pill{
-    flex:0 0 auto;padding:7px 14px;border-radius:var(--r-full);
-    border:1px solid var(--border-md);background:var(--surface);
-    font-size:12px;color:var(--t2);cursor:pointer;transition:all .18s var(--ease);
-  }
-  .pill.on{background:var(--brand-bg);border-color:var(--border-lav);color:var(--brand);font-weight:600}
+  --linea:rgba(0,0,0,.07); --linea-fuerte:rgba(0,0,0,.11);
+  --ok:#166534; --ok-bg:#f0fdf4;
+  --alerta:#9f1239; --alerta-bg:#fff1f2;
 
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .card{
-    background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
-    overflow:hidden;box-shadow:var(--sh);cursor:pointer;
-    transition:transform .18s var(--ease);
-  }
-  .card:active{transform:scale(.98)}
-  .foto{aspect-ratio:3/4;background:var(--bg2);position:relative;overflow:hidden}
-  .foto img{width:100%;height:100%;object-fit:cover;display:block}
-  .foto .vacia{display:flex;align-items:center;justify-content:center;height:100%;font-size:34px;opacity:.25}
-  .agotado{
-    position:absolute;inset:0;background:rgba(255,255,255,.6);
-    display:flex;align-items:center;justify-content:center;
-  }
-  .agotado span{
-    background:var(--danger-bg);border:1px solid #fecdd3;color:var(--danger);
-    font-size:10px;font-weight:600;padding:4px 11px;border-radius:var(--r-full);
-  }
-  .destacada{
-    position:absolute;left:8px;top:8px;background:var(--nude);border:1px solid var(--nude-b);
-    font-size:9px;font-weight:600;padding:3px 8px;border-radius:var(--r-full);
-  }
-  .info{padding:10px 11px 12px}
-  .info .nom{font-size:13px;font-weight:600;line-height:1.3;
-    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .info .precio{font-family:"Cormorant Garamond",Georgia,serif;font-size:18px;font-weight:600;margin-top:5px}
-  .info .talles{font-size:10px;color:var(--t3);margin-top:4px}
+  --r-1:10px; --r-2:14px; --r-3:20px; --r-4:26px; --r-pill:100px;
+  --sombra:0 4px 16px rgba(0,0,0,.08);
+  --sombra-hoja:0 -8px 34px rgba(0,0,0,.16);
 
-  /* ── Ficha ── */
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:50;align-items:flex-end}
-  .modal.on{display:flex}
-  .hoja{
-    background:var(--surface);width:100%;max-height:92dvh;overflow-y:auto;
-    border-radius:var(--r-lg) var(--r-lg) 0 0;animation:sube .26s var(--ease);
+  --script:"Great Vibes",cursive;  /* SOLO el nombre del salón */
+  --sans:Jost,system-ui,-apple-system,sans-serif;
+
+  --dur-1:120ms; --dur-2:200ms; --dur-3:320ms;
+  --ease-out:cubic-bezier(.16,.84,.44,1);
+  --ease-in:cubic-bezier(.4,0,1,1);
+  --tap:44px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{
+  background:var(--bg); color:var(--tx);
+  font-family:var(--sans); font-size:15px;
+  -webkit-font-smoothing:antialiased;
+  min-height:100dvh; overflow-x:hidden;
+}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+a{color:inherit;text-decoration:none}
+img{display:block}
+:focus-visible{outline:2px solid var(--ac-d);outline-offset:3px;border-radius:var(--r-1)}
+.wrap{max-width:520px;margin:0 auto}
+
+@keyframes gridIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes riseIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* La app respeta `disableAnimations` en todas sus animaciones; la vitrina no
+   puede ser la excepción. */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:1ms !important; animation-delay:0ms !important;
+    animation-iteration-count:1 !important; transition-duration:1ms !important;
   }
-  @keyframes sube{from{transform:translateY(30px);opacity:.5}to{transform:none;opacity:1}}
-  .hoja .fotos{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
-  .hoja .fotos::-webkit-scrollbar{display:none}
-  .hoja .fotos img{width:100%;flex:0 0 100%;aspect-ratio:3/4;object-fit:cover;scroll-snap-align:center}
-  .hoja .cuerpo{padding:18px}
-  .hoja h2{font-family:"Cormorant Garamond",Georgia,serif;font-size:24px;font-weight:600;line-height:1.15}
-  .hoja .cod{font-size:10px;letter-spacing:.5px;color:var(--t4);font-weight:600;margin-bottom:4px}
-  .hoja .desc{font-size:13px;color:var(--t2);line-height:1.5;margin-top:8px}
-  .hoja .precio{font-family:"Cormorant Garamond",Georgia,serif;font-size:30px;font-weight:600;margin:12px 0 4px}
-  .rot{font-size:10px;letter-spacing:1px;color:var(--t3);text-transform:uppercase;margin:16px 0 8px;font-weight:600}
-  .opciones{display:flex;flex-wrap:wrap;gap:7px}
-  .op{
-    padding:9px 14px;border-radius:var(--r-full);border:1px solid var(--border-md);
-    background:var(--surface);font-size:12px;cursor:pointer;transition:all .18s var(--ease);
-  }
-  .op.on{background:var(--brand-bg);border-color:var(--border-lav);color:var(--brand);font-weight:600}
-  .op:disabled{opacity:.35;cursor:not-allowed;text-decoration:line-through}
+}
 
-  .btn{
-    width:100%;padding:15px;border:none;border-radius:var(--r-full);
-    background:var(--brand);color:#fff;font-size:14px;font-weight:600;
-    font-family:inherit;cursor:pointer;margin-top:16px;
-  }
-  .btn:disabled{opacity:.4;cursor:not-allowed}
-  .btn.sec{background:var(--surface);color:var(--t);border:1px solid var(--border-md);margin-top:8px}
-  .btn.wa{background:#25d366}
+/* ══ Cabecera ═════════════════════════════════════════════════════════════ */
+.top{display:flex;align-items:center;gap:12px;padding:16px 18px 14px}
+.top .marca{flex:1;min-width:0}
+.top .script{font:400 28px/.9 var(--script)}
+.top .caps{font:500 8.5px var(--sans);letter-spacing:.28em;text-transform:uppercase;
+  color:var(--tx-4);margin:3px 0 0 2px}
+.logo{width:46px;height:46px;border-radius:var(--r-pill);background:var(--ac-xl);
+  border:1px solid rgba(0,0,0,.06);flex:none;display:flex;align-items:center;
+  justify-content:center;font:400 26px/1 var(--script);color:var(--ac-d);padding-bottom:4px}
+.ico-btn{position:relative;width:var(--tap);height:var(--tap);flex:none;
+  border-radius:var(--r-2);border:1px solid var(--linea-fuerte);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform var(--dur-1) var(--ease-out)}
+.ico-btn:active{transform:scale(.94)}
+.ico-btn .n{position:absolute;top:-3px;right:-3px;min-width:19px;height:19px;padding:0 5px;
+  border-radius:var(--r-pill);background:var(--ac);color:#fff;
+  font:600 10.5px/19px var(--sans);text-align:center;font-variant-numeric:tabular-nums}
 
-  /* ── Carrito ── */
-  .barra{
-    position:fixed;left:0;right:0;bottom:0;z-index:40;
-    background:var(--surface);border-top:1px solid var(--border);
-    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
-    display:none;
-  }
-  .barra.on{display:block}
-  .barra .fila{display:flex;align-items:center;justify-content:space-between;max-width:560px;margin:0 auto;gap:12px}
-  .barra .n{font-size:12px;color:var(--t2)}
-  .barra .tot{font-family:"Cormorant Garamond",Georgia,serif;font-size:20px;font-weight:600}
-  .barra button{
-    padding:13px 22px;border:none;border-radius:var(--r-full);background:var(--brand);
-    color:#fff;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;
-  }
+/* ══ Hero ═════════════════════════════════════════════════════════════════ */
+.hero{margin:4px 14px 0;position:relative;height:250px;border-radius:var(--r-4);
+  overflow:hidden;background:var(--bg-4)}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:22% 42%;transform:scale(1.18);animation:fadeIn var(--dur-3) var(--ease-out) both}
+.hero .velo{position:absolute;inset:0;background:linear-gradient(105deg,
+  rgba(250,248,245,.94) 0%,rgba(250,248,245,.78) 42%,rgba(250,248,245,.06) 78%)}
+.hero .txt{position:absolute;inset:0;padding:26px 24px;display:flex;
+  flex-direction:column;justify-content:flex-end}
+.hero h1{font:400 38px/1.02 var(--sans);max-width:250px;letter-spacing:-.01em}
 
-  .item{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
-  .item img{width:52px;height:66px;object-fit:cover;border-radius:8px;background:var(--bg2)}
-  .item .n{font-size:13px;font-weight:600}
-  .item .v{font-size:11px;color:var(--t3);margin-top:2px}
-  .item .q{margin-left:auto;font-size:13px;font-weight:600}
-  .quitar{background:none;border:none;color:var(--t4);font-size:18px;cursor:pointer;padding:0 4px}
+/* Lo que ve un salón que todavía no tiene foto de portada. */
+.hero-tipo{margin:8px 14px 0;padding:34px 24px 30px;border-radius:var(--r-4);
+  background:var(--bg-2);border:1px solid rgba(0,0,0,.06)}
+.hero-tipo .rot{font:600 9.5px var(--sans);letter-spacing:.26em;color:var(--tx-4);
+  text-transform:uppercase}
+.hero-tipo h1{font:400 44px/.98 var(--sans);margin:14px 0 0;letter-spacing:-.015em}
+.hero-tipo .regla{display:flex;align-items:center;gap:12px;margin:18px 0 0}
+.hero-tipo .regla i{flex:1;height:1px;background:var(--linea-fuerte)}
+.hero-tipo .regla b{width:5px;height:5px;border-radius:var(--r-pill);background:var(--ac)}
+.hero-tipo p{font:400 12.5px/1.55 var(--sans);color:var(--tx-3);margin:16px 0 0}
 
-  input,textarea{
-    width:100%;padding:13px;border:1px solid var(--border-md);border-radius:var(--r);
-    background:var(--bg2);font-family:inherit;font-size:14px;color:var(--t);margin-bottom:10px;
-  }
-  input:focus,textarea:focus{outline:none;border-color:var(--border-lav);background:var(--surface)}
-  label{font-size:11px;color:var(--t3);display:block;margin-bottom:5px}
+/* ══ Rubros ═══════════════════════════════════════════════════════════════ */
+.rubros{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 14px 0}
+.rubro-foto{grid-column:span 2;position:relative;height:104px;border-radius:var(--r-3);
+  overflow:hidden;background:var(--bg-4);text-align:left;
+  transition:transform var(--dur-1) var(--ease-out)}
+.rubro-foto:active{transform:scale(.985)}
+.rubro-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:50% 62%}
+.rubro-foto .velo{position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(26,22,18,.62),rgba(26,22,18,.08))}
+.rubro-foto .txt{position:absolute;left:20px;bottom:16px;color:#fff}
+.rubro-foto .txt b{display:block;font:400 24px/1 var(--sans)}
+.rubro-foto .txt i{display:block;font:500 10px var(--sans);letter-spacing:.16em;
+  text-transform:uppercase;color:rgba(255,255,255,.82);margin-top:5px;font-style:normal}
+.rubro-foto.on{outline:2px solid var(--ac);outline-offset:-2px}
+.rubro{height:96px;padding:15px 16px;border:1px solid rgba(0,0,0,.08);
+  border-radius:var(--r-3);background:var(--bg-2);text-align:left;
+  display:flex;flex-direction:column;justify-content:space-between;
+  transition:transform var(--dur-1) var(--ease-out)}
+.rubro:active{transform:scale(.97)}
+.rubro .i{color:var(--ac-d)}
+.rubro b{display:block;font:400 20px/1 var(--sans);color:var(--tx)}
+.rubro i{display:block;font:500 9.5px var(--sans);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--tx-4);margin-top:5px;font-style:normal}
+.rubro.on{background:var(--ac-xl);border-color:var(--ac)}
 
-  .vacio{text-align:center;padding:60px 20px;color:var(--t3)}
-  .vacio .e{font-size:44px;opacity:.25;margin-bottom:12px}
-  .vacio p{font-size:13px}
+/* ══ Chips ════════════════════════════════════════════════════════════════ */
+.chips-barra{position:sticky;top:0;z-index:5;background:rgba(250,248,245,.94);
+  backdrop-filter:blur(10px);padding:16px 0 12px;margin:18px 0 0;
+  border-bottom:1px solid rgba(0,0,0,.06)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:0 14px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:var(--tap);min-width:var(--tap);padding:0 16px;
+  border-radius:var(--r-pill);font:600 12.5px var(--sans);white-space:nowrap;
+  color:var(--tx-2);border:1px solid rgba(0,0,0,.13);
+  transition:transform var(--dur-1) var(--ease-out)}
+.chip:active{transform:scale(.96)}
+.chip.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
 
-  .ok{background:var(--ok-bg);border:1px solid #bbf7d0;color:var(--ok);
-    padding:14px;border-radius:var(--r);font-size:13px;text-align:center;line-height:1.5}
-  .ok b{font-size:22px;letter-spacing:2px;display:block;margin-top:6px}
-  .err{background:var(--danger-bg);border:1px solid #fecdd3;color:var(--danger);
-    padding:12px;border-radius:var(--r);font-size:12px;margin-bottom:10px}
+/* ══ Grilla ═══════════════════════════════════════════════════════════════ */
+.lista{padding:18px 14px 0}
+.enc{display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 14px}
+.enc h2{font:400 22px/1 var(--sans)}
+.enc span{font:400 11.5px var(--sans);color:var(--tx-4);font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 14px}
+.celda{position:relative;animation:gridIn var(--dur-2) var(--ease-out) both}
+.celda.ancha{grid-column:span 2}
+.tarjeta{width:100%;text-align:left;display:block;
+  transition:transform var(--dur-1) var(--ease-out)}
+.tarjeta:active{transform:scale(.975)}
+.paspartu{position:relative;padding:9px;background:var(--bg-3);
+  border:1px solid var(--linea);border-radius:var(--r-3)}
+.hueco{position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;
+  background:var(--bg-4)}
+.celda.ancha .hueco{aspect-ratio:16/9}
+.hueco img{width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity var(--dur-2) var(--ease-out)}
+.hueco img.ya{opacity:1}
+.agotada img{filter:grayscale(.62) brightness(1.04)}
+.sinfoto{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:9px;color:var(--tx-deco);background:var(--bg-4)}
+.sinfoto span{font:500 9.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--tx-4)}
+.marca-est{position:absolute;left:9px;bottom:9px;padding:5px 10px;border-radius:var(--r-pill);
+  font:600 9.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;
+  background:var(--bg);color:var(--tx-3);border:1px solid var(--linea)}
+.marca-est.agotado{background:rgba(250,248,245,.94)}
+.marca-est.ultima{background:var(--ac);color:#fff;border:none}
+.pie{padding:11px 3px 0}
+.pie .nom{font:400 16.5px/1.22 var(--sans);color:var(--tx);min-height:40px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pie .fila{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:5px 0 0}
+.pie .precio{font:500 15px var(--sans);font-variant-numeric:tabular-nums;color:var(--tx)}
+.pie .talles{font:500 9.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--tx-4);white-space:nowrap}
+.fav{position:absolute;top:5px;right:5px;width:var(--tap);height:var(--tap);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform var(--dur-1) var(--ease-out)}
+.fav:active{transform:scale(.86)}
+.fav .env{color:var(--tx-3);display:flex;filter:drop-shadow(0 1px 3px rgba(250,248,245,.9));
+  transition:transform var(--dur-1) var(--ease-out)}
+.fav.on .env{color:var(--ac);filter:none;transform:scale(1.06)}
+.avisar{display:flex;align-items:center;margin-top:8px;min-height:var(--tap);width:100%;
+  padding:0 12px;background:var(--bg-2);border-radius:12px;
+  font:600 11.5px var(--sans);color:var(--tx-2)}
 
-  /* Tarjetas fantasma del MISMO tamaño que las reales. Sirven para dos
-     cosas: que no haya salto de layout cuando llegan los datos, y que el
-     cuerpo no diga "buscando" mientras el encabezado ya canta cuántos
-     productos hay. */
-  .sk{background:var(--surface);border:1px solid var(--border);
-    border-radius:var(--r);overflow:hidden}
-  .sk .f{aspect-ratio:3/4;background:var(--bg2)}
-  .sk .l{height:9px;border-radius:5px;background:var(--bg2);margin:11px 11px 0}
-  .sk .l.corta{width:55%;margin-bottom:14px}
-  .sk .f,.sk .l{animation:latido 1.4s ease-in-out infinite}
-  @keyframes latido{0%,100%{opacity:1}50%{opacity:.55}}
+/* ══ Una sola prenda ══════════════════════════════════════════════════════ */
+.unica{padding:22px 18px 0;animation:riseIn var(--dur-2) var(--ease-out) both}
+.unica .pastilla{display:flex;align-items:center;gap:10px;padding:11px 14px;
+  background:var(--ac-xl);border-radius:var(--r-pill);width:fit-content;
+  font:600 10.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ac-d)}
+.unica .pastilla span{width:6px;height:6px;border-radius:var(--r-pill);
+  background:var(--ac);flex:none}
+.unica h2{font:400 27px/1.12 var(--sans);margin:16px 0 0;max-width:280px}
+.unica > p{font:400 13px/1.6 var(--sans);color:var(--tx-3);margin:9px 0 0;max-width:290px}
+.mientras{margin:26px 0 0;padding:18px 20px;background:var(--bg-2);border-radius:var(--r-3)}
+.mientras p{font:400 13px/1.6 var(--sans);color:var(--tx-2);margin:8px 0 0}
 
-  /* La app respeta `disableAnimations` en todas sus animaciones; la
-     vitrina no puede ser la excepción. */
-  @media (prefers-reduced-motion: reduce){
-    *,*::before,*::after{
-      animation-duration:.01ms !important;
-      animation-iteration-count:1 !important;
-      transition-duration:.01ms !important;
-    }
-  }
+/* ══ Esqueletos ═══════════════════════════════════════════════════════════ */
+.sk{animation:fadeIn var(--dur-2) var(--ease-out) both;opacity:.7}
+.sk .f{aspect-ratio:1/1;border-radius:var(--r-3);background:var(--bg-3)}
+.sk .l{height:15px;width:80%;border-radius:6px;background:var(--bg-3);margin:13px 0 0}
+.sk .l.c{height:13px;width:44%;margin:8px 0 0}
+
+/* ══ Estados ══════════════════════════════════════════════════════════════ */
+.estado{padding:58px 30px;text-align:center;animation:riseIn var(--dur-2) var(--ease-out) both}
+.estado .globo{width:74px;height:74px;margin:0 auto;border-radius:var(--r-pill);
+  background:var(--bg-2);display:flex;align-items:center;justify-content:center;
+  color:var(--tx-deco)}
+.estado h2{font:400 26px/1.16 var(--sans);margin:22px 0 0}
+.estado p{font:400 13.5px/1.65 var(--sans);color:var(--tx-3);margin:10px 0 0}
+.btn{min-height:50px;margin:22px auto 0;padding:0 22px;border-radius:15px;
+  font:600 13.5px var(--sans);display:inline-flex;align-items:center;justify-content:center;
+  gap:9px;transition:transform var(--dur-1) var(--ease-out)}
+.btn:active{transform:scale(.97)}
+.btn-ac{background:var(--ac);color:#fff}
+.btn-tx{background:var(--tx);color:var(--bg)}
+.btn-borde{border:1px solid rgba(0,0,0,.14);color:var(--tx)}
+.link{display:inline-flex;align-items:center;justify-content:center;min-height:var(--tap);
+  margin:6px auto 0;padding:0 14px;color:var(--tx-3);font:500 12.5px var(--sans);
+  text-decoration:underline;text-underline-offset:3px}
+
+/* ══ Pie ══════════════════════════════════════════════════════════════════ */
+.pie-info{margin:14px 0 0;padding:26px 18px 22px;background:var(--bg-2);
+  border-top:1px solid rgba(0,0,0,.06)}
+.pie-info .rot{font:600 9.5px var(--sans);letter-spacing:.24em;text-transform:uppercase;
+  color:var(--tx-4);text-align:center}
+.comofunciona{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px;margin:20px 0 0}
+.comofunciona div{display:flex;gap:10px;align-items:flex-start}
+.comofunciona .i{color:var(--ac-d);flex:none}
+.comofunciona p{font:400 12px/1.45 var(--sans);color:var(--tx-2)}
+.comofunciona strong{font-weight:600;display:block}
+.hr{height:1px;background:var(--linea);margin:22px 0}
+.wa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  min-height:50px;border-radius:15px;font:600 13.5px var(--sans);
+  transition:transform var(--dur-1) var(--ease-out)}
+.wa:active{transform:scale(.98)}
+.firma{text-align:center}
+.firma .n{font:400 27px/1.1 var(--script)}
+.firma p{font:400 11px/1.5 var(--sans);color:var(--tx-4);margin:5px 0 0}
+
+/* ══ Hoja ═════════════════════════════════════════════════════════════════ */
+.capa{position:fixed;inset:0;z-index:40;display:none}
+.capa.on{display:block}
+.fondo{position:absolute;inset:0;width:100%;background:rgba(26,22,18,.34);opacity:0;
+  transition:opacity var(--dur-2) var(--ease-out)}
+.hoja{position:absolute;left:0;right:0;bottom:0;height:92%;max-width:520px;margin:0 auto;
+  background:var(--bg);border-radius:var(--r-4) var(--r-4) 0 0;
+  display:flex;flex-direction:column;box-shadow:var(--sombra-hoja);overflow:hidden;
+  transform:translateY(100%);transition:transform var(--dur-3) var(--ease-out)}
+.capa.abierta .fondo{opacity:1}
+.capa.abierta .hoja{transform:translateY(0)}
+.capa.arrastrando .fondo,.capa.arrastrando .hoja{transition:none}
+.manija{padding:10px 0 6px;cursor:grab;touch-action:none;flex:none}
+.manija i{display:block;width:40px;height:4px;border-radius:var(--r-pill);
+  background:rgba(0,0,0,.16);margin:0 auto}
+.cuerpo{flex:1;overflow-y:auto;overscroll-behavior:contain}
+.barra{flex:none;padding:14px 22px;border-top:1px solid var(--linea);background:var(--bg)}
+.hoja-top{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 8px}
+.hoja-top .grupo{display:flex}
+.hoja-top button{width:var(--tap);height:var(--tap);display:flex;
+  align-items:center;justify-content:center}
+
+.marco-foto{margin:0 16px;padding:10px;background:var(--bg-3);
+  border:1px solid var(--linea);border-radius:24px}
+.marco-foto .hueco{aspect-ratio:4/5;border-radius:16px}
+.puntos{display:flex;gap:7px;justify-content:center;padding:11px 0 2px}
+.puntos button{width:7px;height:7px;border-radius:var(--r-pill);background:rgba(0,0,0,.16);
+  transition:width var(--dur-2) var(--ease-out)}
+.puntos button.on{width:20px;background:var(--ac)}
+
+.ficha{padding:20px 22px 0}
+.ficha .cod{font:500 9.5px var(--sans);letter-spacing:.2em;text-transform:uppercase;
+  color:var(--tx-4);font-variant-numeric:tabular-nums}
+.ficha h2{font:400 29px/1.12 var(--sans);margin:9px 0 0}
+.ficha .precio-fila{display:flex;align-items:baseline;gap:12px;margin:10px 0 0}
+.ficha .precio{font:500 23px var(--sans);font-variant-numeric:tabular-nums}
+.marca-f{padding:5px 11px;border-radius:var(--r-pill);font:600 9.5px var(--sans);
+  letter-spacing:.1em;text-transform:uppercase;background:var(--bg-2);color:var(--tx-3)}
+.marca-f.ultima{background:var(--ac);color:#fff}
+.ficha .desc{font:400 13.5px/1.65 var(--sans);color:var(--tx-3);margin:14px 0 0;
+  text-wrap:pretty}
+.rot{font:600 10px var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--tx-4)}
+.opciones{display:flex;flex-wrap:wrap;gap:9px;margin:11px 0 0}
+.op{min-width:52px;min-height:var(--tap);padding:0 16px;border-radius:13px;
+  font:600 13.5px var(--sans);font-variant-numeric:tabular-nums;
+  border:1px solid rgba(0,0,0,.14);transition:transform var(--dur-1) var(--ease-out)}
+.op:active{transform:scale(.96)}
+.op.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+.unico{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg-2);
+  border-radius:var(--r-2)}
+.unico span{font:400 13px var(--sans);color:var(--tx-2)}
+.cant{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:22px 0 0}
+.cant .caja{display:flex;align-items:center;gap:2px;border:1px solid rgba(0,0,0,.12);
+  border-radius:var(--r-2);padding:2px}
+.cant button{width:var(--tap);height:40px;border-radius:11px;font:400 20px var(--sans)}
+.cant button:disabled{color:var(--tx-claro)}
+.cant .n{min-width:36px;text-align:center;font:600 15px var(--sans);
+  font-variant-numeric:tabular-nums}
+.nota{font:400 11.5px/1.4 var(--sans);color:var(--tx-4);margin:9px 0 0;text-align:right}
+.aviso-bloque{margin:22px 0 0;padding:18px;background:var(--bg-2);border-radius:18px}
+.aviso-bloque b{font:600 13px var(--sans);color:var(--tx)}
+.aviso-bloque p{font:400 12.5px/1.55 var(--sans);color:var(--tx-3);margin:6px 0 0}
+.btn-grande{display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;
+  border-radius:16px;font:600 14.5px var(--sans);
+  transition:transform var(--dur-1) var(--ease-out),background var(--dur-2) var(--ease-out)}
+.btn-grande:active{transform:scale(.985)}
+.btn-grande.off{background:var(--bg-3);color:var(--tx-4);cursor:default}
+
+/* ══ Reserva ══════════════════════════════════════════════════════════════ */
+.item{display:flex;gap:13px;align-items:center}
+.item .mini{width:66px;height:66px;flex:none;border-radius:16px;overflow:hidden;
+  background:var(--bg-3);padding:5px}
+.item .mini div{width:100%;height:100%;border-radius:11px;overflow:hidden;background:var(--bg-4)}
+.item .mini img{width:100%;height:100%;object-fit:cover}
+.item .txt{flex:1;min-width:0}
+.item .txt b{display:block;font:400 16px/1.2 var(--sans)}
+.item .txt i{display:block;font:400 11px var(--sans);color:var(--tx-4);margin:4px 0 0;
+  font-style:normal}
+.item .pr{font:500 14px var(--sans);font-variant-numeric:tabular-nums}
+.quitar{width:var(--tap);height:var(--tap);color:var(--tx-4);display:flex;
+  align-items:center;justify-content:center;flex:none}
+.campo{width:100%;min-height:52px;margin-top:9px;padding:0 16px;border-radius:var(--r-2);
+  border:1px solid rgba(0,0,0,.14);background:#fff;font:400 15px var(--sans);color:var(--tx)}
+.campo.mal{border-color:var(--alerta)}
+.campo:focus-visible{outline-offset:1px}
+.etiq{font:600 10px var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--tx-4)}
+.err{background:var(--alerta-bg);border:1px solid #fecdd3;color:var(--alerta);
+  padding:12px;border-radius:var(--r-2);font:400 12.5px/1.5 var(--sans);margin:12px 0 0}
+.exito{text-align:center;padding:30px 24px}
+.exito .globo{width:74px;height:74px;margin:0 auto;border-radius:var(--r-pill);
+  background:var(--ok-bg);color:var(--ok);display:flex;align-items:center;justify-content:center}
+.exito h2{font:400 27px/1.14 var(--sans);margin:20px 0 0}
+.exito p{font:400 13.5px/1.6 var(--sans);color:var(--tx-3);margin:10px 0 0}
+.codigo{margin:20px 0 0;padding:18px;background:var(--bg-2);border-radius:18px}
+.codigo .rot{text-align:center}
+.codigo b{display:block;font:500 30px var(--sans);letter-spacing:.16em;
+  font-variant-numeric:tabular-nums;margin:6px 0 0}
+
+/* ══ Toast ════════════════════════════════════════════════════════════════ */
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);z-index:60;
+  max-width:340px;padding:13px 18px;border-radius:var(--r-2);background:var(--tx);
+  color:var(--bg);font:400 12.5px/1.45 var(--sans);text-align:center;
+  opacity:0;pointer-events:none;
+  transition:opacity var(--dur-2) var(--ease-out),transform var(--dur-2) var(--ease-out)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+[data-vuelo]{position:fixed;z-index:55;pointer-events:none;overflow:hidden;
+  border-radius:12px;transform-origin:0 0}
+[data-vuelo] img{width:100%;height:100%;object-fit:cover}
 </style>
 </head>
 <body>
 
-<header>
-  <h1 id="titulo">Tienda</h1>
-  <div class="sub" id="sub"></div>
-  <div id="contacto"></div>
-</header>
+<div class="wrap" id="app"></div>
 
-<div class="wrap">
-  <div class="rubros" id="rubros"></div>
-  <div class="filtros" id="filtros"></div>
-  <div id="lista"></div>
-</div>
-
-<!-- Ficha de la prenda -->
-<div class="modal" id="modal" onclick="if(event.target===this)cerrar()">
-  <div class="hoja" id="hoja"></div>
-</div>
-
-<!-- Barra del carrito -->
-<div class="barra" id="barra">
-  <div class="fila">
-    <div>
-      <div class="n" id="carritoN"></div>
-      <div class="tot" id="carritoTot"></div>
-    </div>
-    <button onclick="verCarrito()">Ver pedido</button>
+<div class="capa" id="capa">
+  <button class="fondo" id="fondo" aria-label="Cerrar"></button>
+  <div class="hoja" id="hoja">
+    <div class="manija" id="manija"><i></i></div>
+    <div id="hoja-contenido" style="display:contents"></div>
   </div>
 </div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 const URL_SB = '__SUPABASE_URL__';
@@ -257,340 +421,888 @@ const KEY_SB = '__SUPABASE_KEY__';
 // permite que la misma página sirva a todos los salones de la plataforma.
 const TIENDA = new URLSearchParams(location.search).get('t') || 'mirame';
 
-let PRODUCTOS = [], VARIANTES = {}, FOTOS = {}, CARRITO = [], FILTRO = 'todo';
-let RUBRO = 'todo';
-
-// Los rubros que puede tener un salón. El nombre visible vive acá y no en la
-// base para poder cambiarlo sin tocar los productos ya cargados.
-const RUBROS = {
-  ropa:    {e: '👗', t: 'Ropa'},
-  arbell:  {e: '💄', t: 'Arbell'},
-  insumos: {e: '🧴', t: 'Insumos'},
-};
-// El WhatsApp del salón, en dígitos. Sale de `tienda_salon`; si el salón no
-// cargó su teléfono, no se ofrece contacto en vez de ofrecer un link roto.
-let WA = null;
-
 const $ = id => document.getElementById(id);
-const plata = n => '$' + Math.round(n).toLocaleString('es-AR');
 const esc = s => (s ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const attr = s => JSON.stringify(String(s)).replace(/"/g, '&quot;');
+const plata = n => '$ ' + Math.round(n).toLocaleString('es-AR');
+const ESCALERA = [30, 70, 110, 150, 190, 220];
 
+// ── Íconos ─────────────────────────────────────────────────────────────────
+// Los del set del diseñador. Reemplazan a los emojis, que se ven distinto en
+// cada Android y rompen la elegancia del resto.
+const ICONOS = {
+  ropa: ['M12 7.4V6.5a1.9 1.9 0 1 1 1.9-1.9','M12 7.4 3.7 14.2a1.2 1.2 0 0 0 .76 2.13h15.08a1.2 1.2 0 0 0 .76-2.13L12 7.4Z'],
+  cosmetica: ['M8.6 21h6.8a.9.9 0 0 0 .9-.9V13H7.7v7.1a.9.9 0 0 0 .9.9Z','M9.4 13V5.6l4.6-2.5a.6.6 0 0 1 .9.53V13'],
+  insumos: ['M10 3h4.5','M11 3v3.3a2.2 2.2 0 0 1-.32 1.14L9.4 9.6A3.2 3.2 0 0 0 8.9 11.3v7.6A2.1 2.1 0 0 0 11 21h2.4a2.1 2.1 0 0 0 2.1-2.1v-7.6a3.2 3.2 0 0 0-.5-1.72l-1.28-2.14A2.2 2.2 0 0 1 13.4 6.3V3','M9 14.4h6.4'],
+  sinFoto: ['M20.5 15.6V5.7a1.7 1.7 0 0 0-1.7-1.7H6.9','M3.5 6.6v11.7A1.7 1.7 0 0 0 5.2 20h13.1','M4 17.6l4.6-4.6 2.9 2.9','M3 3l18 18'],
+  vacia: ['M6.1 8.3h11.8l-.95 11.1A1.7 1.7 0 0 1 15.26 21H8.74a1.7 1.7 0 0 1-1.69-1.6L6.1 8.3Z','M9.2 8.3V6.2a2.8 2.8 0 0 1 5.6 0v2.1','M9.8 13.6h4.4'],
+  buscar: ['M17.4 10.7a6.7 6.7 0 1 1-13.4 0 6.7 6.7 0 0 1 13.4 0Z','M15.7 15.7 20.8 20.8','M8.2 10.7h5'],
+  error: ['M19.6 15.9A3.6 3.6 0 0 0 17.4 9.4h-1.1A5.6 5.6 0 0 0 8.2 5.4','M4.9 9.8A3.6 3.6 0 0 0 6.7 16.7h9.1','M3 3l18 18'],
+  fav: ['M12 20.2 4.75 13.1a4.6 4.6 0 0 1 6.5-6.5l.75.74.75-.74a4.6 4.6 0 0 1 6.5 6.5L12 20.2Z'],
+  carrito: ['M5.6 8.1h12.8l-1.05 11.3A1.8 1.8 0 0 1 15.56 21H8.44a1.8 1.8 0 0 1-1.79-1.6L5.6 8.1Z','M9 8.1V6.4a3 3 0 0 1 6 0v1.7'],
+  whatsapp: ['M20.6 11.8a8.6 8.6 0 0 1-12.8 7.5L3.4 20.6l1.35-4.3a8.6 8.6 0 1 1 15.85-4.5Z','M9.1 8.9c-.5.7-.3 1.9.6 3.1 1 1.2 2.1 1.8 2.9 1.6l.7-1.3 2 .9-.4 1.4c-1.5.7-3.6-.3-5.1-2.1-1.5-1.8-2-3.9-1.3-5.2l1.4-.3.8 2-1.6-.1Z'],
+  compartir: ['M15.5 6.6 9.5 10','M9.5 14 15.5 17.4','M20.3 5.3a2.6 2.6 0 1 1-5.2 0 2.6 2.6 0 0 1 5.2 0Z','M8.9 12a2.6 2.6 0 1 1-5.2 0 2.6 2.6 0 0 1 5.2 0Z','M20.3 18.7a2.6 2.6 0 1 1-5.2 0 2.6 2.6 0 0 1 5.2 0Z'],
+  cerrar: ['M6.2 6.2 17.8 17.8','M17.8 6.2 6.2 17.8'],
+  reloj: ['M20.6 12a8.6 8.6 0 1 1-17.2 0 8.6 8.6 0 0 1 17.2 0Z','M12 7.3V12l3.4 2'],
+  pin: ['M19.2 10.5c0 5.2-7.2 10.3-7.2 10.3S4.8 15.7 4.8 10.5a7.2 7.2 0 0 1 14.4 0Z','M14.5 10.4a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z'],
+  probar: ['M8.6 3.6 12 6.2l3.4-2.6 4.4 2.5-2 4.2-1.9-.7V20.4H7.1V9.6l-1.9.7-2-4.2 4.4-2.5Z'],
+  billete: ['M3.4 7.1h17.2v9.8H3.4V7.1Z','M14.4 12a2.4 2.4 0 1 1-4.8 0 2.4 2.4 0 0 1 4.8 0Z','M6.4 10v4','M17.6 10v4'],
+  check: ['M5.4 12.6 9.6 16.8 18.6 7.8'],
+};
+const ic = (k, size, relleno) =>
+  '<svg width="' + (size || 22) + '" height="' + (size || 22) + '" viewBox="0 0 24 24" ' +
+  'fill="' + (relleno ? 'currentColor' : 'none') + '" stroke="currentColor" ' +
+  'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' +
+  'style="display:block;flex:none">' +
+  (ICONOS[k] || []).map(d => '<path d="' + d + '"></path>').join('') + '</svg>';
+
+const RUBROS = {
+  ropa:    {t: 'Ropa',    i: 'ropa',      sub: 'Consignación'},
+  arbell:  {t: 'Arbell',  i: 'cosmetica', sub: 'Por pedido'},
+  insumos: {t: 'Insumos', i: 'insumos',   sub: 'Estética'},
+};
+
+// ── Estado ─────────────────────────────────────────────────────────────────
+const A = {
+  salon: null, productos: [], variantes: {}, fotos: {},
+  chip: 'Todo', rubro: 'todo', carrito: [], favs: cargarFavs(),
+  pantalla: 'cargando', wa: null, heroOk: true,
+  sheet: null, prod: null, talle: null, color: null, cant: 1, foto: 0,
+  nombre: '', tel: '',
+};
+
+// Los favoritos viven en el teléfono, sin cuenta: mirar hoy y decidir mañana es
+// el comportamiento real, y pedir un registro para eso espanta.
+function cargarFavs() {
+  try { return JSON.parse(localStorage.getItem('mirame-favs-' + TIENDA) || '{}'); }
+  catch (_) { return {}; }
+}
+function guardarFavs() {
+  try { localStorage.setItem('mirame-favs-' + TIENDA, JSON.stringify(A.favs)); }
+  catch (_) {}
+}
+
+let _toastT;
+function toast(msg) {
+  clearTimeout(_toastT);
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  _toastT = setTimeout(() => t.classList.remove('on'), 2600);
+}
+
+// ── Datos ──────────────────────────────────────────────────────────────────
 async function api(recurso, query) {
-  const r = await fetch(`${URL_SB}/rest/v1/${recurso}?${query}`, {
+  const r = await fetch(URL_SB + '/rest/v1/' + recurso + '?' + query, {
     headers: {apikey: KEY_SB, Authorization: 'Bearer ' + KEY_SB},
   });
   if (!r.ok) throw new Error(await r.text());
   return r.json();
 }
 
-/// Tarjetas fantasma mientras llegan los datos.
-const esqueleto = (n) => '<div class="grid">' + Array.from({length: n}, () => `
-  <div class="sk"><div class="f"></div><div class="l"></div>
-    <div class="l corta"></div></div>`).join('') + '</div>';
-
-/// El teléfono como lo quiere wa.me: solo dígitos, en formato
-/// internacional. Para Argentina eso es `549` + característica + número.
+/// El teléfono como lo quiere wa.me: solo dígitos, en formato internacional.
+/// Para Argentina eso es `549` + característica + número.
 ///
-/// Ella lo va a escribir como lo marca: "387 15 540 0000". Ese `15` se
-/// usa solo dentro del país y rompe el link; el `9` de celular, al revés,
-/// hace falta y casi nadie lo escribe. Devuelve null ante la duda: mejor
-/// no ofrecer el botón que ofrecer uno que no lleva a ningún lado.
+/// Ella lo va a escribir como lo marca: "387 15 540 0000". Ese `15` se usa solo
+/// dentro del país y rompe el link; el `9` de celular, al revés, hace falta y
+/// casi nadie lo escribe. Devuelve null ante la duda: mejor no ofrecer el botón
+/// que ofrecer uno que no lleva a ningún lado.
 function telefonoWa(bruto) {
   if (!bruto) return null;
   const crudo = String(bruto).trim();
   let d = crudo.replace(/\D/g, '');
   if (!d) return null;
 
-  // Un internacional explicito de otro pais se respeta tal cual: la
-  // plataforma es argentina, pero no tiene por que serlo el salon.
-  if (crudo.startsWith('+') && !d.startsWith('54')) {
-    return d.length >= 8 ? d : null;
-  }
+  // Un internacional explícito de otro país se respeta tal cual: la plataforma
+  // es argentina, pero no tiene por qué serlo el salón.
+  if (crudo.startsWith('+') && !d.startsWith('54')) return d.length >= 8 ? d : null;
 
   if (d.startsWith('00')) d = d.slice(2);
   if (d.startsWith('54')) d = d.slice(2);
-  if (d.startsWith('0')) d = d.slice(1);          // 0 de larga distancia
+  if (d.startsWith('0')) d = d.slice(1);           // 0 de larga distancia
   if (d.length > 10 && d.startsWith('9')) d = d.slice(1);
 
-  // El 15 va pegado despues de la caracteristica, que en Argentina tiene
-  // 2, 3 o 4 digitos. Sacarlo deja los 10 que espera wa.me.
+  // El 15 va pegado después de la característica, que en Argentina tiene 2, 3 o
+  // 4 dígitos. Sacarlo deja los 10 que espera wa.me.
   if (d.length === 12) {
     for (const i of [2, 3, 4]) {
       if (d.slice(i, i + 2) === '15') { d = d.slice(0, i) + d.slice(i + 2); break; }
     }
   }
-
   return d.length === 10 ? '549' + d : null;
 }
 
-function pintarContacto() {
-  if (!WA) return;
-  const msg = encodeURIComponent('¡Hola! Te escribo por la tienda');
-  $('contacto').innerHTML = `
-    <a class="wa-link" href="https://wa.me/${WA}?text=${msg}">
-      <span class="p"></span>Escribinos por WhatsApp</a>`;
+const waLink = txt =>
+  A.wa ? 'https://wa.me/' + A.wa + '?text=' + encodeURIComponent(txt) : '';
+
+/// Cuándo se retira. Una fecha concreta se cumple; "48 horas" se olvida. Se
+/// saltea el domingo para no prometer un retiro con el local cerrado.
+function fechaRetiro() {
+  const d = new Date(Date.now() + 48 * 3600 * 1000);
+  d.setHours(14, 0, 0, 0);
+  if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+  return d;
+}
+const fechaTxt = d =>
+  d.toLocaleDateString('es-AR', {weekday: 'long', day: 'numeric', month: 'long'});
+
+/// Arma el producto que la vista necesita a partir de las tres consultas.
+function armar(p, i) {
+  const vars = A.variantes[p.id] || [];
+  const fotos = (A.fotos[p.id] || []).map(f => f.path);
+  const libres = vars.filter(v => (v.disponible || 0) > 0);
+  const stock = vars.reduce((a, v) => a + (v.disponible || 0), 0);
+  // `reservado` llega de la vista en cuanto exista. Hasta entonces una prenda
+  // tomada por otra clienta se lee como agotada, que es lo que pasa hoy.
+  const tomado = vars.some(v => v.reservado);
+
+  const estado = stock === 0 ? (tomado ? 'reservado' : 'agotado')
+               : stock === 1 ? 'ultima' : 'ok';
+
+  const dias = (Date.now() - new Date(p.created_at).getTime()) / 86400000;
+
+  return {
+    id: p.id, cod: p.codigo || '', nombre: p.nombre, desc: p.descripcion || '',
+    precio: p.precio, rubro: p.rubro || 'ropa', categoria: p.categoria,
+    fotos: fotos, vars: vars, libres: libres, stock: stock, estado: estado,
+    talles: [...new Set(libres.map(v => v.talle).filter(Boolean))],
+    colores: [...new Set(libres.map(v => v.color).filter(Boolean))],
+    nuevo: dias <= 7,
+    // El ritmo de la grilla sale del índice y no de un campo: si dependiera de
+    // los datos bailaría en cada carga, y al azar bailaría al filtrar.
+    ancho: fotos.length > 0 && i % 5 === 0,
+  };
 }
 
 async function cargar() {
-  $('lista').innerHTML = esqueleto(4);
+  A.pantalla = 'cargando';
+  pintar();
   try {
-    // Las dos consultas salen JUNTAS. En cascada, el encabezado se
-    // actualizaba primero y quedaba diciendo "1 producto" mientras el
-    // cuerpo todavía decía que estaba buscando.
+    // Las dos primeras consultas salen JUNTAS. En cascada, el encabezado se
+    // actualizaba antes y quedaba diciendo "1 producto" mientras el cuerpo
+    // todavía decía que estaba buscando.
     const [prods, salones] = await Promise.all([
       api('tienda_productos',
-        `tienda=eq.${encodeURIComponent(TIENDA)}&select=*&order=destacado.desc,created_at.desc`),
+        'tienda=eq.' + encodeURIComponent(TIENDA) +
+        '&select=*&order=destacado.desc,created_at.desc'),
       api('tienda_salon',
-        `tienda=eq.${encodeURIComponent(TIENDA)}&select=*&limit=1`),
+        'tienda=eq.' + encodeURIComponent(TIENDA) + '&select=*&limit=1'),
     ]);
 
-    const salon = salones[0];
-    const nombre = salon?.nombre || 'Tienda';
-    document.title = nombre;
-    $('titulo').textContent = nombre;
-    WA = telefonoWa(salon?.telefono);
-    pintarContacto();
+    A.salon = salones[0] || {nombre: 'Tienda'};
+    A.wa = telefonoWa(A.salon.telefono);
+    document.title = A.salon.nombre || 'Tienda';
 
-    if (!prods.length) {
-      $('sub').textContent = '';
-      $('lista').innerHTML =
-        '<div class="vacio"><div class="e">🛍️</div><p>Todavía no hay productos publicados</p></div>';
-      return;
-    }
-
-    PRODUCTOS = prods;
-    $('sub').textContent =
-      prods.length + (prods.length === 1 ? ' producto' : ' productos');
-    // Ahora sí sabemos cuántas tarjetas van: el esqueleto pasa a tener la
-    // forma exacta de la grilla que viene, así no hay salto al cambiarlo.
-    $('lista').innerHTML = esqueleto(Math.min(prods.length, 6));
+    if (!prods.length) { A.productos = []; A.pantalla = 'vacia'; return pintar(); }
 
     const ids = prods.map(p => p.id);
     // Una sola consulta para variantes y otra para fotos, con `in`: pedir por
     // producto serían 40 requests y en datos móviles eso se nota muchísimo.
     const [vars, fotos] = await Promise.all([
-      api('tienda_variantes', `producto_id=in.(${ids.join(',')})&select=*`),
-      api('tienda_fotos', `producto_id=in.(${ids.join(',')})&select=*&order=orden.asc`),
+      api('tienda_variantes', 'producto_id=in.(' + ids.join(',') + ')&select=*'),
+      api('tienda_fotos', 'producto_id=in.(' + ids.join(',') + ')&select=*&order=orden.asc'),
     ]);
+    A.variantes = {}; A.fotos = {};
+    for (const v of vars) (A.variantes[v.producto_id] ??= []).push(v);
+    for (const f of fotos) (A.fotos[f.producto_id] ??= []).push(f);
 
-    for (const v of vars) (VARIANTES[v.producto_id] ??= []).push(v);
-    for (const f of fotos) (FOTOS[f.producto_id] ??= []).push(f);
-
-    pintarRubros();
-    pintarFiltros();
+    A.productos = prods.map(armar);
+    A.pantalla = 'ok';
     pintar();
   } catch (e) {
-    $('lista').innerHTML =
-      '<div class="vacio"><div class="e">😕</div><p>No se pudo cargar la tienda.<br>Probá de nuevo en un rato.</p></div>';
     console.error(e);
+    A.pantalla = 'error';
+    pintar();
   }
 }
 
-const iconoDe = p => (RUBROS[p.rubro || 'ropa'] || RUBROS.ropa).e;
-
-const stockDe = p => (VARIANTES[p.id] || []).reduce((a, v) => a + (v.disponible || 0), 0);
-
-// Solo se muestran las solapas de los rubros que ESTE salón usa. Una tienda
-// que solo vende ropa no tiene por qué mostrar dos solapas vacías.
-function pintarRubros() {
-  const usados = [...new Set(PRODUCTOS.map(p => p.rubro || 'ropa'))]
-    .filter(r => RUBROS[r]);
-  if (usados.length < 2) { $('rubros').innerHTML = ''; return; }
-
-  $('rubros').innerHTML = [['todo', {e: '✨', t: 'Todo'}],
-    ...usados.map(r => [r, RUBROS[r]])]
-    .map(([k, v]) => `
-      <div class="rubro ${RUBRO === k ? 'on' : ''}" onclick="verRubro('${esc(k)}')">
-        <span class="e">${v.e}</span>${esc(v.t)}
-      </div>`).join('');
-}
-
-function verRubro(k) {
-  RUBRO = k;
-  // El filtro de categoría se resetea: las categorías de ropa no tienen nada
-  // que ver con las de insumos, y arrastrar una dejaría la grilla vacía sin
-  // que se entienda por qué.
-  FILTRO = 'todo';
-  pintarRubros();
-  pintarFiltros();
-  pintar();
-}
-
-/// Los productos del rubro activo.
+// ── Selección ──────────────────────────────────────────────────────────────
 const delRubro = () =>
-  PRODUCTOS.filter(p => RUBRO === 'todo' || (p.rubro || 'ropa') === RUBRO);
+  A.productos.filter(p => A.rubro === 'todo' || p.rubro === A.rubro);
 
-function pintarFiltros() {
-  const cats = [...new Set(delRubro().map(p => p.categoria).filter(Boolean))];
-  if (!cats.length) { $('filtros').innerHTML = ''; return; }
-  $('filtros').innerHTML =
-    [['todo', 'Todo'], ...cats.map(c => [c, c])]
-      .map(([k, t]) =>
-        `<div class="pill ${FILTRO === k ? 'on' : ''}" onclick="filtrar('${esc(k)}')">${esc(t)}</div>`)
-      .join('');
+function visibles() {
+  let l = delRubro();
+  const c = A.chip;
+  if (c === 'Novedades') l = l.filter(p => p.nuevo);
+  else if (c === 'Favoritos') l = l.filter(p => A.favs[p.id]);
+  else if (c !== 'Todo') l = l.filter(p => p.talles.indexOf(c) >= 0 && p.estado !== 'agotado');
+  return l;
 }
 
-function filtrar(k) { FILTRO = k; pintarFiltros(); pintar(); }
+/// Los talles que existen de verdad, no una lista fija: el catálogo mezcla
+/// S/M/L con 38/40/42 y una lista quemada dejaría la mitad sin filtro.
+function tallesDelCatalogo() {
+  const t = new Set();
+  for (const p of delRubro()) for (const x of p.talles) t.add(x);
+  const orden = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  return [...t].sort((a, b) => {
+    const na = parseInt(a, 10), nb = parseInt(b, 10);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    const ia = orden.indexOf(a), ib = orden.indexOf(b);
+    if (ia >= 0 && ib >= 0) return ia - ib;
+    return String(a).localeCompare(String(b), 'es');
+  });
+}
+</script>
 
-function pintar() {
-  const vis = delRubro().filter(p => FILTRO === 'todo' || p.categoria === FILTRO);
-  if (!vis.length) {
-    $('lista').innerHTML =
-      '<div class="vacio"><div class="e">🔍</div><p>No hay nada acá todavía</p></div>';
-    return;
+<script>
+// ══ Vistas ════════════════════════════════════════════════════════════════
+function vHeader() {
+  const partes = (A.salon?.nombre || 'Tienda').trim().split(/\s+/);
+  const n = A.carrito.reduce((a, l) => a + l.cant, 0);
+  return '<div class="top">' +
+    '<div class="logo">' + esc(partes[0].charAt(0)) + '</div>' +
+    '<div class="marca">' +
+      '<div class="script">' + esc(partes[0]) + '</div>' +
+      (partes.length > 1
+        ? '<div class="caps">' + esc(partes.slice(1).join(' ')) + '</div>' : '') +
+    '</div>' +
+    '<button class="ico-btn" onclick="abrirCarrito()" aria-label="Ver mi reserva">' +
+      ic('carrito', 21) + (n ? '<span class="n">' + n + '</span>' : '') +
+    '</button>' +
+  '</div>';
+}
+
+function vHero() {
+  if (A.heroOk) {
+    return '<div class="hero">' +
+      '<img src="hero-blazer.webp" alt="" fetchpriority="high" onerror="sinHero()">' +
+      '<div class="velo"></div>' +
+      '<div class="txt"><h1>Lo que hay,<br>ahora mismo</h1></div>' +
+    '</div>';
   }
-  $('lista').innerHTML = '<div class="grid">' + vis.map(p => {
-    const foto = (FOTOS[p.id] || [])[0];
-    const sin = stockDe(p) <= 0;
-    const talles = [...new Set((VARIANTES[p.id] || [])
-      .filter(v => v.disponible > 0).map(v => v.talle).filter(Boolean))];
-    return `
-      <div class="card" onclick="abrir('${p.id}')">
-        <div class="foto">
-          ${foto ? `<img src="${esc(foto.path)}" alt="${esc(p.nombre)}" loading="lazy">`
-                 : `<div class="vacia">${iconoDe(p)}</div>`}
-          ${p.destacado && !sin ? '<div class="destacada">✨ Nuevo</div>' : ''}
-          ${sin ? '<div class="agotado"><span>Agotado</span></div>' : ''}
-        </div>
-        <div class="info">
-          <div class="nom">${esc(p.nombre)}</div>
-          <div class="precio">${plata(p.precio)}</div>
-          ${talles.length ? `<div class="talles">${
-              (p.rubro || 'ropa') === 'ropa' ? 'Talles ' : ''
-            }${talles.map(esc).join(' · ')}</div>` : ''}
-        </div>
-      </div>`;
+  const rubros = Object.keys(RUBROS)
+    .filter(r => A.productos.some(p => p.rubro === r))
+    .map(r => RUBROS[r].t).join(' · ');
+  return '<div class="hero-tipo">' +
+    '<div class="rot">' + esc(rubros || 'Tienda') + '</div>' +
+    '<h1>Lo que hay,<br>ahora mismo</h1>' +
+    '<div class="regla"><i></i><b></b><i></i></div>' +
+    '<p>Elegís, reservás, y te lo guardamos 48 horas. Pagás cuando lo ves, en el estudio.</p>' +
+  '</div>';
+}
+function sinHero() { A.heroOk = false; pintar(); }
+
+/// Mosaico solo donde hay foto. Ropa tiene material; Arbell e insumos no, y
+/// esperar fotos que no existen dejaría dos huecos grises en la portada.
+function vRubros() {
+  const usados = [...new Set(A.productos.map(p => p.rubro))].filter(r => RUBROS[r]);
+  if (usados.length < 2) return '';
+
+  return '<div class="rubros">' + usados.map(r => {
+    const del = A.productos.filter(p => p.rubro === r);
+    const conFoto = del.find(p => p.fotos.length);
+    const on = A.rubro === r;
+    const cuenta = del.length + (del.length === 1 ? ' producto' : ' productos');
+
+    if (conFoto && r === 'ropa') {
+      return '<button class="rubro-foto' + (on ? ' on' : '') +
+        '" onclick="verRubro(' + attr(r) + ')" aria-pressed="' + on + '">' +
+        '<img src="' + esc(conFoto.fotos[0]) + '" alt="" loading="lazy" decoding="async">' +
+        '<div class="velo"></div>' +
+        '<div class="txt"><b>' + esc(RUBROS[r].t) + '</b><i>' + cuenta + '</i></div>' +
+      '</button>';
+    }
+    return '<button class="rubro' + (on ? ' on' : '') +
+      '" onclick="verRubro(' + attr(r) + ')" aria-pressed="' + on + '">' +
+      '<span class="i">' + ic(RUBROS[r].i, 22) + '</span>' +
+      '<span><b>' + esc(RUBROS[r].t) + '</b><i>' + esc(RUBROS[r].sub) + '</i></span>' +
+    '</button>';
   }).join('') + '</div>';
 }
 
-// ── Ficha ──────────────────────────────────────────────────────────────────
-let ACTUAL = null, VARIANTE = null;
+function verRubro(r) {
+  A.rubro = A.rubro === r ? 'todo' : r;
+  // El filtro de talle se resetea: los talles de ropa no tienen nada que ver
+  // con los de insumos, y arrastrar uno dejaría la grilla vacía sin que se
+  // entienda por qué.
+  A.chip = 'Todo';
+  pintar();
+}
 
-function abrir(id) {
-  ACTUAL = PRODUCTOS.find(p => p.id === id);
-  VARIANTE = null;
-  const fotos = FOTOS[id] || [], vars = VARIANTES[id] || [];
+function vChips() {
+  // Con una o dos prendas los filtros son ruido: no hay nada que filtrar y
+  // ocupan la franja más visible de la portada.
+  if (delRubro().length < 3) return '';
+  const base = ['Todo'];
+  if (delRubro().some(p => p.nuevo)) base.push('Novedades');
+  if (Object.values(A.favs).some(Boolean)) base.push('Favoritos');
+  const chips = base.concat(tallesDelCatalogo());
+  if (chips.length < 2) return '';
+  return '<div class="chips-barra"><div class="chips">' + chips.map(c =>
+    '<button class="chip' + (A.chip === c ? ' on' : '') +
+    '" onclick="verChip(' + attr(c) + ')" aria-pressed="' + (A.chip === c) + '">' +
+    esc(c) + '</button>').join('') + '</div></div>';
+}
+function verChip(c) { A.chip = c; pintar(); }
 
-  $('hoja').innerHTML = `
-    <div class="fotos">
-      ${fotos.length ? fotos.map(f =>
-          `<img src="${esc(f.path)}" alt="${esc(ACTUAL.nombre)}">`).join('')
-        : `<div class="foto"><div class="vacia">${iconoDe(ACTUAL)}</div></div>`}
-    </div>
-    <div class="cuerpo">
-      ${ACTUAL.codigo ? `<div class="cod">${esc(ACTUAL.codigo)}</div>` : ''}
-      <h2>${esc(ACTUAL.nombre)}</h2>
-      <div class="precio">${plata(ACTUAL.precio)}</div>
-      ${ACTUAL.descripcion ? `<div class="desc">${esc(ACTUAL.descripcion)}</div>` : ''}
-      ${vars.length ? `<div class="rot">Elegí</div><div class="opciones" id="ops">
-        ${vars.map((v, i) => `
-          <button class="op" ${v.disponible > 0 ? '' : 'disabled'} onclick="elegir(${i})">
-            ${esc([v.talle, v.color].filter(Boolean).join(' · ') || 'Único')}
-          </button>`).join('')}
-      </div>` : ''}
-      <button class="btn" id="btnAdd" disabled onclick="alCarrito()">Elegí una opción</button>
-      <button class="btn sec" onclick="cerrar()">Seguir mirando</button>
-    </div>`;
-  $('modal').classList.add('on');
+function vTarjeta(p, i) {
+  const agotado = p.estado === 'agotado';
+  const marca = agotado ? 'Agotado' : p.estado === 'ultima' ? 'Última unidad'
+              : p.estado === 'reservado' ? 'Reservado' : '';
+  const fav = !!A.favs[p.id];
+
+  return '<div class="celda' + (p.ancho ? ' ancha' : '') +
+      '" style="animation-delay:' + ESCALERA[Math.min(i, 5)] + 'ms">' +
+    '<button class="tarjeta" onclick="abrirFicha(' + attr(p.id) + ',event)">' +
+      '<div class="paspartu">' +
+        '<div class="hueco' + (agotado ? ' agotada' : '') + '">' +
+          (p.fotos.length
+            ? '<img src="' + esc(p.fotos[0]) + '" alt="' + esc(p.nombre) + '" ' +
+              'loading="lazy" decoding="async" onload="this.classList.add(\'ya\')">'
+            : '<div class="sinfoto">' + ic('sinFoto', 26) +
+              '<span>Foto en camino</span></div>') +
+          (marca ? '<span class="marca-est ' + p.estado + '">' + marca + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="pie">' +
+        '<div class="nom">' + esc(p.nombre) + '</div>' +
+        '<div class="fila">' +
+          '<span class="precio">' + plata(p.precio) + '</span>' +
+          '<span class="talles">' +
+            (agotado ? 'Sin talles' : esc(p.talles.join(' · ')) || '&nbsp;') +
+          '</span>' +
+        '</div>' +
+      '</div>' +
+    '</button>' +
+    '<button class="fav' + (fav ? ' on' : '') + '" onclick="marcarFav(' + attr(p.id) +
+      ',event)" aria-label="Guardar en favoritos" aria-pressed="' + fav + '">' +
+      '<span class="env">' + ic('fav', 21, fav) + '</span>' +
+    '</button>' +
+    (agotado && A.wa
+      ? '<a class="avisar" href="' + esc(waLink('¡Hola! ¿Me avisás si vuelve ' +
+          p.nombre + (p.cod ? ' (' + p.cod + ')' : '') + '?')) + '">' +
+          'Avisame cuando vuelva</a>'
+      : '') +
+  '</div>';
+}
+
+function marcarFav(id, ev) {
+  ev.stopPropagation();
+  const nuevo = !A.favs[id];
+  if (nuevo) A.favs[id] = true; else delete A.favs[id];
+  guardarFavs();
+  pintar();
+  if (nuevo) toast('Guardada en este teléfono.');
+}
+
+function vLista() {
+  if (A.pantalla === 'cargando') {
+    return '<div class="lista"><div class="grid">' +
+      [0, 1, 2, 3].map(i =>
+        '<div class="sk" style="animation-delay:' + ESCALERA[i] + 'ms">' +
+        '<div class="f"></div><div class="l"></div><div class="l c"></div></div>').join('') +
+    '</div></div>';
+  }
+
+  if (A.pantalla === 'error') {
+    return '<div class="estado">' +
+      '<div class="globo">' + ic('error', 30) + '</div>' +
+      '<h2>No pudimos cargar la tienda</h2>' +
+      '<p>Suele ser la señal. La tienda sigue ahí: probá de nuevo en un segundo.</p>' +
+      '<div><button class="btn btn-tx" onclick="cargar()">Probar de nuevo</button></div>' +
+      (A.wa ? '<div><a class="link" href="' + esc(waLink('¡Hola! Quería ver la tienda.')) +
+        '">o escribile directamente</a></div>' : '') +
+    '</div>';
+  }
+
+  if (A.pantalla === 'vacia') {
+    return '<div class="estado">' +
+      '<div class="globo">' + ic('vacia', 30) + '</div>' +
+      '<h2>Se vendió todo</h2>' +
+      '<p>Entra mercadería nueva seguido. Si querés, te avisa cuando cargue lo próximo.</p>' +
+      (A.wa ? '<div><a class="btn btn-ac" href="' +
+        esc(waLink('¡Hola! ¿Me avisás cuando entre mercadería nueva?')) + '">' +
+        ic('whatsapp', 19) + ' Avisame cuando entre</a></div>' : '') +
+    '</div>';
+  }
+
+  const vis = visibles();
+  if (!vis.length) {
+    const filtrando = A.chip !== 'Todo';
+    return '<div class="estado">' +
+      '<div class="globo">' + ic('buscar', 28) + '</div>' +
+      '<h2>' + (filtrando ? 'Nada en ' + esc(A.chip) : 'No hay nada cargado') + '</h2>' +
+      '<p>' + (A.chip === 'Favoritos'
+        ? 'Todavía no guardaste ninguna. Tocá el corazón en las que te gusten.'
+        : filtrando ? 'No hay prendas en ese talle ahora mismo.'
+        : 'Volvé a probar en un rato.') + '</p>' +
+      (filtrando ? '<div><button class="btn btn-borde" onclick="verChip(\'Todo\')">' +
+        'Ver todo lo que hay</button></div>' : '') +
+    '</div>';
+  }
+
+  // Una sola prenda no es una grilla: presentada chica y arriba a la izquierda
+  // la tienda parece abandonada, no recién abierta.
+  if (vis.length === 1 && A.chip === 'Todo') return vUnica(vis[0]);
+
+  const titulo = A.chip === 'Todo' ? 'Disponible ahora'
+    : A.chip === 'Novedades' ? 'Entró esta semana'
+    : A.chip === 'Favoritos' ? 'Tus guardadas' : 'Talle ' + A.chip;
+
+  return '<div class="lista">' +
+    '<div class="enc"><h2>' + esc(titulo) + '</h2><span>' +
+      vis.length + (vis.length === 1 ? ' prenda' : ' prendas') + '</span></div>' +
+    '<div class="grid">' + vis.map(vTarjeta).join('') + '</div>' +
+    '<div style="height:34px"></div>' +
+  '</div>';
+}
+
+/// La prenda sola, presentada grande. Es el estado en el que está la tienda
+/// cuando recién arranca, y el que más se ve al principio.
+function vUnica(p) {
+  const agotado = p.estado === 'agotado';
+  const marca = agotado ? 'Agotado' : p.estado === 'ultima' ? 'Última unidad'
+              : p.estado === 'reservado' ? 'Reservado' : '';
+  const fav = !!A.favs[p.id];
+
+  return '<div class="unica">' +
+    '<div class="pastilla"><span></span>' +
+      (agotado ? 'Se vendió' : p.nuevo ? 'Recién entró' : 'Lo que hay') + '</div>' +
+    '<h2>' + (agotado
+      ? 'Por ahora no queda nada'
+      : 'La primera prenda<br>de la temporada') + '</h2>' +
+    '<p>Es lo único que hay cargado por ahora. ' +
+      (agotado ? 'Escribile y te avisa cuando entre lo próximo.'
+               : 'Se suma mercadería seguido.') + '</p>' +
+
+    '<div style="position:relative;margin:22px 0 0">' +
+      '<button class="tarjeta" onclick="abrirFicha(' + attr(p.id) + ',event)">' +
+        '<div class="paspartu" style="padding:12px;border-radius:var(--r-4)">' +
+          '<div class="hueco' + (agotado ? ' agotada' : '') +
+            '" style="aspect-ratio:4/5;border-radius:18px">' +
+            (p.fotos.length
+              ? '<img src="' + esc(p.fotos[0]) + '" alt="' + esc(p.nombre) + '" ' +
+                'onload="this.classList.add(\'ya\')">'
+              : '<div class="sinfoto">' + ic('sinFoto', 30) +
+                '<span>Foto en camino</span></div>') +
+            (marca ? '<span class="marca-est ' + p.estado + '">' + marca + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div style="padding:16px 4px 0">' +
+          '<div style="font:400 25px/1.15 var(--sans)">' + esc(p.nombre) + '</div>' +
+          '<div style="display:flex;align-items:baseline;gap:14px;margin:8px 0 0">' +
+            '<span style="font:500 20px var(--sans);font-variant-numeric:tabular-nums">' +
+              plata(p.precio) + '</span>' +
+            '<span class="talles">' + (agotado ? 'Sin talles'
+              : esc(p.talles.join(' · ')) || '&nbsp;') + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</button>' +
+      '<button class="fav' + (fav ? ' on' : '') + '" style="top:8px;right:8px" ' +
+        'onclick="marcarFav(' + attr(p.id) + ',event)" aria-label="Guardar en favoritos" ' +
+        'aria-pressed="' + fav + '"><span class="env">' + ic('fav', 21, fav) +
+      '</span></button>' +
+    '</div>' +
+
+    (A.wa
+      ? '<div class="mientras">' +
+          '<div class="rot">Mientras tanto</div>' +
+          '<p>Si buscás algo puntual —un talle, un color, una prenda que viste— ' +
+            'escribile y te avisa cuando entra.</p>' +
+          '<a class="btn btn-ac" style="margin:14px 0 0" href="' +
+            esc(waLink('¡Hola! Estoy buscando algo puntual…')) + '">' +
+            ic('whatsapp', 18) + ' Decile qué buscás</a>' +
+        '</div>'
+      : '') +
+    '<div style="height:30px"></div>' +
+  '</div>';
+}
+
+const dato = (icono, t, sub) =>
+  '<div><span class="i">' + ic(icono, 20) + '</span>' +
+  '<p><strong>' + esc(t) + '</strong>' + esc(sub) + '</p></div>';
+
+function vPie() {
+  const dir = A.salon?.direccion;
+  const ig = A.salon?.instagram;
+  return '<div class="pie-info">' +
+    '<div class="rot" style="text-align:center">Cómo funciona acá</div>' +
+    '<div class="comofunciona">' +
+      dato('reloj', '48 horas', 'Te lo guardamos con tu nombre') +
+      dato('probar', 'Te lo probás', 'En el estudio, sin compromiso') +
+      dato('pin', 'Lo retirás', dir || 'En el estudio') +
+      dato('billete', 'Pagás ahí', 'Cuando lo ves y te gusta') +
+    '</div>' +
+    (A.wa ? '<div class="hr"></div><a class="wa btn-borde" href="' +
+      esc(waLink('¡Hola! Te escribo por la tienda.')) + '">' +
+      ic('whatsapp', 19) + ' Escribile por WhatsApp</a>' : '') +
+    '<div class="hr"></div>' +
+    '<div class="firma">' +
+      '<div class="n">' + esc(A.salon?.nombre || '') + '</div>' +
+      (dir || ig ? '<p>' + esc(dir || '') + (dir && ig ? '<br>' : '') +
+        (ig ? '@' + esc(String(ig).replace(/^@/, '')) : '') + '</p>' : '') +
+    '</div>' +
+  '</div><div style="height:20px"></div>';
+}
+
+function pintar() {
+  const cargando = A.pantalla === 'cargando';
+  $('app').innerHTML = vHeader() +
+    (cargando ? '' : vHero() + vRubros() + vChips()) +
+    vLista() +
+    (cargando ? '' : vPie());
+}
+</script>
+
+<script>
+// ══ Hoja ══════════════════════════════════════════════════════════════════
+// Manejada por `transform` y no por `@keyframes`: así se puede interrumpir y
+// revertir. Con un keyframe, abrir y cerrar rápido se ve roto.
+let _sheetT;
+
+function abrirHoja(html) {
+  $('hoja-contenido').innerHTML = html;
+  $('capa').classList.add('on');
   document.body.style.overflow = 'hidden';
+  // setTimeout y no rAF: con la pestaña en segundo plano el rAF no corre y la
+  // hoja aparecía de golpe en vez de subir.
+  setTimeout(() => $('capa').classList.add('abierta'), 20);
+}
 
+function cerrarHoja() {
+  $('capa').classList.remove('abierta');
+  document.body.style.overflow = '';
+  clearTimeout(_sheetT);
+  _sheetT = setTimeout(() => {
+    $('capa').classList.remove('on');
+    $('hoja-contenido').innerHTML = '';
+    A.sheet = null;
+  }, 320);
+}
+
+function repintarHoja() {
+  $('hoja-contenido').innerHTML =
+    A.sheet === 'ficha' ? vFicha() : A.sheet === 'carrito' ? vCarrito() : '';
+}
+
+// Arrastre: sigue el dedo y cierra por distancia o por velocidad del gesto, no
+// por un umbral fijo.
+(function arrastre() {
+  const capa = $('capa'), hoja = $('hoja'), manija = $('manija'), fondo = $('fondo');
+  let y0 = 0, yl = 0, tl = 0, v = 0, activo = false;
+
+  manija.addEventListener('pointerdown', ev => {
+    try { manija.setPointerCapture(ev.pointerId); } catch (_) {}
+    activo = true; y0 = yl = ev.clientY; tl = performance.now(); v = 0;
+    capa.classList.add('arrastrando');
+  });
+  manija.addEventListener('pointermove', ev => {
+    if (!activo) return;
+    const ahora = performance.now();
+    v = (ev.clientY - yl) / Math.max(1, ahora - tl);
+    yl = ev.clientY; tl = ahora;
+    const dy = Math.max(0, ev.clientY - y0);
+    hoja.style.transform = 'translateY(' + dy + 'px)';
+    fondo.style.opacity = Math.max(0, 1 - dy / 700);
+  });
+  const soltar = () => {
+    if (!activo) return;
+    activo = false;
+    const dy = Math.max(0, yl - y0);
+    capa.classList.remove('arrastrando');
+    hoja.style.transform = '';
+    fondo.style.opacity = '';
+    if (dy > 140 || v > 0.6) cerrarHoja();
+  };
+  manija.addEventListener('pointerup', soltar);
+  manija.addEventListener('pointercancel', soltar);
+  fondo.addEventListener('click', cerrarHoja);
+  document.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape' && capa.classList.contains('on')) cerrarHoja();
+  });
+})();
+
+/// La foto vuela de la tarjeta al lugar que va a ocupar en la ficha. Va
+/// imperativo y con la Web Animations API: por estado no funciona, el destino
+/// se mide antes de que la hoja esté en su sitio y el clon queda tapando.
+function volarFoto(img) {
+  const r0 = img.getBoundingClientRect();
+  const clon = document.createElement('div');
+  clon.setAttribute('data-vuelo', '1');
+  clon.style.cssText = 'left:' + r0.left + 'px;top:' + r0.top +
+    'px;width:' + r0.width + 'px;height:' + r0.height + 'px';
+  const im = document.createElement('img');
+  im.src = img.currentSrc || img.src;
+  im.alt = '';
+  clon.appendChild(im);
+  document.body.appendChild(clon);
+
+  const quitar = () => { if (clon.parentNode) clon.remove(); };
+  let intentos = 0;
+  const lanzar = () => {
+    const tgt = document.querySelector('[data-fly-target]');
+    if (!tgt || !tgt.getBoundingClientRect().width) {
+      // Tras ~20 frames se abandona el vuelo en vez de dejar el clon tapando.
+      if (++intentos > 20) return quitar();
+      return setTimeout(lanzar, 16);
+    }
+    // La hoja todavía está subiendo, así que el destino medido ahora no es el
+    // definitivo: se descuenta lo que le falta recorrer.
+    let pendiente = 0;
+    try {
+      pendiente = new DOMMatrixReadOnly(getComputedStyle($('hoja')).transform).m42;
+    } catch (_) {}
+    const r1 = tgt.getBoundingClientRect();
+    const escala = Math.max(.05, (r1.width - 20) / r0.width);
+    clon.animate([
+      {transform: 'translate(0,0) scale(1)', opacity: 1},
+      {transform: 'translate(' + ((r1.left + 10) - r0.left) + 'px,' +
+        ((r1.top + 10 - pendiente) - r0.top) + 'px) scale(' + escala + ')', opacity: 0}
+    ], {duration: 320, easing: 'cubic-bezier(.16,.84,.44,1)', fill: 'forwards'})
+      .onfinish = quitar;
+    setTimeout(quitar, 700);
+  };
+  setTimeout(lanzar, 16);
+  setTimeout(quitar, 1200);
+}
+
+// ══ Ficha ═════════════════════════════════════════════════════════════════
+function abrirFicha(id, ev) {
+  const p = A.productos.find(x => x.id === id);
+  if (!p) return;
+  const img = ev && ev.currentTarget && ev.currentTarget.querySelector('img');
+  if (img) volarFoto(img);
+
+  A.prod = p; A.sheet = 'ficha'; A.foto = 0; A.cant = 1;
   // Con una sola opción se elige sola: hacer tocar un botón que no ofrece
   // alternativa es un paso vacío.
-  const libres = vars.map((v, i) => [v, i]).filter(([v]) => v.disponible > 0);
-  if (libres.length === 1) elegir(libres[0][1]);
+  A.talle = p.talles.length === 1 ? p.talles[0] : null;
+  A.color = p.colores.length === 1 ? p.colores[0] : null;
+  abrirHoja(vFicha());
 }
 
-function elegir(i) {
-  VARIANTE = (VARIANTES[ACTUAL.id] || [])[i];
-  document.querySelectorAll('#ops .op').forEach((b, k) => b.classList.toggle('on', k === i));
-  const b = $('btnAdd');
-  b.disabled = false;
-  b.textContent = 'Agregar al pedido';
+function varianteElegida() {
+  const p = A.prod;
+  if (!p) return null;
+  return p.libres.find(v =>
+    (!p.talles.length || v.talle === A.talle) &&
+    (!p.colores.length || v.color === A.color)) || null;
+}
+const topeDe = v => v ? Math.min(v.disponible, 4) : 4;
+
+function vFicha() {
+  const p = A.prod;
+  const agotada = p.estado === 'agotado', reservada = p.estado === 'reservado';
+  const dispon = !agotada && !reservada;
+  const v = varianteElegida();
+  const listo = dispon && !!v;
+  const marca = agotada ? 'Agotado' : p.estado === 'ultima' ? 'Última unidad'
+              : reservada ? 'Reservado' : '';
+  const foto = p.fotos[Math.min(A.foto, p.fotos.length - 1)];
+  const fav = !!A.favs[p.id];
+
+  return '<div class="cuerpo">' +
+    '<div class="hoja-top">' +
+      '<button onclick="cerrarHoja()" aria-label="Cerrar">' + ic('cerrar', 21) + '</button>' +
+      '<div class="grupo">' +
+        '<button onclick="compartirProd()" aria-label="Compartir esta prenda">' +
+          ic('compartir', 21) + '</button>' +
+        '<button onclick="favFicha()" aria-label="Guardar en favoritos" ' +
+          'aria-pressed="' + fav + '" style="color:' + (fav ? 'var(--ac)' : 'var(--tx)') + '">' +
+          ic('fav', 21, fav) + '</button>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="marco-foto" data-fly-target="1">' +
+      '<div class="hueco' + (agotada ? ' agotada' : '') + '">' +
+        (p.fotos.length
+          ? '<img src="' + esc(foto) + '" alt="' + esc(p.nombre) + '" ' +
+            'onload="this.classList.add(\'ya\')">'
+          : '<div class="sinfoto">' + ic('sinFoto', 30) +
+            '<span>Foto en camino</span></div>') +
+      '</div>' +
+      (p.fotos.length > 1
+        ? '<div class="puntos">' + p.fotos.map((_, i) =>
+            '<button class="' + (A.foto === i ? 'on' : '') + '" aria-label="Ver foto ' +
+            (i + 1) + '" onclick="verFoto(' + i + ')"></button>').join('') + '</div>'
+        : '') +
+    '</div>' +
+
+    '<div class="ficha">' +
+      (p.cod ? '<div class="cod">' + esc(p.cod) + '</div>' : '') +
+      '<h2>' + esc(p.nombre) + '</h2>' +
+      '<div class="precio-fila"><span class="precio">' + plata(p.precio) + '</span>' +
+        (marca ? '<span class="marca-f ' + p.estado + '">' + marca + '</span>' : '') +
+      '</div>' +
+      (p.desc ? '<div class="desc">' + esc(p.desc) + '</div>' : '') +
+      (dispon ? bloqueOpciones(p, topeDe(v)) : '') +
+      (agotada ? '<div class="aviso-bloque"><b>Se agotó este</b><p>Es mercadería a ' +
+        'consignación, así que no siempre vuelve. Escribile y te avisa si entra algo ' +
+        'parecido en tu talle.</p></div>' : '') +
+      (reservada ? '<div class="aviso-bloque"><b>Reservado por otra clienta</b><p>Lo tiene ' +
+        'tomado. Si no lo retira vuelve a la tienda — escribile y te avisa primero a ' +
+        'vos.</p></div>' : '') +
+      '<div style="height:22px"></div>' +
+    '</div>' +
+  '</div>' +
+
+  '<div class="barra">' +
+    (dispon
+      ? '<button class="btn-grande' + (listo ? '' : ' off') + '"' +
+        (listo ? ' style="background:var(--ac);color:#fff"' : '') +
+        ' onclick="agregar()">' +
+        (listo ? 'Agregar a la reserva'
+          : (p.talles.length > 1 && !A.talle) ? 'Elegí tu talle' : 'Elegí el color') +
+        '</button>'
+      : (A.wa
+        ? '<a class="btn-grande btn-tx" href="' + esc(waLink('¡Hola! ¿Me avisás si ' +
+          (reservada ? 'se libera ' : 'vuelve ') + p.nombre +
+          (p.cod ? ' (' + p.cod + ')' : '') + '?')) + '">' +
+          (reservada ? 'Avisame si se libera' : 'Avisame cuando vuelva') + '</a>'
+        : '<button class="btn-grande off">Sin stock</button>')) +
+  '</div>';
 }
 
-function cerrar() {
-  $('modal').classList.remove('on');
-  document.body.style.overflow = '';
+function bloqueOpciones(p, tope) {
+  let h = '<div style="margin:24px 0 0">';
+  if (p.talles.length === 1) {
+    h += '<div class="unico"><span style="color:var(--ac-d);display:flex">' + ic('check', 20) +
+      '</span><span>Queda un solo talle: <strong>' + esc(p.talles[0]) +
+      '</strong></span></div>';
+  } else if (p.talles.length > 1) {
+    h += '<div class="rot">Talle</div><div class="opciones">' + p.talles.map(t =>
+      '<button class="op' + (A.talle === t ? ' on' : '') + '" aria-pressed="' +
+      (A.talle === t) + '" onclick="elegirTalle(' + attr(t) + ')">' + esc(t) +
+      '</button>').join('') + '</div>';
+  }
+  if (p.colores.length > 1) {
+    h += '<div style="margin:20px 0 0"><div class="rot">Color</div><div class="opciones">' +
+      p.colores.map(c => '<button class="op' + (A.color === c ? ' on' : '') +
+      '" aria-pressed="' + (A.color === c) + '" onclick="elegirColor(' + attr(c) + ')">' +
+      esc(c) + '</button>').join('') + '</div></div>';
+  }
+  h += '<div class="cant"><div class="rot">Cantidad</div><div class="caja">' +
+    '<button onclick="sumar(-1)" aria-label="Quitar uno"' +
+      (A.cant <= 1 ? ' disabled' : '') + '>–</button>' +
+    '<span class="n">' + A.cant + '</span>' +
+    '<button onclick="sumar(1)" aria-label="Agregar uno"' +
+      (A.cant >= tope ? ' disabled' : '') + '>+</button>' +
+    '</div></div>';
+  if (A.cant >= tope) h += '<div class="nota">Es todo lo que queda de este talle.</div>';
+  return h + '</div>';
 }
 
-function alCarrito() {
-  if (!VARIANTE) return;
-  const ya = CARRITO.find(l => l.variante_id === VARIANTE.id);
+function verFoto(i) { A.foto = i; repintarHoja(); }
+function elegirTalle(t) { A.talle = t; A.cant = 1; repintarHoja(); }
+function elegirColor(c) { A.color = c; A.cant = 1; repintarHoja(); }
+function sumar(d) {
+  A.cant = Math.max(1, Math.min(topeDe(varianteElegida()), A.cant + d));
+  repintarHoja();
+}
+function favFicha() {
+  const id = A.prod.id;
+  if (A.favs[id]) delete A.favs[id]; else A.favs[id] = true;
+  guardarFavs();
+  repintarHoja();
+  pintar();
+}
+async function compartirProd() {
+  const url = location.origin + location.pathname + '?t=' + encodeURIComponent(TIENDA);
+  const texto = A.prod.nombre + ' · ' + plata(A.prod.precio) +
+    (A.prod.cod ? ' (' + A.prod.cod + ')' : '');
+  try {
+    if (navigator.share) await navigator.share({title: A.prod.nombre, text: texto, url: url});
+    else { await navigator.clipboard.writeText(texto + '\n' + url); toast('Link copiado.'); }
+  } catch (_) {}
+}
+
+function agregar() {
+  const v = varianteElegida();
+  if (!v) return toast(A.talle ? 'Elegí el color.' : 'Tocá tu talle arriba.');
+  const ya = A.carrito.find(l => l.variante_id === v.id);
   // Nunca por encima de lo disponible: la reserva rebotaría del lado del
   // servidor y la clienta se enteraría recién al confirmar.
-  if (ya) {
-    if (ya.cantidad >= VARIANTE.disponible) return cerrar();
-    ya.cantidad++;
-  } else {
-    CARRITO.push({
-      variante_id: VARIANTE.id, cantidad: 1,
-      nombre: ACTUAL.nombre, precio: ACTUAL.precio,
-      variante: [VARIANTE.talle, VARIANTE.color].filter(Boolean).join(' · '),
-      foto: (FOTOS[ACTUAL.id] || [])[0]?.path,
-      tope: VARIANTE.disponible,
-    });
+  if (ya) ya.cant = Math.min(v.disponible, ya.cant + A.cant);
+  else A.carrito.push({
+    variante_id: v.id, nombre: A.prod.nombre, precio: A.prod.precio,
+    variante: [v.talle, v.color].filter(Boolean).join(' · '),
+    foto: A.prod.fotos[0] || '', cant: A.cant,
+  });
+  A.sheet = 'carrito';
+  repintarHoja();
+  pintar();
+}
+</script>
+
+<script>
+// ══ Reserva ═══════════════════════════════════════════════════════════════
+function abrirCarrito() { A.sheet = 'carrito'; abrirHoja(vCarrito()); }
+
+const carritoTop = () =>
+  '<div class="hoja-top" style="justify-content:flex-start;gap:6px">' +
+    '<button onclick="cerrarHoja()" aria-label="Cerrar">' + ic('cerrar', 21) + '</button>' +
+    '<div style="font:400 24px var(--sans)">Tu reserva</div>' +
+  '</div>';
+
+function vCarrito() {
+  const total = A.carrito.reduce((a, l) => a + l.precio * l.cant, 0);
+  const d = fechaRetiro();
+
+  if (!A.carrito.length) {
+    return '<div class="cuerpo">' + carritoTop() +
+      '<div class="estado"><div class="globo">' + ic('carrito', 28) + '</div>' +
+      '<h2>Todavía no elegiste nada</h2>' +
+      '<p>Tocá una prenda y elegí tu talle para empezar tu reserva.</p>' +
+      '<div><button class="btn btn-borde" onclick="cerrarHoja()">Seguir mirando</button></div>' +
+      '</div></div>';
   }
-  cerrar();
-  pintarBarra();
+
+  return '<div class="cuerpo">' + carritoTop() +
+    '<div style="padding:0 20px">' +
+      '<div style="display:grid;gap:14px">' + A.carrito.map((l, i) =>
+        '<div class="item">' +
+          '<div class="mini"><div>' +
+            (l.foto ? '<img src="' + esc(l.foto) + '" alt="">' : '') + '</div></div>' +
+          '<div class="txt"><b>' + esc(l.nombre) + '</b>' +
+            '<i>' + esc(l.variante) + ' · ×' + l.cant + '</i></div>' +
+          '<span class="pr">' + plata(l.precio * l.cant) + '</span>' +
+          '<button class="quitar" onclick="quitar(' + i + ')" aria-label="Quitar">' +
+            ic('cerrar', 17) + '</button>' +
+        '</div>').join('') + '</div>' +
+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;' +
+        'margin:20px 0 0"><span class="etiq">Total</span>' +
+        '<span style="font:500 23px var(--sans);font-variant-numeric:tabular-nums">' +
+        plata(total) + '</span></div>' +
+      '<p style="font:400 12px/1.5 var(--sans);color:var(--tx-4);margin:8px 0 0">' +
+        'No se paga nada ahora. Te lo guardamos hasta el ' + esc(fechaTxt(d)) +
+        ' a las 14, y lo pagás en el estudio cuando lo ves.</p>' +
+
+      '<div class="hr"></div>' +
+      '<div class="etiq">Tus datos</div>' +
+      '<div id="errBox"></div>' +
+      '<input class="campo" id="fNombre" placeholder="Tu nombre" autocomplete="name" ' +
+        'value="' + esc(A.nombre) + '">' +
+      '<input class="campo" id="fTel" placeholder="Tu WhatsApp, para avisarte" ' +
+        'inputmode="tel" autocomplete="tel" value="' + esc(A.tel) + '">' +
+      '<div style="height:16px"></div>' +
+    '</div></div>' +
+
+    '<div class="barra">' +
+      '<button class="btn-grande" id="btnRes" style="background:var(--ac);color:#fff" ' +
+        'onclick="reservar()">Reservar hasta el ' +
+        esc(fechaTxt(d).split(' ')[0]) + '</button>' +
+    '</div>';
 }
 
-function pintarBarra() {
-  const n = CARRITO.reduce((a, l) => a + l.cantidad, 0);
-  $('barra').classList.toggle('on', n > 0);
-  $('carritoN').textContent = n + (n === 1 ? ' producto' : ' productos');
-  $('carritoTot').textContent =
-    plata(CARRITO.reduce((a, l) => a + l.precio * l.cantidad, 0));
+function quitar(i) {
+  A.carrito.splice(i, 1);
+  repintarHoja();
+  pintar();
 }
-
-// ── Pedido ─────────────────────────────────────────────────────────────────
-function verCarrito() {
-  const total = CARRITO.reduce((a, l) => a + l.precio * l.cantidad, 0);
-  $('hoja').innerHTML = `
-    <div class="cuerpo">
-      <h2>Tu pedido</h2>
-      <div style="margin-top:14px">
-        ${CARRITO.map((l, i) => `
-          <div class="item">
-            ${l.foto ? `<img src="${esc(l.foto)}" alt="">` : '<img alt="">'}
-            <div>
-              <div class="n">${esc(l.nombre)}</div>
-              <div class="v">${esc(l.variante)} · ${plata(l.precio)}</div>
-            </div>
-            <div class="q">×${l.cantidad}</div>
-            <button class="quitar" onclick="quitar(${i})">✕</button>
-          </div>`).join('')}
-      </div>
-      <div style="display:flex;justify-content:space-between;margin:16px 0 4px">
-        <span style="font-size:13px;color:var(--t2)">Total</span>
-        <span class="tot" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600">${plata(total)}</span>
-      </div>
-
-      <div class="rot">Tus datos</div>
-      <div id="errBox"></div>
-      <label>Nombre</label>
-      <input id="fNombre" placeholder="Tu nombre" autocomplete="name">
-      <label>WhatsApp</label>
-      <input id="fTel" placeholder="Para avisarte" inputmode="tel" autocomplete="tel">
-
-      <button class="btn" id="btnRes" onclick="reservar()">Reservar por 48 horas</button>
-      <p style="font-size:11px;color:var(--t3);text-align:center;margin-top:10px;line-height:1.5">
-        Te lo guardamos 48 horas.<br>Después te escribimos para coordinar.
-      </p>
-      <button class="btn sec" onclick="cerrar()">Seguir mirando</button>
-    </div>`;
-  $('modal').classList.add('on');
-  document.body.style.overflow = 'hidden';
-}
-
-function quitar(i) { CARRITO.splice(i, 1); pintarBarra(); CARRITO.length ? verCarrito() : cerrar(); }
 
 async function reservar() {
   const nombre = $('fNombre').value.trim();
   const tel = $('fTel').value.trim();
-  if (!nombre) {
+  A.nombre = nombre; A.tel = tel;
+
+  if (nombre.length < 2) {
     $('errBox').innerHTML =
-      '<div class="err">Poné tu nombre así sabemos para quién guardarlo</div>';
+      '<div class="err">Poné tu nombre así sabemos para quién guardarlo.</div>';
+    $('fNombre').classList.add('mal');
+    $('fNombre').focus();
     return;
   }
 
@@ -599,51 +1311,52 @@ async function reservar() {
   b.textContent = 'Reservando…';
 
   try {
-    const r = await fetch(`${URL_SB}/rest/v1/rpc/crear_reserva`, {
+    const r = await fetch(URL_SB + '/rest/v1/rpc/crear_reserva', {
       method: 'POST',
       headers: {apikey: KEY_SB, Authorization: 'Bearer ' + KEY_SB,
                 'Content-Type': 'application/json'},
       body: JSON.stringify({
         p_tienda: TIENDA, p_nombre: nombre, p_telefono: tel,
-        p_items: CARRITO.map(l => ({variante_id: l.variante_id, cantidad: l.cantidad})),
+        p_items: A.carrito.map(l => ({variante_id: l.variante_id, cantidad: l.cant})),
       }),
     });
     if (!r.ok) throw new Error(await r.text());
-    const codigo = (await r.json()).replace(/"/g, '');
-
-    const detalle = CARRITO
-      .map(l => `• ${l.nombre}${l.variante ? ' (' + l.variante + ')' : ''} ×${l.cantidad}`)
-      .join('\n');
-    const msg = encodeURIComponent(
-      `¡Hola! Reservé con el código ${codigo}\n\n${detalle}\n\nSoy ${nombre}`);
-
-    $('hoja').innerHTML = `
-      <div class="cuerpo" style="text-align:center">
-        <div style="font-size:46px;margin:10px 0">🎉</div>
-        <h2>¡Listo, ${esc(nombre)}!</h2>
-        <div class="ok" style="margin-top:16px">
-          Te lo guardamos por 48 horas.<br>Tu código es
-          <b>${esc(codigo)}</b>
-        </div>
-        ${WA ? `<a href="https://wa.me/${WA}?text=${msg}" class="btn wa"
-                  style="display:block;text-decoration:none;line-height:1.2">
-                  Avisar por WhatsApp</a>` : ''}
-        <button class="btn sec" onclick="reiniciar()">Seguir mirando</button>
-      </div>`;
-    CARRITO = [];
-    pintarBarra();
+    mostrarExito((await r.json()).replace(/"/g, ''), nombre);
   } catch (e) {
-    // El mensaje del servidor es el que importa: "se quedó sin stock una de
-    // las prendas" le dice qué hacer; un "error 400" no.
+    // El mensaje del servidor es el que importa: "se quedó sin stock una de las
+    // prendas" le dice qué hacer; un "error 400" no.
     let m = 'No se pudo reservar. Probá de nuevo.';
     try { m = JSON.parse(e.message).message || m; } catch (_) {}
-    $('errBox').innerHTML = `<div class="err">${esc(m)}</div>`;
+    $('errBox').innerHTML = '<div class="err">' + esc(m) + '</div>';
     b.disabled = false;
-    b.textContent = 'Reservar por 48 horas';
+    b.textContent = 'Reservar';
   }
 }
 
-function reiniciar() { cerrar(); cargar(); }
+function mostrarExito(codigo, nombre) {
+  const d = fechaRetiro();
+  const detalle = A.carrito
+    .map(l => '• ' + l.nombre + (l.variante ? ' (' + l.variante + ')' : '') + ' ×' + l.cant)
+    .join('\n');
+
+  $('hoja-contenido').innerHTML = '<div class="cuerpo"><div class="exito">' +
+    '<div class="globo">' + ic('check', 32) + '</div>' +
+    '<h2>Listo, ' + esc(nombre.split(' ')[0]) + '</h2>' +
+    '<p>Te lo guardamos hasta el <strong>' + esc(fechaTxt(d)) + ' a las 14</strong>. ' +
+      'Pasá por el estudio cuando quieras y lo pagás ahí.</p>' +
+    '<div class="codigo"><div class="rot">Tu código</div><b>' + esc(codigo) + '</b></div>' +
+    (A.wa ? '<a class="btn-grande" style="margin:16px 0 0;background:var(--ac);color:#fff" ' +
+      'href="' + esc(waLink('¡Hola! Reservé con el código ' + codigo + '\n\n' + detalle +
+        '\n\nSoy ' + nombre)) + '">Avisale por WhatsApp</a>' : '') +
+    '<button class="btn-grande btn-borde" style="margin:8px 0 0" onclick="reiniciar()">' +
+      'Seguir mirando</button>' +
+  '</div></div>';
+
+  A.carrito = [];
+  pintar();
+}
+
+function reiniciar() { cerrarHoja(); cargar(); }
 
 cargar();
 </script>

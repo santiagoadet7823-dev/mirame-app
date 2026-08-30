@@ -13,18 +13,29 @@ import '../remote/supabase_client.dart';
 class AccessRepository {
   const AccessRepository();
 
-  /// Guarda el teléfono del salón, que es lo que la vitrina usa para el
-  /// botón de WhatsApp.
+  /// Guarda los datos que la vitrina muestra: el WhatsApp del botón de
+  /// contacto, y la dirección y el Instagram del pie.
   ///
   /// Escribe directo contra Supabase y no por el outbox: `tenants` no es una
   /// tabla de negocio ni vive en Drift, se lee una vez al entrar. La RLS
   /// `tenants_owner_update` deja hacerlo solo al owner del salón.
-  Future<void> guardarTelefono(String tenantId, String? telefono) async {
-    final limpio = telefono?.trim();
-    await sb
-        .from('tenants')
-        .update({'telefono': (limpio?.isEmpty ?? true) ? null : limpio})
-        .eq('id', tenantId);
+  Future<void> guardarDatosPublicos(
+    String tenantId, {
+    String? telefono,
+    String? direccion,
+    String? instagram,
+  }) async {
+    String? limpiar(String? v) {
+      final t = v?.trim();
+      return (t == null || t.isEmpty) ? null : t;
+    }
+
+    await sb.from('tenants').update({
+      'telefono': limpiar(telefono),
+      'direccion': limpiar(direccion),
+      // Sin la arroba: la vitrina la agrega, y guardarla doble la duplicaría.
+      'instagram': limpiar(instagram)?.replaceFirst(RegExp(r'^@'), ''),
+    }).eq('id', tenantId);
   }
 
   /// Carga perfil, membresías, salones y licencias del usuario logueado.
@@ -70,7 +81,8 @@ class AccessRepository {
 
     final tenantRows = await sb
         .from('tenants')
-        .select('id, nombre, slug, estado, plan, creado_por, telefono');
+        .select('id, nombre, slug, estado, plan, creado_por, telefono, '
+            'direccion, instagram');
     final tenants = (tenantRows as List)
         .map((f) => tenantDesdeFila(f as Map<String, dynamic>))
         .toList();

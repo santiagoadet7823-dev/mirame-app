@@ -45,6 +45,8 @@ class Tenant {
     this.plan = 'basico',
     this.creadoPor,
     this.telefono,
+    this.direccion,
+    this.instagram,
   });
 
   final String id;
@@ -55,7 +57,11 @@ class Tenant {
 
   /// Quién dio de alta el salón. Un revendedor solo administra los que creó.
   final String? creadoPor;
+
+  /// Los tres que muestra la vitrina pública.
   final String? telefono;
+  final String? direccion;
+  final String? instagram;
 
   /// `suspendido` y `cancelado` cierran la puerta aunque la licencia no haya
   /// vencido: son decisiones de la plataforma, no del calendario.

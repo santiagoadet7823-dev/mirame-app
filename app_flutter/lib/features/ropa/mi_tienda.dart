@@ -38,26 +38,37 @@ class _MiTienda extends ConsumerStatefulWidget {
 class _MiTiendaState extends ConsumerState<_MiTienda> {
   late final _tel = TextEditingController(
       text: ref.read(tenantActivoProvider)?.telefono ?? '');
+  late final _dir = TextEditingController(
+      text: ref.read(tenantActivoProvider)?.direccion ?? '');
+  late final _ig = TextEditingController(
+      text: ref.read(tenantActivoProvider)?.instagram ?? '');
   var _guardando = false;
 
   @override
   void dispose() {
     _tel.dispose();
+    _dir.dispose();
+    _ig.dispose();
     super.dispose();
   }
 
-  Future<void> _guardarTelefono() async {
+  Future<void> _guardar() async {
     final tenant = ref.read(tenantActivoProvider);
     if (tenant == null) return;
     setState(() => _guardando = true);
     try {
-      await const AccessRepository().guardarTelefono(tenant.id, _tel.text);
+      await const AccessRepository().guardarDatosPublicos(
+        tenant.id,
+        telefono: _tel.text,
+        direccion: _dir.text,
+        instagram: _ig.text,
+      );
       // Sin esto el Tenant en memoria sigue con el teléfono viejo y la pantalla
       // mostraría el aviso de "falta el WhatsApp" recién guardado.
       await ref.read(sessionProvider.notifier).refrescar();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('WhatsApp guardado')),
+          const SnackBar(content: Text('Datos guardados')),
         );
       }
     } catch (_) {
@@ -183,35 +194,33 @@ class _MiTiendaState extends ConsumerState<_MiTienda> {
               ),
 
               const SizedBox(height: 12),
-              const EtiquetaSeccion('TU WHATSAPP'),
+              const EtiquetaSeccion('LO QUE SE VE EN LA TIENDA'),
               Text(
-                'Es el número que ven tus clientas en la tienda para '
-                'escribirte. Sin esto no tienen cómo.',
+                'El WhatsApp es por donde te escriben; la dirección sale en '
+                '"lo retirás". Sin el WhatsApp no tienen cómo contactarte.',
                 style: sans(size: 12, color: MColors.tSecondary),
               ),
               const SizedBox(height: 10),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: CampoTexto(
-                      controlador: _tel,
-                      etiqueta: 'Con código de área, sin el 15',
-                      teclado: TextInputType.phone,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    width: 96,
-                    child: _Boton(
-                      icono: Icons.check_rounded,
-                      texto: _guardando ? '…' : 'Guardar',
-                      principal: true,
-                      onTap: _guardando ? () {} : _guardarTelefono,
-                    ),
-                  ),
-                ],
+              CampoTexto(
+                controlador: _tel,
+                etiqueta: 'WhatsApp — con código de área, sin el 15',
+                teclado: TextInputType.phone,
               ),
+              CampoTexto(
+                controlador: _dir,
+                etiqueta: 'Dirección donde retiran',
+              ),
+              CampoTexto(
+                controlador: _ig,
+                etiqueta: 'Instagram (sin la arroba)',
+              ),
+              _Boton(
+                icono: Icons.check_rounded,
+                texto: _guardando ? 'Guardando…' : 'Guardar',
+                principal: true,
+                onTap: _guardando ? () {} : _guardar,
+              ),
+              const SizedBox(height: 4),
               if ((tenant?.telefono ?? '').trim().isEmpty)
                 Container(
                   margin: const EdgeInsets.only(top: 4),
