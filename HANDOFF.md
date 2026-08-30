@@ -141,6 +141,7 @@ tuyo y del revendedor. Requiere que cada uno entre a la app una vez para que exi
 | 02 | `02-empaquetado-apk.md` | implementado | Rama anticipada de la Fase 8: keystore, firma, iconos y deep link para probar en un teléfono real |
 | 04 | `03-tienda-diseno.md` | implementado (fase 0) | Diagnóstico de la vitrina, arreglos de identidad y WhatsApp, y el brief de diseño (`12-BRIEF-TIENDA.md`) |
 | 05 | `04-tienda-implementacion.md` | fases 1 y 2 implementadas | La entrega del diseñador portada al HTML plano; cuentas de clienta y mails quedan para las fases 3 y 4 |
+| 06 | `05-equipo-y-roles.md` | implementado | Rol `encargado`, permisos más finos, pantalla de Equipo y limpieza de nombres |
 
 > El contenido de `planes/` es local. Este índice es lo único que se versiona.
 > Al crear un plan nuevo, agregar la fila acá.
@@ -509,3 +510,44 @@ dirección**, que se carga desde "Mi tienda".
 
 **Publicado:** APK 1.14.1 y la PWA. **Próximo:** fases 3 y 4 del plan de la
 tienda (cuentas de clienta y avisos por mail).
+
+### 2026-08-30 (cierre) — Roles, Equipo y nombres
+
+Al sumar `cardixteam@gmail.com` —un segundo teléfono que queda en el estudio— apareció algo
+más grande: **la app y el servidor no estaban de acuerdo**. Todo el módulo de la tienda
+exigía `administra()` en la RLS, o sea owner o admin, pero la UI se lo ofrecía a un
+`profesional`. Un profesional editando un producto guardaba local y **el sync le fallaba en
+silencio, trabado en el outbox**.
+
+**Rol `encargado`** y permisos partidos en dos: `escribirAgenda` (turnos y clientas) y
+`operarNegocio` (caja, tienda, insumos). Matriz verificada simulando cada rol con
+`set request.jwt.claims`:
+
+| rol | atiende | opera | administra |
+|---|:--:|:--:|:--:|
+| owner · admin | sí | sí | sí |
+| **encargado** | sí | sí | **no** |
+| profesional | sí | **no** | no |
+| lectura | no | no | no |
+
+Del lado del servidor, la tienda pasó de `administra()` a la nueva `opera()`; caja e insumos
+también; y servicios, profesionales y ajustes subieron a `administra()` porque son
+configuración, no operación. `verReportes` deja de ser para todos: un profesional que no
+toca la caja tampoco ve la facturación.
+
+**Pantalla de Equipo** (`features/settings/equipo_view.dart`): pendientes arriba, aprobar
+eligiendo rol, cambiar rol, bloquear, y el botón de invitar. Antes aprobar a alguien había
+que hacerlo por SQL. Nadie se puede degradar ni bloquear a sí mismo. La ruta `/admin/invitar`
+cuelga del área de plataforma y una dueña no llega, así que la pantalla se empuja directo.
+
+**`cardixteam@gmail.com` quedó como `encargado` aprobado** en el salón de Candela.
+
+**Nombres:** el nav dice **Insumos** (era Stock, y tiene dos insumos reales que ella gasta
+trabajando — no era redundante con la tienda, era choque de nombres); el módulo dice
+**Tienda** con ícono de local; el acceso al link dice **Compartir**; y el rubro de la vitrina
+dice **Estética**, solo la etiqueta — el valor guardado sigue siendo `insumos`.
+
+**El ícono del carrito** pasó a una bolsa con pliegue. Se probaron tres variantes a 24 px: el
+fuelle se ensucia y la curva inferior se lee como una carita.
+
+**Próximo:** fases 3 y 4 del plan de la tienda (cuentas de clienta y avisos por mail).

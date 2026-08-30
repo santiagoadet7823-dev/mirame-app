@@ -26,7 +26,9 @@ import '../ropa/mi_tienda.dart';
 import '../update/update_sheet.dart';
 import 'backup_view.dart';
 import 'restaurar_backup.dart';
+import '../../domain/rules/access.dart';
 import 'catalogo.dart';
+import 'equipo_view.dart';
 
 class SettingsView extends ConsumerWidget {
   const SettingsView({super.key});
@@ -178,6 +180,22 @@ class SettingsView extends ConsumerWidget {
                     ),
                   ],
                 ),
+                if (ref.watch(puedeProvider(Permiso.gestionarUsuarios))) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _Acceso(
+                          emoji: '👥',
+                          titulo: 'Equipo',
+                          onTap: () => mostrarEquipo(ctx),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(child: SizedBox()),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

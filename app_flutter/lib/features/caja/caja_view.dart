@@ -104,7 +104,7 @@ class _CajaViewState extends ConsumerState<CajaView> {
         const <db.Transaction>[];
     final todos = filas.map(aTransaction).toList();
     final resumen = summarize(todos, monthRange(_mes));
-    final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirDatos));
+    final puedeEscribir = ref.watch(puedeProvider(Permiso.operarNegocio));
 
     // El filtro se aplica DESPUÉS de calcular los totales: los números de
     // arriba son del mes completo, no de lo que quedó filtrado. Es lo que

@@ -48,7 +48,7 @@ class _StockViewState extends ConsumerState<StockView> {
       'out' => todos.where((i) => stockStatus(i) == StockStatus.out).toList(),
       _ => todos,
     };
-    final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirDatos));
+    final puedeEscribir = ref.watch(puedeProvider(Permiso.operarNegocio));
 
     return Scaffold(
       backgroundColor: Colors.transparent,

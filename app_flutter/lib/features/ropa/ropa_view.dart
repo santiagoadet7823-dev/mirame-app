@@ -105,7 +105,7 @@ class _RopaViewState extends ConsumerState<RopaView> {
     final variantes = ref.watch(variantesProvider).value ?? const {};
     final stock = ref.watch(stockRopaProvider).value ?? const {};
     final portadas = ref.watch(portadasProvider).value ?? const {};
-    final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirDatos));
+    final puedeEscribir = ref.watch(puedeProvider(Permiso.operarNegocio));
 
     /// Cuántas unidades hay de un producto, sumando todas sus variantes.
     int stockDe(String productoId) => (variantes[productoId] ?? const [])

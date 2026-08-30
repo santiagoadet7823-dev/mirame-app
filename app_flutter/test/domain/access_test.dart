@@ -373,20 +373,34 @@ void main() {
     });
 
     test('admin hace todo menos borrar el salón', () {
-      expect(puede(MiembroRol.admin, Permiso.escribirDatos), isTrue);
+      expect(puede(MiembroRol.admin, Permiso.escribirAgenda), isTrue);
+      expect(puede(MiembroRol.admin, Permiso.operarNegocio), isTrue);
       expect(puede(MiembroRol.admin, Permiso.gestionarUsuarios), isTrue);
       expect(puede(MiembroRol.admin, Permiso.editarAjustes), isTrue);
       expect(puede(MiembroRol.admin, Permiso.borrarTenant), isFalse);
     });
 
-    test('profesional escribe datos pero no administra', () {
-      expect(puede(MiembroRol.profesional, Permiso.escribirDatos), isTrue);
+    test('encargado maneja el negocio pero no toca usuarios ni ajustes', () {
+      expect(puede(MiembroRol.encargado, Permiso.escribirAgenda), isTrue);
+      expect(puede(MiembroRol.encargado, Permiso.operarNegocio), isTrue);
+      expect(puede(MiembroRol.encargado, Permiso.verReportes), isTrue);
+      expect(puede(MiembroRol.encargado, Permiso.gestionarUsuarios), isFalse);
+      expect(puede(MiembroRol.encargado, Permiso.editarAjustes), isFalse);
+      expect(puede(MiembroRol.encargado, Permiso.borrarTenant), isFalse);
+    });
+
+    test('profesional atiende y nada más', () {
+      expect(puede(MiembroRol.profesional, Permiso.escribirAgenda), isTrue);
+      // La distinción que motivó todo esto: la tienda y la caja no son suyas.
+      expect(puede(MiembroRol.profesional, Permiso.operarNegocio), isFalse);
+      expect(puede(MiembroRol.profesional, Permiso.verReportes), isFalse);
       expect(puede(MiembroRol.profesional, Permiso.gestionarUsuarios), isFalse);
       expect(puede(MiembroRol.profesional, Permiso.editarAjustes), isFalse);
     });
 
     test('lectura solo ve', () {
-      expect(puede(MiembroRol.lectura, Permiso.escribirDatos), isFalse);
+      expect(puede(MiembroRol.lectura, Permiso.escribirAgenda), isFalse);
+      expect(puede(MiembroRol.lectura, Permiso.operarNegocio), isFalse);
       expect(puede(MiembroRol.lectura, Permiso.gestionarUsuarios), isFalse);
       expect(puede(MiembroRol.lectura, Permiso.verReportes), isTrue);
     });
@@ -398,14 +412,16 @@ void main() {
         rol: MiembroRol.owner,
         impersonando: true,
       );
-      expect(puedeEnDecision(acceso, Permiso.escribirDatos), isFalse);
+      expect(puedeEnDecision(acceso, Permiso.escribirAgenda), isFalse);
+      expect(puedeEnDecision(acceso, Permiso.operarNegocio), isFalse);
       expect(puedeEnDecision(acceso, Permiso.gestionarUsuarios), isFalse);
       expect(puedeEnDecision(acceso, Permiso.verReportes), isTrue);
     });
 
     test('sin impersonar, manda el rol', () {
       const acceso = GoToApp(tenant: salonA, rol: MiembroRol.profesional);
-      expect(puedeEnDecision(acceso, Permiso.escribirDatos), isTrue);
+      expect(puedeEnDecision(acceso, Permiso.escribirAgenda), isTrue);
+      expect(puedeEnDecision(acceso, Permiso.operarNegocio), isFalse);
       expect(puedeEnDecision(acceso, Permiso.editarAjustes), isFalse);
     });
   });

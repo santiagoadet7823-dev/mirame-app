@@ -10,7 +10,12 @@ library;
 enum PlataformaRol { superadmin }
 
 /// Rol DENTRO de un salón.
-enum MiembroRol { owner, admin, profesional, lectura }
+/// Quién es quién adentro de un salón.
+///
+/// `encargado` es el que maneja el negocio sin ser dueña: opera caja, tienda e
+/// insumos, pero no toca usuarios ni ajustes. `profesional` atiende — turnos y
+/// clientas — y nada más.
+enum MiembroRol { owner, admin, encargado, profesional, lectura }
 
 /// Estado de una membresía.
 enum MiembroEstado { pending, approved, blocked }

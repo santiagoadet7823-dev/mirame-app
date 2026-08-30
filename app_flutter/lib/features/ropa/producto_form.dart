@@ -322,7 +322,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
             opciones: const [
               ('ropa', '👗 Ropa'),
               ('arbell', '💄 Arbell'),
-              ('insumos', '🧴 Insumos'),
+              ('insumos', '🧴 Estética'),
             ],
             activo: _rubro,
             onElegir: (v) => setState(() => _rubro = v),

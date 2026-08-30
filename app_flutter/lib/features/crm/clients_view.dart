@@ -46,7 +46,7 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
   Widget build(BuildContext context) {
     final todas = ref.watch(clientesProvider).value ?? const <Client>[];
     final busqueda = _busqueda.trim().toLowerCase();
-    final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirDatos));
+    final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirAgenda));
     final resumen = ref.watch(resumenClientesProvider).value ??
         const <String, ({int turnos, double gastado})>{};
 

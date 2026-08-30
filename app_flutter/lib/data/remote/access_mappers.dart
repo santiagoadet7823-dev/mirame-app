@@ -12,6 +12,7 @@ import '../../domain/entities/access.dart';
 MiembroRol rolDesdeTexto(String? v) => switch (v) {
       'owner' => MiembroRol.owner,
       'admin' => MiembroRol.admin,
+      'encargado' => MiembroRol.encargado,
       'profesional' => MiembroRol.profesional,
       _ => MiembroRol.lectura,
     };

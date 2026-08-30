@@ -263,8 +263,8 @@ class DashboardView extends ConsumerWidget {
           child: Row(
             children: [
               _AccionRapida(
-                emoji: '👗',
-                titulo: 'Ropa',
+                emoji: '🛍️',
+                titulo: 'Tienda',
                 detalle: 'Catálogo y ventas',
                 fondo: MColors.nude100,
                 borde: MColors.nude300,
@@ -272,9 +272,9 @@ class DashboardView extends ConsumerWidget {
               ),
               const SizedBox(width: 10),
               _AccionRapida(
-                emoji: '🛍️',
-                titulo: 'Mi tienda',
-                detalle: 'Compartir link',
+                emoji: '🔗',
+                titulo: 'Compartir',
+                detalle: 'El link de la tienda',
                 fondo: MColors.lav50,
                 borde: MColors.borderLav,
                 onTap: () => mostrarMiTienda(context),

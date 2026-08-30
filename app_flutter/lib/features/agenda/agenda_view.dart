@@ -84,7 +84,7 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
             const <db.Appointment>[];
     final diasConTurno = {for (final t in delMes) t.fecha};
     final clientes = ref.watch(clientesProvider).value ?? const <db.Client>[];
-    final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirDatos));
+    final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirAgenda));
 
     final nombrePorId = {for (final c in clientes) c.id: c.nombre};
 

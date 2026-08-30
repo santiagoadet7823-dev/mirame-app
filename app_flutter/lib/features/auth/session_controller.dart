@@ -227,7 +227,7 @@ final impersonandoProvider = Provider((ref) {
 });
 
 /// Chequeo de permiso listo para usar en la UI:
-/// `ref.watch(puedeProvider(Permiso.escribirDatos))`.
+/// `ref.watch(puedeProvider(Permiso.operarNegocio))`.
 final puedeProvider = Provider.family<bool, Permiso>((ref, permiso) {
   final d = ref.watch(sessionProvider).decision;
   if (d is! GoToApp) return false;

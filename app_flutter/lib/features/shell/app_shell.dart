@@ -48,7 +48,7 @@ const itemsNav = <ItemNav>[
   ItemNav(Icons.calendar_today_outlined, 'Agenda'),
   ItemNav(Icons.people_outline, 'Clientas'),
   ItemNav(Icons.attach_money_rounded, 'Caja'),
-  ItemNav(Icons.inventory_2_outlined, 'Stock'),
+  ItemNav(Icons.inventory_2_outlined, 'Insumos'),
 ];
 
 /// Índices de las vistas que no están en el nav. El orden tiene que coincidir
@@ -59,7 +59,7 @@ const itemsSidebar = <ItemNav>[
   ...itemsNav,
   ItemNav(Icons.bar_chart_rounded, 'Stats'),
   ItemNav(Icons.settings_outlined, 'Ajustes'),
-  ItemNav(Icons.checkroom_outlined, 'Ropa'),
+  ItemNav(Icons.storefront_outlined, 'Tienda'),
 ];
 
 abstract final class Vistas {
@@ -71,7 +71,7 @@ abstract final class Vistas {
   static const stats = 5;
   static const ajustes = 6;
 
-  /// Ropa NO entra al nav: son cinco items, como el original. Se llega desde
+  /// La tienda NO entra al nav: son cinco items, como el original. Se llega
   /// una accion rapida del Inicio, igual que Stats.
   static const ropa = 7;
 }

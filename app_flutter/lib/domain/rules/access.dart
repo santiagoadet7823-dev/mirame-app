@@ -284,8 +284,17 @@ int diasDeGraciaRestantes(DateTime? ultimaValidacion, DateTime ahora) {
 /// Espeja `puede_escribir()` y `administra()` de `sql/03_rls.sql`. Si cambia
 /// una, tiene que cambiar la otra.
 enum Permiso {
-  /// Crear y editar turnos, clientas, movimientos y stock.
-  escribirDatos,
+  /// Atender: crear y editar turnos y clientas.
+  escribirAgenda,
+
+  /// Manejar el negocio: caja, tienda e insumos.
+  ///
+  /// Está separado de [escribirAgenda] porque no son la misma
+  /// responsabilidad. Quien atiende no necesariamente maneja la plata ni el
+  /// catálogo, y el servidor ya hacía esa distinción: todo el módulo de la
+  /// tienda exigía ser admin mientras la app se lo ofrecía a un profesional,
+  /// así que el sync le fallaba en silencio.
+  operarNegocio,
 
   /// Invitar, aprobar, bloquear usuarios y cambiar sus roles.
   gestionarUsuarios,
@@ -301,15 +310,21 @@ enum Permiso {
 }
 
 bool puede(MiembroRol rol, Permiso permiso) => switch (permiso) {
-      Permiso.escribirDatos => rol == MiembroRol.owner ||
+      Permiso.escribirAgenda => rol == MiembroRol.owner ||
           rol == MiembroRol.admin ||
+          rol == MiembroRol.encargado ||
           rol == MiembroRol.profesional,
+      Permiso.operarNegocio => rol == MiembroRol.owner ||
+          rol == MiembroRol.admin ||
+          rol == MiembroRol.encargado,
       Permiso.gestionarUsuarios =>
         rol == MiembroRol.owner || rol == MiembroRol.admin,
       Permiso.editarAjustes =>
         rol == MiembroRol.owner || rol == MiembroRol.admin,
-      // Incluso `lectura` ve los reportes: para eso existe el rol.
-      Permiso.verReportes => true,
+      // `lectura` existe justamente para mirar sin operar. Un `profesional`
+      // que no puede tocar la caja tampoco tiene por qué ver la facturación
+      // del salón: eso es información de manejo.
+      Permiso.verReportes => rol != MiembroRol.profesional,
       Permiso.borrarTenant => rol == MiembroRol.owner,
     };
 
