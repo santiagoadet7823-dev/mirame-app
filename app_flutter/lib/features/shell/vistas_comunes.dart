@@ -247,6 +247,7 @@ class CampoTexto extends StatelessWidget {
     this.lineas = 1,
     this.autofocus = false,
     this.prefijo,
+    this.onCambio,
   });
 
   final TextEditingController controlador;
@@ -256,11 +257,16 @@ class CampoTexto extends StatelessWidget {
   final bool autofocus;
   final String? prefijo;
 
+  /// Para los campos que filtran mientras se tipea, como la busqueda del
+  /// catalogo.
+  final ValueChanged<String>? onCambio;
+
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: TextField(
           controller: controlador,
+          onChanged: onCambio,
           keyboardType: teclado,
           maxLines: lineas,
           autofocus: autofocus,

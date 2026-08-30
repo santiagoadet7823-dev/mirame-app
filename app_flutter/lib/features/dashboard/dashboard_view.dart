@@ -256,6 +256,31 @@ class DashboardView extends ConsumerWidget {
             ],
           ),
         ),
+        const SizedBox(height: 10),
+        FadeSlideIn(
+          delay: const Duration(milliseconds: 265),
+          child: Row(
+            children: [
+              _AccionRapida(
+                emoji: '👗',
+                titulo: 'Ropa',
+                detalle: 'Catálogo y ventas',
+                fondo: MColors.nude100,
+                borde: MColors.nude300,
+                onTap: () => NavegadorShell.ir(context, Vistas.ropa),
+              ),
+              const SizedBox(width: 10),
+              _AccionRapida(
+                emoji: '🛍️',
+                titulo: 'Mi tienda',
+                detalle: 'Compartir link',
+                fondo: MColors.lav50,
+                borde: MColors.borderLav,
+                onTap: () => NavegadorShell.ir(context, Vistas.ropa),
+              ),
+            ],
+          ),
+        ),
 
         // 5 · Alertas de stock
         if (alertas.isNotEmpty) ...[

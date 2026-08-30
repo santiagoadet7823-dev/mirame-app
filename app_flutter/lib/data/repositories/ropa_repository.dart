@@ -551,7 +551,73 @@ class RopaRepository {
     return ventaId;
   }
 
-  /// Borrado lógico, igual que el resto del sistema.
+
+  /// Guarda una foto. Si `path` viene vacio, queda pendiente de subir.
+  ///
+  /// Las fotos son lo unico del modulo que NO funciona offline de punta a
+  /// punta: los datos de la prenda se encolan como cualquier fila, pero una
+  /// imagen no se encola razonablemente. Se guarda la ruta local, se marca
+  /// pendiente, y la ficha lo dice en vez de mostrar un rectangulo roto.
+  Future<String> guardarFoto({
+    String? id,
+    required String productoId,
+    String? varianteId,
+    String path = '',
+    String? rutaLocal,
+    int orden = 0,
+  }) async {
+    final filaId = id ?? nuevoId();
+    final ahora = DateTime.now();
+    final pendiente = path.isEmpty;
+
+    await _db.transaction(() async {
+      await _db.into(_db.productoFotos).insertOnConflictUpdate(
+            ProductoFotosCompanion.insert(
+              id: filaId,
+              tenantId: _tenantId,
+              productoId: productoId,
+              varianteId: Value(varianteId),
+              path: path,
+              orden: Value(orden),
+              pendienteDeSubir: Value(pendiente),
+              rutaLocal: Value(rutaLocal),
+              updatedAt: Value(ahora),
+            ),
+          );
+      // Una foto pendiente NO se encola: el servidor guardaria una fila con
+      // path vacio y la vitrina mostraria un hueco. Se encola recien cuando
+      // la imagen ya esta arriba.
+      if (!pendiente) {
+        await _sync.encolar(
+          tenantId: _tenantId,
+          tabla: 'producto_fotos',
+          filaId: filaId,
+          operacion: 'upsert',
+          payload: {
+            'id': filaId,
+            'tenant_id': _tenantId,
+            'producto_id': productoId,
+            'variante_id': varianteId,
+            'path': path,
+            'orden': orden,
+            'updated_at': ahora.toUtc().toIso8601String(),
+          },
+        );
+      }
+    });
+    return filaId;
+  }
+
+  /// Las fotos que quedaron sin subir, para reintentarlas cuando haya senal.
+  Future<List<ProductoFoto>> fotosPendientes() =>
+      (_db.select(_db.productoFotos)
+            ..where((f) =>
+                f.tenantId.equals(_tenantId) &
+                f.deletedAt.isNull() &
+                f.pendienteDeSubir.equals(true)))
+          .get();
+
+  /// Borrado logico, igual que el resto del sistema.
   Future<void> borrar(String tabla, String filaId) async {
     final ahora = DateTime.now();
     await _db.transaction(() async {

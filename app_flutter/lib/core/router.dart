@@ -18,6 +18,7 @@ import '../features/agenda/agenda_view.dart';
 import '../features/caja/caja_view.dart';
 import '../features/crm/clients_view.dart';
 import '../features/dashboard/dashboard_view.dart';
+import '../features/ropa/ropa_view.dart';
 import '../features/settings/settings_view.dart';
 import '../features/stats/stats_view.dart';
 import '../features/stock/stock_view.dart';
@@ -114,6 +115,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             StockView(),
             StatsView(),
             SettingsView(),
+            RopaView(),
           ],
         ),
       ),

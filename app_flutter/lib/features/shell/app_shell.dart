@@ -59,6 +59,7 @@ const itemsSidebar = <ItemNav>[
   ...itemsNav,
   ItemNav(Icons.bar_chart_rounded, 'Stats'),
   ItemNav(Icons.settings_outlined, 'Ajustes'),
+  ItemNav(Icons.checkroom_outlined, 'Ropa'),
 ];
 
 abstract final class Vistas {
@@ -69,6 +70,10 @@ abstract final class Vistas {
   static const stock = 4;
   static const stats = 5;
   static const ajustes = 6;
+
+  /// Ropa NO entra al nav: son cinco items, como el original. Se llega desde
+  /// una accion rapida del Inicio, igual que Stats.
+  static const ropa = 7;
 }
 
 /// `.view { padding: 16px 16px 96px }` — los 96 de abajo dejan pasar el FAB y

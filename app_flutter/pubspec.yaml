@@ -56,6 +56,13 @@ dependencies:
   # un plugin nativo por plataforma que solo hace falta para mandar a una
   # impresora, y acá el PDF va por WhatsApp.
   pdf: ^3.11.3
+  # Fotos de las prendas. `image_picker` para sacarlas o elegirlas, y
+  # `flutter_image_compress` para bajarlas de 3-4 MB a ~150 KB ANTES de subir:
+  # sin eso el free tier de 1 GB se agota en ~300 fotos y la tienda tarda una
+  # eternidad con datos moviles. La alternativa en Dart puro tarda segundos por
+  # foto en un telefono de gama media.
+  image_picker: ^1.2.0
+  flutter_image_compress: ^2.4.0
   flutter_svg: ^2.3.0           # los 12 iconos del original
   # QR de invitacion. Pinta con CustomPainter, sin assets ni red: pesa ~40 KB
   # y respeta la regla de no meter librerias pesadas.
