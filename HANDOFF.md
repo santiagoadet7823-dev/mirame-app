@@ -4,7 +4,7 @@
 > Dice en qué estado está el proyecto, qué se decidió y cuál es el próximo paso.
 > Actualizarlo al terminar cada sesión no es opcional.
 
-**Última actualización:** 2026-08-24 (noche)
+**Última actualización:** 2026-08-30
 **Estado general:** PWA publicada y APK distribuyéndose solo. Repo `mirame-app` vivo.
 **Fase actual:** 5 — falta solo Estadísticas. Después: fase 6 (panel) y 7 (notificaciones)
 
@@ -13,6 +13,7 @@
 | Qué | Dónde |
 |---|---|
 | PWA | https://santiagoadet7823-dev.github.io/mirame-app/ |
+| **Tienda de ropa** (el link para las clientas) | https://santiagoadet7823-dev.github.io/mirame-app/tienda.html?t=mirame |
 | Landing de descarga (la del QR) | https://santiagoadet7823-dev.github.io/mirame-app/descargar.html |
 | Repo | https://github.com/santiagoadet7823-dev/mirame-app |
 | Releases | https://github.com/santiagoadet7823-dev/mirame-app/releases |
@@ -55,6 +56,7 @@ flota sin arreglo remoto.
 | 6 | Panel superadmin / revendedor | 🟨 lista de salones + entrar a un salón ✅ · faltan alta de tenant, licencias, usuarios y auditoría |
 | 7 | Notificaciones | 🟨 **locales completas** (retoque, turnos de mañana, cierre de caja, stock, cumpleaños) con permiso pedido en contexto · `device_tokens` + `enviar-push` escritos · el push queda inerte hasta cargar `google-services.json` y la service account — ver `06-NOTIFICACIONES.md` §6 |
 | 8 | Build PWA + APK, auto-update, distribución | 🟨 **APK 1.0.0 firmado y compilando OK** (62 MB) · falta el auto-updater y el pipeline de GitHub |
+| **R** | **Módulo de ropa (consignación)** | 🟨 Fases A–D listas: esquema + RLS + vitrina segura, catálogo con talles y fotos, ventas con reparto a tres puntas e impacto en caja, tienda pública con carrito y reservas. Faltan **vendedores con cuenta** (rol `vendedor` ya existe en el esquema) y la **pantalla de liquidaciones** (el PDF ya está hecho) |
 | 9 | Migración de los datos reales de la dueña | ✅ **en produccion**: 67 clientas, 96 turnos, 120 servicios de turno, 112 movimientos, 13 servicios, 1 profesional, 2 de stock. Ademas hay **Restaurar backup** en Ajustes, con ids uuid5 deterministas que coinciden con los de la migracion por SQL, asi que reimportar el mismo JSON no duplica nada |
 
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ hecho · ⛔ bloqueada
