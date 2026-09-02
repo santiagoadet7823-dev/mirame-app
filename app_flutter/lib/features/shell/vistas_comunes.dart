@@ -103,6 +103,7 @@ class SheetFormulario extends StatelessWidget {
     this.onBorrar,
     this.error,
     this.guardando = false,
+    this.etiquetaGuardando,
   });
 
   final String titulo;
@@ -111,6 +112,13 @@ class SheetFormulario extends StatelessWidget {
   final VoidCallback? onBorrar;
   final String? error;
   final bool guardando;
+
+  /// Qué está pasando mientras se guarda, si hay algo que valga la pena decir.
+  ///
+  /// Un spinner mudo durante media subida se lee como colgado. Con texto, el
+  /// botón dice "Subiendo 2 de 5" y la espera se entiende. En null vuelve al
+  /// spinner de siempre, que es lo correcto para un guardado instantáneo.
+  final String? etiquetaGuardando;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -165,13 +173,29 @@ class SheetFormulario extends StatelessWidget {
                     ),
                     onPressed: guardando ? null : onGuardar,
                     child: guardando
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: MColors.tWhite,
-                            ),
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: MColors.tWhite,
+                                ),
+                              ),
+                              if (etiquetaGuardando != null) ...[
+                                const SizedBox(width: 10),
+                                Text(
+                                  etiquetaGuardando!,
+                                  style: sans(
+                                      size: 15,
+                                      weight: 600,
+                                      color: MColors.tWhite),
+                                ),
+                              ],
+                            ],
                           )
                         : Text(
                             'Guardar',

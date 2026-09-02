@@ -88,6 +88,13 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
   var _reintentando = false;
   String? _error;
 
+  /// "Subiendo 2 de 5" mientras dura la tanda.
+  ///
+  /// Sin esto, guardar cinco fotos con datos móviles deja el botón girando
+  /// medio minuto sin decir nada, se lee como colgado y se toca atrás — que
+  /// aborta las que faltaban.
+  String? _progresoFotos;
+
   @override
   void initState() {
     super.initState();
@@ -118,6 +125,12 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
           (ref.read(productosProvider).value ?? const []).map((x) => x.codigo);
       _codigo.text = proximoCodigo(usados);
     }
+
+    // Lo que Android se llevó mientras el picker estaba abierto. Va acá y no
+    // en el botón porque el formulario se reconstruye desde cero justo después
+    // de que el sistema mata la actividad: este es el primer momento en que
+    // hay dónde ponerlo.
+    _recuperarPerdidas();
   }
 
   @override
@@ -197,8 +210,36 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
   }
 
   Future<void> _agregarFoto(bool camara) async {
-    final ruta = await elegirYComprimir(desdeCamara: camara);
-    if (ruta != null && mounted) setState(() => _fotosNuevas.add(ruta));
+    if (camara) {
+      final ruta = await elegirYComprimir(desdeCamara: true);
+      if (ruta != null && mounted) setState(() => _fotosNuevas.add(ruta));
+      return;
+    }
+    // De la galería se eligen todas juntas: un solo viaje al picker en vez de
+    // uno por foto. Ver `elegirVariasYComprimir`.
+    final rutas = await elegirVariasYComprimir();
+    if (rutas.isNotEmpty && mounted) {
+      setState(() => _fotosNuevas.addAll(rutas));
+    }
+  }
+
+  /// Suma las fotos que el picker no llegó a devolver. Ver
+  /// `recuperarFotosPerdidas`.
+  ///
+  /// Puede traer una foto de OTRA prenda —la que se estaba editando cuando el
+  /// sistema mató la app—, y no hay forma de saber de cuál era. Por eso se
+  /// avisa en vez de sumarla en silencio: la miniatura se quita con un toque.
+  Future<void> _recuperarPerdidas() async {
+    final rutas = await recuperarFotosPerdidas();
+    if (rutas.isEmpty || !mounted) return;
+    setState(() => _fotosNuevas.addAll(rutas));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(rutas.length == 1
+          ? 'Se recuperó 1 foto que había quedado colgada. Si no es de esta '
+              'prenda, quitala.'
+          : 'Se recuperaron ${rutas.length} fotos que habían quedado colgadas. '
+              'Si no son de esta prenda, quitalas.'),
+    ));
   }
 
   /// Vuelve a intentar las fotos que quedaron en el teléfono.
@@ -317,7 +358,12 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
 
       String? motivoFalla;
       var pendientes = 0;
-      for (final local in _fotosNuevas) {
+      for (var i = 0; i < _fotosNuevas.length; i++) {
+        final local = _fotosNuevas[i];
+        if (mounted && _fotosNuevas.length > 1) {
+          setState(() => _progresoFotos =
+              'Subiendo ${i + 1} de ${_fotosNuevas.length}');
+        }
         final r = await subirFoto(
           rutaLocal: local,
           tenantId: repo.tenantId,
@@ -353,6 +399,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
       if (mounted) {
         setState(() {
           _guardando = false;
+          _progresoFotos = null;
           _error = 'No se pudo guardar';
         });
       }
@@ -366,6 +413,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
     return SheetFormulario(
       titulo: widget.producto == null ? 'Nueva prenda' : 'Editar prenda',
       guardando: _guardando,
+      etiquetaGuardando: _progresoFotos,
       error: _error,
       onGuardar: _guardar,
       onBorrar: widget.producto == null

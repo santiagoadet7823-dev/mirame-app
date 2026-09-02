@@ -45,13 +45,93 @@ Future<String?> elegirYComprimir({required bool desdeCamara}) async {
       imageQuality: 90,
     );
     if (x == null) return null;
+    return await _comprimir(x.path);
+  } catch (e) {
+    debugPrint('fotos: no se pudo preparar la imagen ($e)');
+    return null;
+  }
+}
 
+/// Elige VARIAS fotos de la galería en un solo viaje al picker.
+///
+/// Cargar cinco fotos de a una son cinco saltos a la actividad del selector, y
+/// en cada salto Android puede matar la actividad de la app por memoria: al
+/// volver, el formulario arranca vacío y lo cargado antes se pierde sin que
+/// nadie se entere. Eligiendo todas juntas ese riesgo se corre una vez en vez
+/// de cinco. La red que atrapa lo que igual se pierda es
+/// [recuperarFotosPerdidas].
+Future<List<String>> elegirVariasYComprimir() async {
+  try {
+    final elegidas = await ImagePicker().pickMultiImage(
+      maxWidth: kLadoMaximo.toDouble(),
+      maxHeight: kLadoMaximo.toDouble(),
+      imageQuality: 90,
+    );
+    return await _comprimirTodas(elegidas.map((x) => x.path));
+  } catch (e) {
+    debugPrint('fotos: no se pudieron preparar las imágenes ($e)');
+    return const [];
+  }
+}
+
+/// Rescata las fotos que quedaron colgadas cuando Android mató la app.
+///
+/// Es la contracara del problema de arriba: si el sistema destruye la actividad
+/// mientras el picker está abierto, el resultado no vuelve por el `await` —ese
+/// Future murió con la actividad— y queda guardado del lado nativo hasta que
+/// alguien lo pide. Sin esta llamada, la foto que la usuaria sacó existe en el
+/// teléfono y no aparece en ninguna parte.
+///
+/// Es una cola de un solo uso: lo que se lee acá ya no vuelve a leerse.
+Future<List<String>> recuperarFotosPerdidas() async {
+  if (!Platform.isAndroid) return const [];
+  try {
+    final perdido = await ImagePicker().retrieveLostData();
+    if (perdido.isEmpty) return const [];
+    if (perdido.exception != null) {
+      debugPrint('fotos: el picker murió con un error (${perdido.exception})');
+    }
+    final archivos = perdido.files ??
+        (perdido.file == null ? const <XFile>[] : <XFile>[perdido.file!]);
+    return await _comprimirTodas(archivos.map((x) => x.path));
+  } catch (e) {
+    debugPrint('fotos: no se pudo recuperar lo del picker ($e)');
+    return const [];
+  }
+}
+
+/// Comprime una tanda, de a una y en orden.
+///
+/// **En serie a propósito.** Cinco compresiones en paralelo en un teléfono de
+/// gama media son cinco bitmaps de 12 MP vivos al mismo tiempo: es exactamente
+/// la presión de memoria que hace que Android mate la app, que es el problema
+/// que se está tratando de evitar. En serie tarda lo mismo y no la mata.
+Future<List<String>> _comprimirTodas(Iterable<String> origenes) async {
+  final out = <String>[];
+  for (final origen in origenes) {
+    final ruta = await _comprimir(origen);
+    if (ruta != null) out.add(ruta);
+  }
+  return out;
+}
+
+/// Desempata los nombres dentro de una misma tanda. Ver [_comprimir].
+var _secuencia = 0;
+
+/// Deja la foto comprimida en el teléfono y devuelve su ruta local.
+Future<String?> _comprimir(String origen) async {
+  try {
     final dir = await getApplicationDocumentsDirectory();
-    final base = '${dir.path}/fotos/${DateTime.now().microsecondsSinceEpoch}';
     await Directory('${dir.path}/fotos').create(recursive: true);
 
+    // El contador desempata: dos fotos de la misma tanda pueden caer en el
+    // mismo microsegundo, y el nombre del archivo es lo que después la
+    // identifica en el bucket. Dos con el mismo nombre = una pisa a la otra.
+    final base = '${dir.path}/fotos/'
+        '${DateTime.now().microsecondsSinceEpoch}-${_secuencia++}';
+
     final comprimida = await FlutterImageCompress.compressAndGetFile(
-      x.path,
+      origen,
       '$base.webp',
       quality: kCalidad,
       minWidth: kLadoMaximo,
@@ -65,12 +145,12 @@ Future<String?> elegirYComprimir({required bool desdeCamara}) async {
     // Va con extensión .jpg y no .webp a propósito: el original ES un jpg, y
     // subirlo diciendo que es webp lo dejaría roto en la vitrina.
     if (comprimida == null) {
-      final copia = await File(x.path).copy('$base.jpg');
+      final copia = await File(origen).copy('$base.jpg');
       return copia.path;
     }
     return comprimida.path;
   } catch (e) {
-    debugPrint('fotos: no se pudo preparar la imagen ($e)');
+    debugPrint('fotos: no se pudo comprimir ($e)');
     return null;
   }
 }
