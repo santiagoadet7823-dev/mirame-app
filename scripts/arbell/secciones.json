@@ -1,0 +1,26 @@
+{
+  "_comentario": [
+    "Rangos de pagina -> categoria, para el catalogo cat-4-2026.pdf (08/05/2026 al 09/07/2026).",
+    "Arbell reordena las secciones en cada catalogo: REVISAR estos rangos con cada PDF nuevo.",
+    "Para chequearlos rapido: python extraer.py <pdf> --solo-secciones",
+    "Las paginas fuera de todo rango se ignoran (portada, indices, separadores)."
+  ],
+  "periodo": "2026-04",
+  "vigencia": "2026-05-08 a 2026-07-09",
+  "rangos": [
+    {"desde": 4,   "hasta": 37,  "categoria": "Maquillaje"},
+    {"desde": 39,  "hasta": 61,  "categoria": "Cuidado facial"},
+    {"desde": 63,  "hasta": 71,  "categoria": "Cuidado corporal"},
+    {"desde": 72,  "hasta": 73,  "categoria": "Fragancias femeninas"},
+    {"desde": 74,  "hasta": 74,  "categoria": "Cuidado facial"},
+    {"desde": 75,  "hasta": 85,  "categoria": "Capilar"},
+    {"desde": 86,  "hasta": 87,  "categoria": "Cuidado corporal"},
+    {"desde": 88,  "hasta": 95,  "categoria": "Bienestar"},
+    {"desde": 97,  "hasta": 120, "categoria": "Suplementos"},
+    {"desde": 121, "hasta": 124, "categoria": "Joyeria"},
+    {"desde": 125, "hasta": 134, "categoria": "Fragancias femeninas"},
+    {"desde": 135, "hasta": 141, "categoria": "Fragancias masculinas"},
+    {"desde": 142, "hasta": 145, "categoria": "Ninez"},
+    {"desde": 146, "hasta": 149, "categoria": "Hogar"}
+  ]
+}

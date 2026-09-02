@@ -58,3 +58,12 @@ desktop.ini
 # ── Temporales ─────────────────────────────────────────────────────────────
 *.log
 *.bak
+
+# Salida de scripts/arbell: 280 MB de renders del catalogo, se regeneran
+# con `python extraer.py <pdf>`. El JSON congelado de cada catalogo SI sube
+# (scripts/arbell/catalogos/).
+scripts/arbell/salida/
+
+# Cache de Python de los scripts de mantenimiento
+__pycache__/
+*.pyc

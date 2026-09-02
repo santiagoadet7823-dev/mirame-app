@@ -1,0 +1,7243 @@
+{
+  "periodo": "2026-04",
+  "vigencia": "2026-05-08 a 2026-07-09",
+  "productos": [
+    {
+      "codigo": "ARB-F-ESMALTES",
+      "nombre": "ESMALTES",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 6,
+      "precio": 3490,
+      "p_reg": null,
+      "presentacion": "6 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        49.20795440673828,
+        169.5,
+        446.2628173828125,
+        617.2119140625
+      ],
+      "variantes": [
+        {
+          "codigo": "C905",
+          "color": "Azul"
+        },
+        {
+          "codigo": "C903",
+          "color": "Esmeralda"
+        },
+        {
+          "codigo": "C904",
+          "color": "Ocre"
+        },
+        {
+          "codigo": "C906",
+          "color": "Rosa"
+        },
+        {
+          "codigo": "C862",
+          "color": "Borgoña Perlado"
+        },
+        {
+          "codigo": "C860",
+          "color": "Fucsia Perlado"
+        },
+        {
+          "codigo": "C855",
+          "color": "Lila Tornasol"
+        },
+        {
+          "codigo": "C866",
+          "color": "Tornasol Rosa"
+        },
+        {
+          "codigo": "C848",
+          "color": "Plateado"
+        },
+        {
+          "codigo": "C846",
+          "color": "Negro Black"
+        },
+        {
+          "codigo": "C885",
+          "color": "Océano"
+        },
+        {
+          "codigo": "C777",
+          "color": "Malbec"
+        },
+        {
+          "codigo": "C778",
+          "color": "Chocolate"
+        },
+        {
+          "codigo": "C884",
+          "color": "Pistacho"
+        },
+        {
+          "codigo": "C886",
+          "color": "Manteca"
+        },
+        {
+          "codigo": "C864",
+          "color": "Rosa Pétalo"
+        },
+        {
+          "codigo": "C887",
+          "color": "Rosa Dior"
+        },
+        {
+          "codigo": "C863",
+          "color": "Rosa Atardecer"
+        },
+        {
+          "codigo": "C859",
+          "color": "Coral"
+        },
+        {
+          "codigo": "C858",
+          "color": "Colorado Rubí"
+        },
+        {
+          "codigo": "C865",
+          "color": "Durazno Nude"
+        },
+        {
+          "codigo": "C776",
+          "color": "Moka Nude"
+        },
+        {
+          "codigo": "C779",
+          "color": "Escarlata"
+        },
+        {
+          "codigo": "C861",
+          "color": "Fresa Dulce"
+        },
+        {
+          "codigo": "C849",
+          "color": "Multiglitter"
+        }
+      ],
+      "recorte": "ARB-F-ESMALTES.png"
+    },
+    {
+      "codigo": "ARB-C910",
+      "nombre": "DELINEADOR LÁPIZ PARA OJOS CON SACAPUNTAS NEGRO 1,2 gr.",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 8,
+      "precio": 7900,
+      "p_reg": 7900,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.; la pagina tiene un combo o un regalo",
+      "bbox": [
+        301.5,
+        659.9,
+        427.2,
+        698.2
+      ],
+      "variantes": [
+        {
+          "codigo": "C910",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C910.png"
+    },
+    {
+      "codigo": "ARB-F-LABIAL-MATE-10-HORAS",
+      "nombre": "LABIAL MATE 10 HORAS",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 8,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "1,2 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        91.28790283203125,
+        306.9182434082031,
+        345.2,
+        615.312255859375
+      ],
+      "variantes": [
+        {
+          "codigo": "C892",
+          "color": "Coral"
+        },
+        {
+          "codigo": "C894",
+          "color": "Nude"
+        },
+        {
+          "codigo": "C893",
+          "color": "Miel"
+        }
+      ],
+      "recorte": "ARB-F-LABIAL-MATE-10-HORAS.png"
+    },
+    {
+      "codigo": "ARB-F-RUBOR-LIQUIDO-MULTIPROPOSITO",
+      "nombre": "RUBOR LÍQUIDO MULTIPROPÓSITO",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 11,
+      "precio": 8900,
+      "p_reg": null,
+      "presentacion": "5 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        75.2,
+        471.2563171386719,
+        239.93438720703125,
+        556.5625
+      ],
+      "variantes": [
+        {
+          "codigo": "C897",
+          "color": "Natural Glow"
+        },
+        {
+          "codigo": "C898",
+          "color": "Natural Bloom"
+        },
+        {
+          "codigo": "C899",
+          "color": "Cherry Up"
+        }
+      ],
+      "recorte": "ARB-F-RUBOR-LIQUIDO-MULTIPROPOSITO.png"
+    },
+    {
+      "codigo": "ARB-F-6-TONOS-MIL-LOOKS",
+      "nombre": "6 TONOS, MIL LOOKS",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 12,
+      "precio": 11000,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        53.0,
+        202.77842712402344,
+        421.19677734375,
+        549.3
+      ],
+      "variantes": [
+        {
+          "codigo": "C895",
+          "color": "Brown Collection"
+        },
+        {
+          "codigo": "C896",
+          "color": "Pink Collection"
+        }
+      ],
+      "recorte": "ARB-F-6-TONOS-MIL-LOOKS.png"
+    },
+    {
+      "codigo": "ARB-F-LABIAL-LIQUIDO-16-HORAS",
+      "nombre": "LABIAL LÍQUIDO 16 HORAS",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 14,
+      "precio": 15900,
+      "p_reg": null,
+      "presentacion": "5 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        47.482398986816406,
+        213.62466430664062,
+        274.2294006347656,
+        600.5
+      ],
+      "variantes": [
+        {
+          "codigo": "C811",
+          "color": "Kiss Me"
+        },
+        {
+          "codigo": "C679",
+          "color": "Hypnotic Red"
+        },
+        {
+          "codigo": "C677",
+          "color": "Lovely Cherry"
+        },
+        {
+          "codigo": "C680",
+          "color": "Chic Nude"
+        },
+        {
+          "codigo": "C812",
+          "color": "Natural Nude"
+        }
+      ],
+      "recorte": "ARB-F-LABIAL-LIQUIDO-16-HORAS.png"
+    },
+    {
+      "codigo": "ARB-C870",
+      "nombre": "Vinyl Caramel Rose",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 14,
+      "precio": 15900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        373.1,
+        340.9,
+        467.9,
+        352.2
+      ],
+      "variantes": [
+        {
+          "codigo": "C870",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C870.png"
+    },
+    {
+      "codigo": "ARB-C871",
+      "nombre": "Vinyl Mousse de Chocolate",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 14,
+      "precio": 15900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        373.4,
+        462.0,
+        442.6,
+        481.7
+      ],
+      "variantes": [
+        {
+          "codigo": "C871",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C871.png"
+    },
+    {
+      "codigo": "ARB-F-VINYL-TOFFEE-DE-HIGO-ROSE-INTENSE",
+      "nombre": "Vinyl Toffee de Higo Rose Intense",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 14,
+      "precio": 15900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        46.8,
+        214.9,
+        471.8,
+        226.6
+      ],
+      "variantes": [
+        {
+          "codigo": "C872",
+          "color": null
+        },
+        {
+          "codigo": "C759",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-F-VINYL-TOFFEE-DE-HIGO-ROSE-INTENSE.png"
+    },
+    {
+      "codigo": "ARB-AC1054",
+      "nombre": "BRILLO LABIAL CON ACCESORIO",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 15,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": "5 G.",
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        234.4,
+        587.6,
+        429.3,
+        707.5
+      ],
+      "variantes": [
+        {
+          "codigo": "AC1054",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC1054.png"
+    },
+    {
+      "codigo": "ARB-F-LABIAL-HUMECTANTE",
+      "nombre": "LABIAL HUMECTANTE",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 16,
+      "precio": 4500,
+      "p_reg": null,
+      "presentacion": "3 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        25.825603485107422,
+        105.63916015625,
+        416.7021179199219,
+        666.625732421875
+      ],
+      "variantes": [
+        {
+          "codigo": "C803",
+          "color": "Rojo Carmesi"
+        },
+        {
+          "codigo": "C155",
+          "color": "Ciruela Cremoso"
+        },
+        {
+          "codigo": "C838",
+          "color": "Nude Almendra"
+        },
+        {
+          "codigo": "C488",
+          "color": "Rosa Antique"
+        },
+        {
+          "codigo": "C800",
+          "color": "Coral Ardiente"
+        },
+        {
+          "codigo": "C731",
+          "color": "Terra Colorada"
+        },
+        {
+          "codigo": "C801",
+          "color": "Havanna Cremoso"
+        },
+        {
+          "codigo": "C836",
+          "color": "Canela Soft"
+        },
+        {
+          "codigo": "C730",
+          "color": "Moka Rose"
+        },
+        {
+          "codigo": "C491",
+          "color": "Rosa Perlado"
+        },
+        {
+          "codigo": "C839",
+          "color": "Pandora Rose"
+        },
+        {
+          "codigo": "C649",
+          "color": "Rojo Mate"
+        },
+        {
+          "codigo": "C489",
+          "color": "Borgoña cremoso"
+        },
+        {
+          "codigo": "C157",
+          "color": "Avellana"
+        },
+        {
+          "codigo": "C889",
+          "color": "Rosa Coral"
+        },
+        {
+          "codigo": "C493",
+          "color": "Capuchino"
+        },
+        {
+          "codigo": "C888",
+          "color": "Néctar"
+        },
+        {
+          "codigo": "C891",
+          "color": "Caramel"
+        },
+        {
+          "codigo": "C900",
+          "color": "Rosa Puro"
+        },
+        {
+          "codigo": "C902",
+          "color": "Terracota Rose"
+        },
+        {
+          "codigo": "C901",
+          "color": "Rosa Nude"
+        }
+      ],
+      "recorte": "ARB-F-LABIAL-HUMECTANTE.png"
+    },
+    {
+      "codigo": "ARB-C837",
+      "nombre": "Coral Tierra Cremoso",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 16,
+      "precio": 4500,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        172.1,
+        169.4,
+        181.9,
+        184.8
+      ],
+      "variantes": [
+        {
+          "codigo": "C837",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C837.png"
+    },
+    {
+      "codigo": "ARB-C734",
+      "nombre": "Coral Pearl Perlado",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 16,
+      "precio": 4500,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        218.6,
+        291.5,
+        228.4,
+        306.8
+      ],
+      "variantes": [
+        {
+          "codigo": "C734",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C734.png"
+    },
+    {
+      "codigo": "ARB-C877",
+      "nombre": "PALETA TRÍO ATARDECER",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 18,
+      "precio": 11000,
+      "p_reg": 15900,
+      "presentacion": "3,8 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        42.6,
+        232.1,
+        133.8,
+        331.1
+      ],
+      "variantes": [
+        {
+          "codigo": "C877",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C877.png"
+    },
+    {
+      "codigo": "ARB-F-BRILLO-LABIAL-STYLE-GLOSS",
+      "nombre": "BRILLO LABIAL STYLE GLOSS",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 18,
+      "precio": 11000,
+      "p_reg": null,
+      "presentacion": "5 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        253.9,
+        177.12110900878906,
+        350.94940185546875,
+        277.2619323730469
+      ],
+      "variantes": [
+        {
+          "codigo": "C876",
+          "color": "Rosa Mágico"
+        },
+        {
+          "codigo": "C873",
+          "color": "Nude Encantado"
+        }
+      ],
+      "recorte": "ARB-F-BRILLO-LABIAL-STYLE-GLOSS.png"
+    },
+    {
+      "codigo": "ARB-C875",
+      "nombre": "Lila Misterioso HASTA AGOTAR STOCK",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 18,
+      "precio": 11000,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        390.5,
+        210.8,
+        439.7,
+        277.7
+      ],
+      "variantes": [
+        {
+          "codigo": "C875",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C875.png"
+    },
+    {
+      "codigo": "ARB-C874",
+      "nombre": "Luz De Luna",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 18,
+      "precio": 11000,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        186.5,
+        231.9,
+        234.7,
+        309.4
+      ],
+      "variantes": [
+        {
+          "codigo": "C874",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C874.png"
+    },
+    {
+      "codigo": "ARB-C823",
+      "nombre": "FIJADOR DE MAQUILLAJE",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 19,
+      "precio": 9900,
+      "p_reg": 9900,
+      "presentacion": "60 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        285.0,
+        496.5,
+        366.8,
+        557.0
+      ],
+      "variantes": [
+        {
+          "codigo": "C823",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C823.png"
+    },
+    {
+      "codigo": "ARB-C840",
+      "nombre": "PRIMER HUMECTANTE PREBASE",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 19,
+      "precio": 7900,
+      "p_reg": 9900,
+      "presentacion": "35 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        285.0,
+        599.3,
+        401.0,
+        717.5
+      ],
+      "variantes": [
+        {
+          "codigo": "C840",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C840.png"
+    },
+    {
+      "codigo": "ARB-F-BASE-FLUIDA-3O-ML",
+      "nombre": "BASE FLUÍDA 3O ml..",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 20,
+      "precio": 8900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        113.45950317382812,
+        179.29551696777344,
+        375.4,
+        211.9
+      ],
+      "variantes": [
+        {
+          "codigo": "C788",
+          "color": "Medio"
+        },
+        {
+          "codigo": "C787",
+          "color": "Claro"
+        }
+      ],
+      "recorte": "ARB-F-BASE-FLUIDA-3O-ML.png"
+    },
+    {
+      "codigo": "ARB-F-RUBOR-COMPACTO",
+      "nombre": "RUBOR COMPACTO",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 22,
+      "precio": 2990,
+      "p_reg": null,
+      "presentacion": "4 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        220.49110412597656,
+        220.4,
+        394.3,
+        527.7274169921875
+      ],
+      "variantes": [
+        {
+          "codigo": "C785",
+          "color": "Claro"
+        },
+        {
+          "codigo": "C783",
+          "color": "Bronzer"
+        },
+        {
+          "codigo": "C799",
+          "color": "Rose"
+        },
+        {
+          "codigo": "C786",
+          "color": "Medio"
+        }
+      ],
+      "recorte": "ARB-F-RUBOR-COMPACTO.png"
+    },
+    {
+      "codigo": "ARB-F-CUARTETO-CORRECTOR",
+      "nombre": "CUARTETO CORRECTOR",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 23,
+      "precio": 5900,
+      "p_reg": null,
+      "presentacion": "10 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        118.57284545898438,
+        336.0264892578125,
+        203.6,
+        503.4
+      ],
+      "variantes": [
+        {
+          "codigo": "C706",
+          "color": "Medio"
+        },
+        {
+          "codigo": "C705",
+          "color": "Claro"
+        }
+      ],
+      "recorte": "ARB-F-CUARTETO-CORRECTOR.png"
+    },
+    {
+      "codigo": "ARB-C499",
+      "nombre": "CUARTETO CORRECTOR 2 X 1",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 23,
+      "precio": 5900,
+      "p_reg": null,
+      "presentacion": "10 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        258.5,
+        436.4,
+        450.5,
+        553.3
+      ],
+      "variantes": [
+        {
+          "codigo": "C499",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C499.png"
+    },
+    {
+      "codigo": "ARB-C747",
+      "nombre": "LASH CLEAR MÁSCARA INCOLORA PARA PESTAÑAS Y CEJAS",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 24,
+      "precio": 9900,
+      "p_reg": 12900,
+      "presentacion": "14 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        31.0,
+        600.1,
+        164.7,
+        707.4
+      ],
+      "variantes": [
+        {
+          "codigo": "C747",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C747.png"
+    },
+    {
+      "codigo": "ARB-C851",
+      "nombre": "MÁSCARA DE PESTAÑAS MAX POWER WATERPROOF",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 24,
+      "precio": 11900,
+      "p_reg": 14900,
+      "presentacion": "6 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        183.8,
+        611.3,
+        314.4,
+        708.3
+      ],
+      "variantes": [
+        {
+          "codigo": "C851",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C851.png"
+    },
+    {
+      "codigo": "ARB-C628",
+      "nombre": "MÁSCARA PARA PESTAÑAS XL con biotina y aceite de coco",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 25,
+      "precio": 7900,
+      "p_reg": null,
+      "presentacion": "12 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        276.7,
+        576.4,
+        417.8,
+        624.8
+      ],
+      "variantes": [
+        {
+          "codigo": "C628",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C628.png"
+    },
+    {
+      "codigo": "ARB-F-LAPIZ-DELINEADOR",
+      "nombre": "LÁPIZ DELINEADOR",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 26,
+      "precio": 3990,
+      "p_reg": null,
+      "presentacion": "1,2 g",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        105.1202163696289,
+        212.0735626220703,
+        383.6934814453125,
+        650.5933227539062
+      ],
+      "variantes": [
+        {
+          "codigo": "C813",
+          "color": "Cobre"
+        },
+        {
+          "codigo": "C815",
+          "color": "Negro"
+        },
+        {
+          "codigo": "C600",
+          "color": "Negro"
+        },
+        {
+          "codigo": "C754",
+          "color": "Rojo"
+        },
+        {
+          "codigo": "C753",
+          "color": "Marrón"
+        },
+        {
+          "codigo": "C880",
+          "color": "Plata"
+        },
+        {
+          "codigo": "C751",
+          "color": "Azul"
+        },
+        {
+          "codigo": "C881",
+          "color": "Rosa"
+        }
+      ],
+      "recorte": "ARB-F-LAPIZ-DELINEADOR.png"
+    },
+    {
+      "codigo": "ARB-C792",
+      "nombre": "DELINEADOR LÍQUIDO NEGRO",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 27,
+      "precio": 4990,
+      "p_reg": null,
+      "presentacion": "3 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        305.8,
+        612.1,
+        447.9,
+        647.7
+      ],
+      "variantes": [
+        {
+          "codigo": "C792",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C792.png"
+    },
+    {
+      "codigo": "ARB-C534",
+      "nombre": "QUITAESMALTE",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 28,
+      "precio": 4900,
+      "p_reg": null,
+      "presentacion": "30 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        68.5,
+        428.0,
+        150.9,
+        515.6
+      ],
+      "variantes": [
+        {
+          "codigo": "C534",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C534.png"
+    },
+    {
+      "codigo": "ARB-C883",
+      "nombre": "QUITAESMALTE FORTALECEDOR",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 28,
+      "precio": 4900,
+      "p_reg": null,
+      "presentacion": "50 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        240.9,
+        248.2,
+        324.6,
+        347.8
+      ],
+      "variantes": [
+        {
+          "codigo": "C883",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C883.png"
+    },
+    {
+      "codigo": "ARB-C832",
+      "nombre": "Uñas cuidadas por 7 días TRATAMIENTOS",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 29,
+      "precio": 4990,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        48.0,
+        481.3,
+        68.1,
+        493.9
+      ],
+      "variantes": [
+        {
+          "codigo": "C832",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C832.png"
+    },
+    {
+      "codigo": "ARB-C835",
+      "nombre": "Uñas cuidadas por 7 días TRATAMIENTOS",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 29,
+      "precio": 4990,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        179.2,
+        478.9,
+        199.4,
+        491.5
+      ],
+      "variantes": [
+        {
+          "codigo": "C835",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C835.png"
+    },
+    {
+      "codigo": "ARB-C834",
+      "nombre": "Uñas cuidadas por 7 días TRATAMIENTOS",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 29,
+      "precio": 4990,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        48.7,
+        141.0,
+        68.9,
+        153.6
+      ],
+      "variantes": [
+        {
+          "codigo": "C834",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C834.png"
+    },
+    {
+      "codigo": "ARB-C833",
+      "nombre": "Uñas cuidadas por 7 días TRATAMIENTOS",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 29,
+      "precio": 4990,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        177.8,
+        140.9,
+        198.0,
+        153.5
+      ],
+      "variantes": [
+        {
+          "codigo": "C833",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-C833.png"
+    },
+    {
+      "codigo": "ARB-F-SERUM-FULL-COVER-BASE",
+      "nombre": "SERUM FULL COVER Base.",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 30,
+      "precio": 18900,
+      "p_reg": null,
+      "presentacion": "30 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        140.59475708007812,
+        179.9,
+        430.3,
+        476.9673767089844
+      ],
+      "variantes": [
+        {
+          "codigo": "6740",
+          "color": "Claro"
+        },
+        {
+          "codigo": "6709",
+          "color": "Medio"
+        },
+        {
+          "codigo": "6708",
+          "color": "Natural"
+        },
+        {
+          "codigo": "6741",
+          "color": "Medio"
+        }
+      ],
+      "recorte": "ARB-F-SERUM-FULL-COVER-BASE.png"
+    },
+    {
+      "codigo": "ARB-6772",
+      "nombre": "RUBOR ILUMINADOR EN PERLAS",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 31,
+      "precio": 18900,
+      "p_reg": 25900,
+      "presentacion": "24 gr",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        312.0,
+        341.9,
+        463.0,
+        428.6
+      ],
+      "variantes": [
+        {
+          "codigo": "6772",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6772.png"
+    },
+    {
+      "codigo": "ARB-F-BASE-POLVO-COMPACTO-CON-FPS-50",
+      "nombre": "BASE POLVO COMPACTO CON FPS 50",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 31,
+      "precio": 26900,
+      "p_reg": null,
+      "presentacion": "8 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        204.0,
+        487.9,
+        231.95001220703125,
+        707.1885375976562
+      ],
+      "variantes": [
+        {
+          "codigo": "6762",
+          "color": "Claro"
+        },
+        {
+          "codigo": "6763",
+          "color": "Medio"
+        }
+      ],
+      "recorte": "ARB-F-BASE-POLVO-COMPACTO-CON-FPS-50.png"
+    },
+    {
+      "codigo": "ARB-6629",
+      "nombre": "MÁSCARA DE PESTAÑAS",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 32,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "15 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        123.7,
+        544.8,
+        191.4,
+        591.4
+      ],
+      "variantes": [
+        {
+          "codigo": "6629",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6629.png"
+    },
+    {
+      "codigo": "ARB-6756",
+      "nombre": "MÁSCARA MEGA VOLUMEN Negro. 9 g.",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 32,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        226.7,
+        548.3,
+        303.9,
+        593.1
+      ],
+      "variantes": [
+        {
+          "codigo": "6756",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6756.png"
+    },
+    {
+      "codigo": "ARB-6698",
+      "nombre": "MÁSCARA 24 HS",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 32,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "13 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        294.0,
+        317.9,
+        344.0,
+        362.7
+      ],
+      "variantes": [
+        {
+          "codigo": "6698",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6698.png"
+    },
+    {
+      "codigo": "ARB-6757",
+      "nombre": "CUARTETO DEFINITION",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 33,
+      "precio": 18900,
+      "p_reg": 26900,
+      "presentacion": "8 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        19.1,
+        564.2,
+        158.3,
+        668.4
+      ],
+      "variantes": [
+        {
+          "codigo": "6757",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6757.png"
+    },
+    {
+      "codigo": "ARB-6758",
+      "nombre": "DELINEADOR DE CEJAS BROWN",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 33,
+      "precio": 11900,
+      "p_reg": 16900,
+      "presentacion": "0,8 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        234.3,
+        566.7,
+        380.5,
+        668.4
+      ],
+      "variantes": [
+        {
+          "codigo": "6758",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6758.png"
+    },
+    {
+      "codigo": "ARB-6739",
+      "nombre": "DIAMOND PALETA DE SOMBRAS Medidas: 15 x 7,5 cm",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 33,
+      "precio": 19900,
+      "p_reg": 29900,
+      "presentacion": "16 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        232.0,
+        337.1,
+        375.1,
+        450.1
+      ],
+      "variantes": [
+        {
+          "codigo": "6739",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6739.png"
+    },
+    {
+      "codigo": "ARB-F-RUBORES-Y-LABIALES",
+      "nombre": "RUBORES Y LABIALES",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 35,
+      "precio": 5900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        23.16581916809082,
+        109.95828247070312,
+        453.89111328125,
+        578.7703247070312
+      ],
+      "variantes": [
+        {
+          "codigo": "6733",
+          "color": "Magic Nude"
+        },
+        {
+          "codigo": "6734",
+          "color": "Peach"
+        },
+        {
+          "codigo": "6735",
+          "color": "Tentación Pink"
+        },
+        {
+          "codigo": "6716",
+          "color": "Dynamic"
+        },
+        {
+          "codigo": "6745",
+          "color": "Burgundy"
+        },
+        {
+          "codigo": "6715",
+          "color": "Emotional"
+        },
+        {
+          "codigo": "6723",
+          "color": "Nude Rose"
+        },
+        {
+          "codigo": "6742",
+          "color": "Soft Peach"
+        },
+        {
+          "codigo": "6744",
+          "color": "Terra"
+        },
+        {
+          "codigo": "6743",
+          "color": "Rosie Light"
+        }
+      ],
+      "recorte": "ARB-F-RUBORES-Y-LABIALES.png"
+    },
+    {
+      "codigo": "ARB-F-ESMALTE-EN-GEL",
+      "nombre": "ESMALTE EN GEL",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 37,
+      "precio": 6900,
+      "p_reg": null,
+      "presentacion": "8 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        11.892487525939941,
+        475.7,
+        462.0564880371094,
+        705.3916015625
+      ],
+      "variantes": [
+        {
+          "codigo": "6777",
+          "color": "Chocolate Viena"
+        },
+        {
+          "codigo": "6778",
+          "color": "Ciruela Milán"
+        },
+        {
+          "codigo": "6779",
+          "color": "Bordó París"
+        },
+        {
+          "codigo": "6751",
+          "color": "Arena Marrakesh"
+        },
+        {
+          "codigo": "6750",
+          "color": "Blanco Atenas"
+        },
+        {
+          "codigo": "6754",
+          "color": "Vino Burdeos"
+        },
+        {
+          "codigo": "6749",
+          "color": "Rosa Sicilia"
+        },
+        {
+          "codigo": "6753",
+          "color": "Terracota Cuzco"
+        },
+        {
+          "codigo": "6747",
+          "color": "Rojo Madrid"
+        }
+      ],
+      "recorte": "ARB-F-ESMALTE-EN-GEL.png"
+    },
+    {
+      "codigo": "ARB-6748",
+      "nombre": "Rojo Carmin Toscana",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 37,
+      "precio": 6900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        321.6,
+        618.4,
+        347.2,
+        726.8
+      ],
+      "variantes": [
+        {
+          "codigo": "6748",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6748.png"
+    },
+    {
+      "codigo": "ARB-6752",
+      "nombre": "Rosa Nude Bali",
+      "descripcion": null,
+      "categoria": "Maquillaje",
+      "pagina": 37,
+      "precio": 6900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        141.9,
+        622.1,
+        167.5,
+        700.5
+      ],
+      "variantes": [
+        {
+          "codigo": "6752",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6752.png"
+    },
+    {
+      "codigo": "ARB-3151",
+      "nombre": "EMULSIÓN REHIDRATACIÓN",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 39,
+      "precio": 6500,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        309.2,
+        458.8,
+        437.7,
+        481.8
+      ],
+      "variantes": [
+        {
+          "codigo": "3151",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3151.png"
+    },
+    {
+      "codigo": "ARB-F-EMULSIONES",
+      "nombre": "EMULSIONES",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 39,
+      "precio": 6500,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        317.5,
+        510.7,
+        429.5,
+        533.7
+      ],
+      "variantes": [
+        {
+          "codigo": "3156",
+          "color": "EMULSIÓN HIDRATANTE"
+        }
+      ],
+      "recorte": "ARB-F-EMULSIONES.png"
+    },
+    {
+      "codigo": "ARB-3154",
+      "nombre": "AGUA MICELAR OIL CONTROL",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 40,
+      "precio": 9900,
+      "p_reg": 11990,
+      "presentacion": "125 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        32.0,
+        650.7,
+        119.5,
+        746.5
+      ],
+      "variantes": [
+        {
+          "codigo": "3154",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3154.png"
+    },
+    {
+      "codigo": "ARB-3155",
+      "nombre": "GEL CORRECTIVO CON COLOR",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 40,
+      "precio": 5900,
+      "p_reg": 7900,
+      "presentacion": "15 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        160.0,
+        645.1,
+        247.2,
+        749.9
+      ],
+      "variantes": [
+        {
+          "codigo": "3155",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3155.png"
+    },
+    {
+      "codigo": "ARB-3158",
+      "nombre": "CREMA NOCHE HIDRATANTE MATIFICANTE",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 40,
+      "precio": 9900,
+      "p_reg": 12900,
+      "presentacion": "50 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        334.4,
+        640.8,
+        421.6,
+        746.5
+      ],
+      "variantes": [
+        {
+          "codigo": "3158",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3158.png"
+    },
+    {
+      "codigo": "ARB-3152",
+      "nombre": "CREMA NOCHE NUTRICIÓN INTENSIVA",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 41,
+      "precio": 12900,
+      "p_reg": 12900,
+      "presentacion": "50 g.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        258.8,
+        653.9,
+        363.8,
+        714.5
+      ],
+      "variantes": [
+        {
+          "codigo": "3152",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3152.png"
+    },
+    {
+      "codigo": "ARB-3150",
+      "nombre": "AGUA MICELAR HIDRATANTE 3 EN 1",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 41,
+      "precio": 11990,
+      "p_reg": 11990,
+      "presentacion": "125 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        56.0,
+        653.9,
+        188.0,
+        714.9
+      ],
+      "variantes": [
+        {
+          "codigo": "3150",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3150.png"
+    },
+    {
+      "codigo": "ARB-3174",
+      "nombre": "TOALLAS DESMAQUILLANTES ANTIOXIDANTES",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 42,
+      "precio": 7900,
+      "p_reg": 11900,
+      "presentacion": "30 unidades.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        312.0,
+        638.0,
+        404.4,
+        745.3
+      ],
+      "variantes": [
+        {
+          "codigo": "3174",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3174.png"
+    },
+    {
+      "codigo": "ARB-3163",
+      "nombre": "LECHE DE LIMPIEZA",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 42,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": "100 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        220.0,
+        638.5,
+        279.0,
+        693.5
+      ],
+      "variantes": [
+        {
+          "codigo": "3163",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3163.png"
+    },
+    {
+      "codigo": "ARB-3171",
+      "nombre": "FLUÍDO DE LIMPIEZA FACIAL",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 42,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": "125 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        101.2,
+        637.6,
+        193.0,
+        683.4
+      ],
+      "variantes": [
+        {
+          "codigo": "3171",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3171.png"
+    },
+    {
+      "codigo": "ARB-3161",
+      "nombre": "ESPUMA DE LIMPIEZA",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 42,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": "60 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        24.4,
+        637.2,
+        84.4,
+        691.8
+      ],
+      "variantes": [
+        {
+          "codigo": "3161",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3161.png"
+    },
+    {
+      "codigo": "ARB-3179",
+      "nombre": "TOALLAS DESMAQUILLANTES",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 43,
+      "precio": 5900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        294.8,
+        611.3,
+        432.5,
+        634.9
+      ],
+      "variantes": [
+        {
+          "codigo": "3179",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3179.png"
+    },
+    {
+      "codigo": "ARB-3173",
+      "nombre": "DESMAQUILLANTE BIFÁSICO",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 44,
+      "precio": 11900,
+      "p_reg": 14990,
+      "presentacion": "125 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        12.0,
+        635.0,
+        103.7,
+        730.8
+      ],
+      "variantes": [
+        {
+          "codigo": "3173",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3173.png"
+    },
+    {
+      "codigo": "ARB-3162",
+      "nombre": "EXFOLIANTE REVITALIZANTE",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 44,
+      "precio": 8900,
+      "p_reg": 9990,
+      "presentacion": "60 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        139.2,
+        623.5,
+        223.8,
+        730.8
+      ],
+      "variantes": [
+        {
+          "codigo": "3162",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3162.png"
+    },
+    {
+      "codigo": "ARB-F-DESMAQUILLANTE-BIFASICO",
+      "nombre": "DESMAQUILLANTE BIFÁSICO",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 44,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "30 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        269.6,
+        622.3,
+        309.9,
+        667.1
+      ],
+      "variantes": [
+        {
+          "codigo": "3176",
+          "color": "SERUM PEELING"
+        }
+      ],
+      "recorte": "ARB-F-DESMAQUILLANTE-BIFASICO.png"
+    },
+    {
+      "codigo": "ARB-3164",
+      "nombre": "SERUM CONCENTRADO PREMIUM",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 44,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "30 g",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        383.7,
+        621.1,
+        456.0,
+        676.2
+      ],
+      "variantes": [
+        {
+          "codigo": "3164",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3164.png"
+    },
+    {
+      "codigo": "ARB-F-PREVIENE-Y-REVITALIZA",
+      "nombre": "PREVIENE Y REVITALIZA",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 45,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        10.0,
+        503.8,
+        93.2,
+        528.4
+      ],
+      "variantes": [
+        {
+          "codigo": "3166",
+          "color": "PREVENCIÓN +30"
+        }
+      ],
+      "recorte": "ARB-F-PREVIENE-Y-REVITALIZA.png"
+    },
+    {
+      "codigo": "ARB-F-REGENERACION-60-FIRMEZA-50",
+      "nombre": "REGENERACIÓN +60 FIRMEZA +50",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 45,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        156.0,
+        504.2,
+        423.5,
+        529.8
+      ],
+      "variantes": [
+        {
+          "codigo": "3168",
+          "color": null
+        },
+        {
+          "codigo": "3167",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-F-REGENERACION-60-FIRMEZA-50.png"
+    },
+    {
+      "codigo": "ARB-3159",
+      "nombre": "CREMA ANTI-PIGMENTACIÓN",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 47,
+      "precio": 9900,
+      "p_reg": 12900,
+      "presentacion": "50 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        70.0,
+        656.7,
+        204.1,
+        743.5
+      ],
+      "variantes": [
+        {
+          "codigo": "3159",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3159.png"
+    },
+    {
+      "codigo": "ARB-3160",
+      "nombre": "CREMA CONTORNO DE OJOS",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 47,
+      "precio": 5900,
+      "p_reg": 7900,
+      "presentacion": "15 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        256.0,
+        656.7,
+        388.7,
+        743.5
+      ],
+      "variantes": [
+        {
+          "codigo": "3160",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3160.png"
+    },
+    {
+      "codigo": "ARB-3175",
+      "nombre": "LABIAL FPS 30",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 48,
+      "precio": 7900,
+      "p_reg": 9900,
+      "presentacion": "3,5 g.",
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        360.0,
+        283.5,
+        442.2,
+        369.0
+      ],
+      "variantes": [
+        {
+          "codigo": "3175",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3175.png"
+    },
+    {
+      "codigo": "ARB-3614",
+      "nombre": "PROTECTOR SOLAR FPS 50",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 48,
+      "precio": 21900,
+      "p_reg": null,
+      "presentacion": "30 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        360.0,
+        92.9,
+        453.4,
+        137.7
+      ],
+      "variantes": [
+        {
+          "codigo": "3614",
+          "color": null
+        }
+      ]
+    },
+    {
+      "codigo": "ARB-3172",
+      "nombre": "PROTECTOR SOLAR CON COLOR FPS 50",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 48,
+      "precio": 21900,
+      "p_reg": null,
+      "presentacion": "30 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        360.0,
+        145.2,
+        453.4,
+        190.0
+      ],
+      "variantes": [
+        {
+          "codigo": "3172",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3172.png"
+    },
+    {
+      "codigo": "ARB-7134",
+      "nombre": "Refresh Cucumber DESCONGESTIVA, CALMANTEN Y REFRESCANTE",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 49,
+      "precio": 3990,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        229.3,
+        404.8,
+        438.4,
+        459.0
+      ],
+      "variantes": [
+        {
+          "codigo": "7134",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7134.png"
+    },
+    {
+      "codigo": "ARB-7135",
+      "nombre": "Repair Mango REPARADORA, ANTIOXIDANTE Y CALMANTE",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 49,
+      "precio": 3990,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        229.3,
+        699.9,
+        421.8,
+        749.0
+      ],
+      "variantes": [
+        {
+          "codigo": "7135",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7135.png"
+    },
+    {
+      "codigo": "ARB-2315",
+      "nombre": "CREMA PARA ROSTRO",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 50,
+      "precio": 27900,
+      "p_reg": null,
+      "presentacion": "50 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        373.3,
+        316.4,
+        465.3,
+        411.9
+      ],
+      "variantes": [
+        {
+          "codigo": "2315",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2315.png"
+    },
+    {
+      "codigo": "ARB-2314",
+      "nombre": "Argireline Efecto lifting inmediado. Caviar Oro coloidal",
+      "descripcion": "Regeneración celular. Estimulación de colágeno. Ácido hialurónico Hidratación profunda. SERUM FACIAL",
+      "categoria": "Cuidado facial",
+      "pagina": 50,
+      "precio": 24900,
+      "p_reg": 29900,
+      "presentacion": "30 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        18.7,
+        385.3,
+        131.3,
+        577.7
+      ],
+      "variantes": [
+        {
+          "codigo": "2314",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2314.png"
+    },
+    {
+      "codigo": "ARB-2322",
+      "nombre": "CONTORNO LABIOS",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 50,
+      "precio": 19900,
+      "p_reg": 24900,
+      "presentacion": "20 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        18.7,
+        659.4,
+        110.8,
+        751.5
+      ],
+      "variantes": [
+        {
+          "codigo": "2322",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2322.png"
+    },
+    {
+      "codigo": "ARB-2316",
+      "nombre": "CONTORNO OJOS",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 51,
+      "precio": 14900,
+      "p_reg": 24900,
+      "presentacion": "20 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        263.8,
+        512.5,
+        453.0,
+        635.8
+      ],
+      "variantes": [
+        {
+          "codigo": "2316",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2316.png"
+    },
+    {
+      "codigo": "ARB-2310",
+      "nombre": "SOLUCIÓN MICELAR Agua con Ácido Hialurónico + Vit C.",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 52,
+      "precio": 18900,
+      "p_reg": 22900,
+      "presentacion": "150 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        274.3,
+        469.3,
+        366.4,
+        575.7
+      ],
+      "variantes": [
+        {
+          "codigo": "2310",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2310.png"
+    },
+    {
+      "codigo": "ARB-2311",
+      "nombre": "ELIXIR CONCENTRADO",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 52,
+      "precio": 21900,
+      "p_reg": 26900,
+      "presentacion": "30 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        274.3,
+        594.3,
+        376.9,
+        679.7
+      ],
+      "variantes": [
+        {
+          "codigo": "2311",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2311.png"
+    },
+    {
+      "codigo": "ARB-2309",
+      "nombre": "COMPLEJO ANTI-ARRUGAS Crema con Retinol + Q10 + Vit C. +40",
+      "descripcion": "%",
+      "categoria": "Cuidado facial",
+      "pagina": 53,
+      "precio": 19900,
+      "p_reg": 34900,
+      "presentacion": "50 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        13.1,
+        597.7,
+        471.9,
+        732.8
+      ],
+      "variantes": [
+        {
+          "codigo": "2309",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2309.png"
+    },
+    {
+      "codigo": "ARB-2331",
+      "nombre": "CREMA PÁRPADOS CAÍDOS",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 54,
+      "precio": 16900,
+      "p_reg": 24900,
+      "presentacion": "20 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        13.7,
+        640.9,
+        109.6,
+        738.2
+      ],
+      "variantes": [
+        {
+          "codigo": "2331",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2331.png"
+    },
+    {
+      "codigo": "ARB-2329",
+      "nombre": "PADS CONTORNO DE OJOS 7 pares. 14 ml. en total.",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 54,
+      "precio": 9900,
+      "p_reg": 15900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        172.5,
+        365.3,
+        268.4,
+        462.5
+      ],
+      "variantes": [
+        {
+          "codigo": "2329",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2329.png"
+    },
+    {
+      "codigo": "ARB-2328",
+      "nombre": "AMPOLLAS TRATAMIENTO INTENSIVO x 4 unidades de 3 ml. c/u.",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 54,
+      "precio": 9900,
+      "p_reg": 18900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        172.5,
+        618.4,
+        260.0,
+        737.5
+      ],
+      "variantes": [
+        {
+          "codigo": "2328",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2328.png"
+    },
+    {
+      "codigo": "ARB-2327",
+      "nombre": "CREMA DE NOCHE",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 55,
+      "precio": 27900,
+      "p_reg": 34900,
+      "presentacion": "30 g.",
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        158.5,
+        540.4,
+        370.5,
+        631.1
+      ],
+      "variantes": [
+        {
+          "codigo": "2327",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2327.png"
+    },
+    {
+      "codigo": "ARB-2326",
+      "nombre": "CREMA DE DÍA",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 55,
+      "precio": 39900,
+      "p_reg": null,
+      "presentacion": "30 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        73.1,
+        540.4,
+        143.1,
+        575.5
+      ],
+      "variantes": [
+        {
+          "codigo": "2326",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2326.png"
+    },
+    {
+      "codigo": "ARB-2300",
+      "nombre": "CREMA DE DÍA 50 %",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 56,
+      "precio": 16900,
+      "p_reg": 33900,
+      "presentacion": "50 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        24.9,
+        571.7,
+        464.2,
+        698.4
+      ],
+      "variantes": [
+        {
+          "codigo": "2300",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2300.png"
+    },
+    {
+      "codigo": "ARB-2325",
+      "nombre": "RETINOL POWER LIFT Serum Facial",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 57,
+      "precio": 11500,
+      "p_reg": null,
+      "presentacion": "15 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        118.1,
+        556.8,
+        218.2,
+        603.4
+      ],
+      "variantes": [
+        {
+          "codigo": "2325",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2325.png"
+    },
+    {
+      "codigo": "ARB-2330",
+      "nombre": "SERUM ENZYDERM Q10 Serum Facial",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 57,
+      "precio": 11500,
+      "p_reg": null,
+      "presentacion": "15 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        342.3,
+        557.1,
+        448.1,
+        603.7
+      ],
+      "variantes": [
+        {
+          "codigo": "2330",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2330.png"
+    },
+    {
+      "codigo": "ARB-2324",
+      "nombre": "4D HYALURON COMPLEX Serum Facial",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 57,
+      "precio": 11500,
+      "p_reg": null,
+      "presentacion": "15 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        118.1,
+        320.2,
+        232.7,
+        366.8
+      ],
+      "variantes": [
+        {
+          "codigo": "2324",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2324.png"
+    },
+    {
+      "codigo": "ARB-2323",
+      "nombre": "NIACINAMIDA 10% EXTREME Serum Facial",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 57,
+      "precio": 11500,
+      "p_reg": null,
+      "presentacion": "15 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        342.3,
+        320.2,
+        464.4,
+        366.8
+      ],
+      "variantes": [
+        {
+          "codigo": "2323",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2323.png"
+    },
+    {
+      "codigo": "ARB-7130",
+      "nombre": "SERUM FACIAL ARÁNDANOS",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 58,
+      "precio": 11900,
+      "p_reg": 14900,
+      "presentacion": "30 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        34.0,
+        648.1,
+        126.1,
+        755.7
+      ],
+      "variantes": [
+        {
+          "codigo": "7130",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7130.png"
+    },
+    {
+      "codigo": "ARB-7137",
+      "nombre": "BRUMA FACIAL REVITALIZANTE VITAMINA C",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 58,
+      "precio": 9900,
+      "p_reg": 12900,
+      "presentacion": "100 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        207.7,
+        642.7,
+        379.7,
+        756.3
+      ],
+      "variantes": [
+        {
+          "codigo": "7137",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7137.png"
+    },
+    {
+      "codigo": "ARB-7102",
+      "nombre": "BRUMA FACIAL REFRESCANTE Y CALMANTE",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 58,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "100 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        357.1,
+        642.7,
+        430.3,
+        697.8
+      ],
+      "variantes": [
+        {
+          "codigo": "7102",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7102.png"
+    },
+    {
+      "codigo": "ARB-7138",
+      "nombre": "HYDRA GEL FACIAL",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 59,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "50 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        298.9,
+        669.5,
+        390.4,
+        705.4
+      ],
+      "variantes": [
+        {
+          "codigo": "7138",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7138.png"
+    },
+    {
+      "codigo": "ARB-F-CREMA-FACIAL-ANTIOXIDANTE-QUE-NUTRE-Y-RE",
+      "nombre": "CREMA FACIAL ANTIOXIDANTE QUE NUTRE Y REVITALIZA",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 59,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "50 g",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        118.0,
+        670.8,
+        187.8,
+        705.4
+      ],
+      "variantes": [
+        {
+          "codigo": "7103",
+          "color": "CREMA FACIAL"
+        }
+      ],
+      "recorte": "ARB-F-CREMA-FACIAL-ANTIOXIDANTE-QUE-NUTRE-Y-RE.png"
+    },
+    {
+      "codigo": "ARB-7131",
+      "nombre": "SERUM FACIAL AVENA Y TRIGO",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 60,
+      "precio": 14900,
+      "p_reg": 14900,
+      "presentacion": "30 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.; la pagina tiene un combo o un regalo",
+      "bbox": [
+        232.0,
+        685.0,
+        319.5,
+        750.3
+      ],
+      "variantes": [
+        {
+          "codigo": "7131",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7131.png"
+    },
+    {
+      "codigo": "ARB-7142",
+      "nombre": "CREMA CORPORAL AVENA Y TRIGO",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 60,
+      "precio": 15900,
+      "p_reg": 15900,
+      "presentacion": "200 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.; la pagina tiene un combo o un regalo",
+      "bbox": [
+        366.6,
+        689.3,
+        457.3,
+        750.3
+      ],
+      "variantes": [
+        {
+          "codigo": "7142",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7142.png"
+    },
+    {
+      "codigo": "ARB-7145",
+      "nombre": "CREMA FACIAL AVENA Y TRIGO",
+      "descripcion": null,
+      "categoria": "Cuidado facial",
+      "pagina": 61,
+      "precio": 14900,
+      "p_reg": 14900,
+      "presentacion": "50 g.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        23.8,
+        654.1,
+        168.4,
+        705.2
+      ],
+      "variantes": [
+        {
+          "codigo": "7145",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7145.png"
+    },
+    {
+      "codigo": "ARB-4002",
+      "nombre": "CREMA DE ORDEÑE",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 63,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        377.3,
+        593.9,
+        433.6,
+        627.7
+      ],
+      "variantes": [
+        {
+          "codigo": "4002",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4002.png"
+    },
+    {
+      "codigo": "ARB-4031",
+      "nombre": "CREMA CORPORAL PIERNAS CANSADAS",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 64,
+      "precio": 11900,
+      "p_reg": 16900,
+      "presentacion": "200 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        136.7,
+        654.9,
+        366.9,
+        755.6
+      ],
+      "variantes": [
+        {
+          "codigo": "4031",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4031.png"
+    },
+    {
+      "codigo": "ARB-4033",
+      "nombre": "CREMA CORPORAL ULTRA NUTRITIVA",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 64,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "200 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        54.0,
+        654.9,
+        177.2,
+        702.7
+      ],
+      "variantes": [
+        {
+          "codigo": "4033",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4033.png"
+    },
+    {
+      "codigo": "ARB-5012",
+      "nombre": "PULVERIZADOR BUCAL Con Propóleos y Miel. 60 cm 3",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 65,
+      "precio": 11900,
+      "p_reg": 14900,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        144.0,
+        643.8,
+        237.9,
+        754.5
+      ],
+      "variantes": [
+        {
+          "codigo": "5012",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-5012.png"
+    },
+    {
+      "codigo": "ARB-4018",
+      "nombre": "MANTECA DE CACAO Con Propóleos y Miel.",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 65,
+      "precio": 5900,
+      "p_reg": 6900,
+      "presentacion": "4 g.",
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        298.0,
+        313.4,
+        391.7,
+        412.7
+      ],
+      "variantes": [
+        {
+          "codigo": "4018",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4018.png"
+    },
+    {
+      "codigo": "ARB-5005",
+      "nombre": "GEL DE PROPÓLEOS Con Aloe Vera.",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 66,
+      "precio": 7900,
+      "p_reg": 9900,
+      "presentacion": "100 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        22.0,
+        643.2,
+        117.4,
+        741.3
+      ],
+      "variantes": [
+        {
+          "codigo": "5005",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-5005.png"
+    },
+    {
+      "codigo": "ARB-4046",
+      "nombre": "CREMA REPARADORA INTENSIVA PARA PIES",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 66,
+      "precio": 9900,
+      "p_reg": 13900,
+      "presentacion": "90 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        167.5,
+        642.9,
+        270.7,
+        741.3
+      ],
+      "variantes": [
+        {
+          "codigo": "4046",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4046.png"
+    },
+    {
+      "codigo": "ARB-4056",
+      "nombre": "BARRA ANTIROCES",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 66,
+      "precio": 14900,
+      "p_reg": 19900,
+      "presentacion": "30 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        327.9,
+        653.0,
+        429.2,
+        741.3
+      ],
+      "variantes": [
+        {
+          "codigo": "4056",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4056.png"
+    },
+    {
+      "codigo": "ARB-4028",
+      "nombre": "EMULSIÓN CORPORAL",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 67,
+      "precio": 9900,
+      "p_reg": 11000,
+      "presentacion": "200 g.",
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        18.0,
+        651.0,
+        121.8,
+        741.3
+      ],
+      "variantes": [
+        {
+          "codigo": "4028",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4028.png"
+    },
+    {
+      "codigo": "ARB-4020",
+      "nombre": "CREMA PARA MANOS Con Propóleos y Miel.",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 67,
+      "precio": 6900,
+      "p_reg": 7990,
+      "presentacion": "60 g.",
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        148.0,
+        640.7,
+        250.3,
+        741.3
+      ],
+      "variantes": [
+        {
+          "codigo": "4020",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4020.png"
+    },
+    {
+      "codigo": "ARB-4019",
+      "nombre": "JABÓN EN BARRA",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 68,
+      "precio": 6900,
+      "p_reg": 7900,
+      "presentacion": "100 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        60.3,
+        620.8,
+        145.0,
+        711.1
+      ],
+      "variantes": [
+        {
+          "codigo": "4019",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4019.png"
+    },
+    {
+      "codigo": "ARB-F-JABON-EN-BARRA",
+      "nombre": "JABÓN EN BARRA",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 68,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": "300 ml",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        222.4,
+        610.0,
+        273.6,
+        647.3
+      ],
+      "variantes": [
+        {
+          "codigo": "3376",
+          "color": "SHAMPOO"
+        }
+      ],
+      "recorte": "ARB-F-JABON-EN-BARRA.png"
+    },
+    {
+      "codigo": "ARB-3377",
+      "nombre": "CREMA DE ENJUAGUE",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 68,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": "300 ml",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        355.1,
+        609.9,
+        457.7,
+        645.8
+      ],
+      "variantes": [
+        {
+          "codigo": "3377",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3377.png"
+    },
+    {
+      "codigo": "ARB-4055",
+      "nombre": "DESODORANTE ANTITRANSPIRANTE",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 69,
+      "precio": 6900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        326.7,
+        324.8,
+        422.1,
+        358.7
+      ],
+      "variantes": [
+        {
+          "codigo": "4055",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4055.png"
+    },
+    {
+      "codigo": "ARB-4034",
+      "nombre": "GEL LUBRICANTE ÍNTIMO",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 70,
+      "precio": 7900,
+      "p_reg": 11900,
+      "presentacion": "50 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        342.0,
+        636.6,
+        458.5,
+        727.2
+      ],
+      "variantes": [
+        {
+          "codigo": "4034",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4034.png"
+    },
+    {
+      "codigo": "ARB-4035",
+      "nombre": "JABÓN LÍQUIDO ÍNTIMO",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 70,
+      "precio": 9500,
+      "p_reg": 13900,
+      "presentacion": "200 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        190.0,
+        638.2,
+        299.3,
+        727.6
+      ],
+      "variantes": [
+        {
+          "codigo": "4035",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4035.png"
+    },
+    {
+      "codigo": "ARB-4042",
+      "nombre": "CREMA DEPILATORIA PARA ROSTRO",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 70,
+      "precio": 5900,
+      "p_reg": 8900,
+      "presentacion": "12 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        28.0,
+        625.4,
+        129.3,
+        724.9
+      ],
+      "variantes": [
+        {
+          "codigo": "4042",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4042.png"
+    },
+    {
+      "codigo": "ARB-4057",
+      "nombre": "TOALLAS DE HIGIENE ÍNTIMA 30 unidades,",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 71,
+      "precio": 12900,
+      "p_reg": 12900,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.; la pagina tiene un combo o un regalo",
+      "bbox": [
+        42.7,
+        653.2,
+        426.3,
+        750.0
+      ],
+      "variantes": [
+        {
+          "codigo": "4057",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-4057.png"
+    },
+    {
+      "codigo": "ARB-7013",
+      "nombre": "BODY SPLASH N° 40",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 72,
+      "precio": 14900,
+      "p_reg": null,
+      "presentacion": "90 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        351.6,
+        636.2,
+        416.0,
+        678.2
+      ],
+      "variantes": [
+        {
+          "codigo": "7013",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7013.png"
+    },
+    {
+      "codigo": "ARB-7015",
+      "nombre": "BODY SPLASH N° 59",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 72,
+      "precio": 14900,
+      "p_reg": null,
+      "presentacion": "90 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        232.0,
+        636.3,
+        296.3,
+        678.3
+      ],
+      "variantes": [
+        {
+          "codigo": "7015",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7015.png"
+    },
+    {
+      "codigo": "ARB-F-BALSAMOS-LABIALES-SABORIZADOS",
+      "nombre": "BÁLSAMOS LABIALES SABORIZADOS",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 72,
+      "precio": 14900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        29.6,
+        336.1904296875,
+        160.77549743652344,
+        359.8
+      ],
+      "variantes": [
+        {
+          "codigo": "7141",
+          "color": "CHOCOLATE"
+        },
+        {
+          "codigo": "7140",
+          "color": "VAINILLA"
+        }
+      ],
+      "recorte": "ARB-F-BALSAMOS-LABIALES-SABORIZADOS.png"
+    },
+    {
+      "codigo": "ARB-7014",
+      "nombre": "BODY SPLASH N° 62",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 73,
+      "precio": 14900,
+      "p_reg": 16900,
+      "presentacion": "90 ml.",
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        16.0,
+        648.1,
+        117.4,
+        740.4
+      ],
+      "variantes": [
+        {
+          "codigo": "7014",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7014.png"
+    },
+    {
+      "codigo": "ARB-7124",
+      "nombre": "NUTRICIÓN TOTAL CABELLOS CASTIGADOS",
+      "descripcion": "Nutre y repara la fibra capilar.",
+      "categoria": "Capilar",
+      "pagina": 75,
+      "precio": 6900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        60.9,
+        256.8,
+        218.2,
+        317.3
+      ],
+      "variantes": [
+        {
+          "codigo": "7124",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7124.png"
+    },
+    {
+      "codigo": "ARB-7123",
+      "nombre": "FUERZA Y RESISTENCIA CABELLOS DÉBILES Y REBELDES",
+      "descripcion": "Hidrata, fortalece y controla el frizz.",
+      "categoria": "Capilar",
+      "pagina": 75,
+      "precio": 6900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        60.9,
+        514.9,
+        165.4,
+        617.5
+      ],
+      "variantes": [
+        {
+          "codigo": "7123",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7123.png"
+    },
+    {
+      "codigo": "ARB-7119",
+      "nombre": "CREMA DE PEINAR",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 75,
+      "precio": 6900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        339.2,
+        595.6,
+        426.2,
+        621.0
+      ],
+      "variantes": [
+        {
+          "codigo": "7119",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7119.png"
+    },
+    {
+      "codigo": "ARB-3404",
+      "nombre": "TRATAMIENTO PROTECTOR TÉRMICO",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 76,
+      "precio": 11900,
+      "p_reg": 14900,
+      "presentacion": "100 ml",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        20.0,
+        621.2,
+        121.4,
+        733.0
+      ],
+      "variantes": [
+        {
+          "codigo": "3404",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3404.png"
+    },
+    {
+      "codigo": "ARB-3387",
+      "nombre": "SERUM ARGÁN",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 76,
+      "precio": 12900,
+      "p_reg": 16900,
+      "presentacion": "30 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        106.0,
+        166.6,
+        201.1,
+        253.4
+      ],
+      "variantes": [
+        {
+          "codigo": "3387",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3387.png"
+    },
+    {
+      "codigo": "ARB-3423",
+      "nombre": "SHAMPOO NUTRICIÓN ABSOLUTA ARGÁN",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 77,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": "220 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        278.2,
+        605.9,
+        400.6,
+        651.7
+      ],
+      "variantes": [
+        {
+          "codigo": "3423",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3423.png"
+    },
+    {
+      "codigo": "ARB-3424",
+      "nombre": "ACONDICIONADOR NUTRICIÓN ABSOLUTA ARGÁN",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 77,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": "220 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        20.0,
+        603.3,
+        148.8,
+        649.1
+      ],
+      "variantes": [
+        {
+          "codigo": "3424",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3424.png"
+    },
+    {
+      "codigo": "ARB-3418",
+      "nombre": "DESENREDANTE SPRAY BIFASE Lacios perfectos",
+      "descripcion": "Alisa y controla el frizz. Repara con keratina. Suavidad y brillo intenso. Uso diario, sin enjuague.",
+      "categoria": "Capilar",
+      "pagina": 78,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "120 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        134.0,
+        410.7,
+        450.3,
+        545.4
+      ],
+      "variantes": [
+        {
+          "codigo": "3418",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3418.png"
+    },
+    {
+      "codigo": "ARB-3391",
+      "nombre": "MÁSCARA TRATAMIENTO RULOS",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 78,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "180 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        372.0,
+        508.9,
+        437.2,
+        574.2
+      ],
+      "variantes": [
+        {
+          "codigo": "3391",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3391.png"
+    },
+    {
+      "codigo": "ARB-3422",
+      "nombre": "MÁSCARA LACIOS PERFECTOS",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 78,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "180 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        372.0,
+        600.9,
+        427.5,
+        666.2
+      ],
+      "variantes": [
+        {
+          "codigo": "3422",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3422.png"
+    },
+    {
+      "codigo": "ARB-F-SHOCK-DE-REPARACION-Y-BRILLO",
+      "nombre": "Shock de reparación y brillo",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 79,
+      "precio": 6900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        348.9,
+        462.1,
+        421.3,
+        485.7
+      ],
+      "variantes": [
+        {
+          "codigo": "3362",
+          "color": "BAÑO CAPILAR"
+        }
+      ],
+      "recorte": "ARB-F-SHOCK-DE-REPARACION-Y-BRILLO.png"
+    },
+    {
+      "codigo": "ARB-3403",
+      "nombre": "CREMA DE PEINAR",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 79,
+      "precio": 6900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        341.8,
+        514.9,
+        428.4,
+        538.5
+      ],
+      "variantes": [
+        {
+          "codigo": "3403",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3403.png"
+    },
+    {
+      "codigo": "ARB-F-MASCARAS-AMPOLLAS",
+      "nombre": "MÁSCARAS & AMPOLLAS",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 80,
+      "precio": 3500,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        358.0,
+        135.0,
+        430.8,
+        178.8
+      ],
+      "variantes": [
+        {
+          "codigo": "3408",
+          "color": "Hyaluronic REGENERA"
+        }
+      ],
+      "recorte": "ARB-F-MASCARAS-AMPOLLAS.png"
+    },
+    {
+      "codigo": "ARB-3392",
+      "nombre": "Repair Plex REPARA",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 80,
+      "precio": 3500,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        358.0,
+        185.0,
+        429.3,
+        228.8
+      ],
+      "variantes": [
+        {
+          "codigo": "3392",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3392.png"
+    },
+    {
+      "codigo": "ARB-3397",
+      "nombre": "Nutrition Plex NUTRE",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 80,
+      "precio": 3500,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        358.0,
+        81.0,
+        444.2,
+        124.8
+      ],
+      "variantes": [
+        {
+          "codigo": "3397",
+          "color": null
+        }
+      ]
+    },
+    {
+      "codigo": "ARB-3420",
+      "nombre": "Aceite de Argán NUTRE E HIDRATA",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 80,
+      "precio": 3500,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        356.0,
+        384.4,
+        455.3,
+        441.3
+      ],
+      "variantes": [
+        {
+          "codigo": "3420",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3420.png"
+    },
+    {
+      "codigo": "ARB-3421",
+      "nombre": "Colágeno Vegetal PROTEGE Y SUAVIZA",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 80,
+      "precio": 3500,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        356.0,
+        445.8,
+        464.0,
+        502.7
+      ],
+      "variantes": [
+        {
+          "codigo": "3421",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3421.png"
+    },
+    {
+      "codigo": "ARB-3419",
+      "nombre": "Ácido Hialurónico RECONSTRUYE Y REPARA",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 80,
+      "precio": 3500,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        356.0,
+        508.1,
+        459.3,
+        565.0
+      ],
+      "variantes": [
+        {
+          "codigo": "3419",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3419.png"
+    },
+    {
+      "codigo": "ARB-3407",
+      "nombre": "Keratina ELIMINA FRIZZ",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 80,
+      "precio": 3500,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        358.0,
+        234.2,
+        416.9,
+        291.0
+      ],
+      "variantes": [
+        {
+          "codigo": "3407",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3407.png"
+    },
+    {
+      "codigo": "ARB-F-TRATAMIENTO-COMPLETO",
+      "nombre": "TRATAMIENTO COMPLETO",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 81,
+      "precio": 25800,
+      "p_reg": null,
+      "presentacion": "200 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        28.8,
+        334.9,
+        117.7,
+        369.4
+      ],
+      "variantes": [
+        {
+          "codigo": "3383",
+          "color": "ORTIGA SHAMPOO"
+        }
+      ],
+      "recorte": "ARB-F-TRATAMIENTO-COMPLETO.png"
+    },
+    {
+      "codigo": "ARB-3384",
+      "nombre": "ORTIGA ACONDICIONADOR",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 81,
+      "precio": 25800,
+      "p_reg": null,
+      "presentacion": "200 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        28.8,
+        375.3,
+        154.9,
+        409.9
+      ],
+      "variantes": [
+        {
+          "codigo": "3384",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3384.png"
+    },
+    {
+      "codigo": "ARB-3414",
+      "nombre": "TÓNICO FORTIFICANTE ANTICAÍDA",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 81,
+      "precio": 25800,
+      "p_reg": null,
+      "presentacion": "125 ml",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        28.8,
+        418.3,
+        137.3,
+        463.1
+      ],
+      "variantes": [
+        {
+          "codigo": "3414",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3414.png"
+    },
+    {
+      "codigo": "ARB-3411",
+      "nombre": "ACONDICIONADOR BRILLO ESPEJO",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 82,
+      "precio": 9900,
+      "p_reg": 12900,
+      "presentacion": "200 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        258.1,
+        650.3,
+        455.6,
+        738.3
+      ],
+      "variantes": [
+        {
+          "codigo": "3411",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3411.png"
+    },
+    {
+      "codigo": "ARB-3409",
+      "nombre": "SHAMPOO VIOLETA",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 82,
+      "precio": 11000,
+      "p_reg": 13900,
+      "presentacion": "200 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        14.6,
+        651.6,
+        116.0,
+        738.3
+      ],
+      "variantes": [
+        {
+          "codigo": "3409",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3409.png"
+    },
+    {
+      "codigo": "ARB-3410",
+      "nombre": "SHAMPOO BRILLO ESPEJO",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 82,
+      "precio": 11000,
+      "p_reg": null,
+      "presentacion": "200 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        202.9,
+        650.3,
+        275.5,
+        696.1
+      ],
+      "variantes": [
+        {
+          "codigo": "3410",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3410.png"
+    },
+    {
+      "codigo": "ARB-3417",
+      "nombre": "MÁSCARA PLEX",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 83,
+      "precio": 11900,
+      "p_reg": 14900,
+      "presentacion": "160 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        19.8,
+        653.4,
+        116.5,
+        740.1
+      ],
+      "variantes": [
+        {
+          "codigo": "3417",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3417.png"
+    },
+    {
+      "codigo": "ARB-3416",
+      "nombre": "ACONDICIONADOR PLEX",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 83,
+      "precio": 9900,
+      "p_reg": 13900,
+      "presentacion": "220 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        264.6,
+        649.4,
+        466.3,
+        740.1
+      ],
+      "variantes": [
+        {
+          "codigo": "3416",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3416.png"
+    },
+    {
+      "codigo": "ARB-F-MASCARA-PLEX",
+      "nombre": "MÁSCARA PLEX",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 83,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "220 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        214.7,
+        649.4,
+        289.9,
+        684.0
+      ],
+      "variantes": [
+        {
+          "codigo": "3415",
+          "color": "SHAMPOO PLEX"
+        }
+      ],
+      "recorte": "ARB-F-MASCARA-PLEX.png"
+    },
+    {
+      "codigo": "ARB-3375",
+      "nombre": "SHAMPOO INTELIGENTE",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 84,
+      "precio": 11000,
+      "p_reg": 13900,
+      "presentacion": "200 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        33.8,
+        639.4,
+        135.2,
+        736.4
+      ],
+      "variantes": [
+        {
+          "codigo": "3375",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3375.png"
+    },
+    {
+      "codigo": "ARB-3394",
+      "nombre": "ACONDICIONADOR ALOE VERA",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 84,
+      "precio": 11000,
+      "p_reg": null,
+      "presentacion": "200 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        380.6,
+        640.2,
+        463.9,
+        688.0
+      ],
+      "variantes": [
+        {
+          "codigo": "3394",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3394.png"
+    },
+    {
+      "codigo": "ARB-3393",
+      "nombre": "SHAMPOO ALOE VERA",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 84,
+      "precio": 11000,
+      "p_reg": null,
+      "presentacion": "200 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        244.0,
+        640.2,
+        306.1,
+        688.0
+      ],
+      "variantes": [
+        {
+          "codigo": "3393",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3393.png"
+    },
+    {
+      "codigo": "ARB-3413",
+      "nombre": "ACONDICIONADOR EQUILIBRANTE",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 85,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": "220 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        220.0,
+        638.1,
+        305.8,
+        682.9
+      ],
+      "variantes": [
+        {
+          "codigo": "3413",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-3413.png"
+    },
+    {
+      "codigo": "ARB-F-CABELLO-EQUILIBRADO-Y-CON-BRILLO",
+      "nombre": "Cabello equilibrado y con brillo.",
+      "descripcion": null,
+      "categoria": "Capilar",
+      "pagina": 85,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": "220 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        41.9,
+        638.1,
+        110.8,
+        685.9
+      ],
+      "variantes": [
+        {
+          "codigo": "3412",
+          "color": "SHAMPOO EQUILIBRANTE"
+        }
+      ],
+      "recorte": "ARB-F-CABELLO-EQUILIBRADO-Y-CON-BRILLO.png"
+    },
+    {
+      "codigo": "ARB-5105",
+      "nombre": "BODY LOTION",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 86,
+      "precio": 16900,
+      "p_reg": 16900,
+      "presentacion": "300 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        119.9,
+        654.9,
+        207.4,
+        705.7
+      ],
+      "variantes": [
+        {
+          "codigo": "5105",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-5105.png"
+    },
+    {
+      "codigo": "ARB-5103",
+      "nombre": "GEL DE DUCHA",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 86,
+      "precio": 7900,
+      "p_reg": 11900,
+      "presentacion": "200 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        346.0,
+        654.8,
+        433.5,
+        740.4
+      ],
+      "variantes": [
+        {
+          "codigo": "5103",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-5103.png"
+    },
+    {
+      "codigo": "ARB-5104",
+      "nombre": "JABÓN LÍQUIDO ESPUMOSO",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 86,
+      "precio": 8900,
+      "p_reg": 11900,
+      "presentacion": "200 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        63.3,
+        644.6,
+        322.6,
+        741.4
+      ],
+      "variantes": [
+        {
+          "codigo": "5104",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-5104.png"
+    },
+    {
+      "codigo": "ARB-5106",
+      "nombre": "BODY SPLASH",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 86,
+      "precio": 15900,
+      "p_reg": 15900,
+      "presentacion": "150 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        26.2,
+        649.9,
+        113.7,
+        705.7
+      ],
+      "variantes": [
+        {
+          "codigo": "5106",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-5106.png"
+    },
+    {
+      "codigo": "ARB-5101",
+      "nombre": "MANTECA CORPORAL",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 86,
+      "precio": 14900,
+      "p_reg": 19900,
+      "presentacion": "140 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        34.0,
+        133.4,
+        134.8,
+        220.7
+      ],
+      "variantes": [
+        {
+          "codigo": "5101",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-5101.png"
+    },
+    {
+      "codigo": "ARB-5100",
+      "nombre": "CREMA DE MANOS",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 87,
+      "precio": 6900,
+      "p_reg": 7990,
+      "presentacion": "60 g.",
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        166.0,
+        643.4,
+        253.1,
+        729.0
+      ],
+      "variantes": [
+        {
+          "codigo": "5100",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-5100.png"
+    },
+    {
+      "codigo": "ARB-5102",
+      "nombre": "EXFOLIANTE",
+      "descripcion": null,
+      "categoria": "Cuidado corporal",
+      "pagina": 87,
+      "precio": 16900,
+      "p_reg": 16900,
+      "presentacion": "160 g.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.; la pagina tiene un combo o un regalo",
+      "bbox": [
+        49.5,
+        635.2,
+        136.9,
+        696.2
+      ],
+      "variantes": [
+        {
+          "codigo": "5102",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-5102.png"
+    },
+    {
+      "codigo": "ARB-1226",
+      "nombre": "ROLL ON ALIVIA SIENES",
+      "descripcion": null,
+      "categoria": "Bienestar",
+      "pagina": 88,
+      "precio": 11000,
+      "p_reg": 16900,
+      "presentacion": "10 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        328.0,
+        602.6,
+        438.2,
+        696.6
+      ],
+      "variantes": [
+        {
+          "codigo": "1226",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-1226.png"
+    },
+    {
+      "codigo": "ARB-1234",
+      "nombre": "BÁLSAMO SPRAY DE ÁRNICA",
+      "descripcion": null,
+      "categoria": "Bienestar",
+      "pagina": 89,
+      "precio": 12900,
+      "p_reg": 18900,
+      "presentacion": "120 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        311.6,
+        568.8,
+        445.7,
+        662.8
+      ],
+      "variantes": [
+        {
+          "codigo": "1234",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-1234.png"
+    },
+    {
+      "codigo": "ARB-1229",
+      "nombre": "ÓLEO PASIÓN Aceite esencial de jazmín.",
+      "descripcion": null,
+      "categoria": "Bienestar",
+      "pagina": 90,
+      "precio": 4900,
+      "p_reg": null,
+      "presentacion": "10 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        246.0,
+        600.0,
+        351.2,
+        645.8
+      ],
+      "variantes": [
+        {
+          "codigo": "1229",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-1229.png"
+    },
+    {
+      "codigo": "ARB-1230",
+      "nombre": "ÓLEO ENERGÍA Aceite esencial de limón.",
+      "descripcion": null,
+      "categoria": "Bienestar",
+      "pagina": 90,
+      "precio": 4900,
+      "p_reg": null,
+      "presentacion": "10 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        40.0,
+        600.0,
+        140.7,
+        645.8
+      ],
+      "variantes": [
+        {
+          "codigo": "1230",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-1230.png"
+    },
+    {
+      "codigo": "ARB-1206",
+      "nombre": "EUCALIVIA Spray de Eucalipto, Mentol,",
+      "descripcion": "Alcanfor y aceites esenciales.",
+      "categoria": "Bienestar",
+      "pagina": 91,
+      "precio": 21900,
+      "p_reg": 29900,
+      "presentacion": "60 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        242.0,
+        644.6,
+        359.3,
+        752.6
+      ],
+      "variantes": [
+        {
+          "codigo": "1206",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-1206.png"
+    },
+    {
+      "codigo": "ARB-1207",
+      "nombre": "UNGÜENTO DE TOMILLO con Mentol, Alcanfor y Clavo de olor.",
+      "descripcion": null,
+      "categoria": "Bienestar",
+      "pagina": 91,
+      "precio": 11900,
+      "p_reg": 16900,
+      "presentacion": "20 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        84.0,
+        644.6,
+        193.1,
+        752.6
+      ],
+      "variantes": [
+        {
+          "codigo": "1207",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-1207.png"
+    },
+    {
+      "codigo": "ARB-1233",
+      "nombre": "BRUMA CORPORAL DE BIENESTAR Con aceites florales de Aspen,",
+      "descripcion": "Walnut y White Chestnut",
+      "categoria": "Bienestar",
+      "pagina": 92,
+      "precio": 11900,
+      "p_reg": 16900,
+      "presentacion": "125 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        12.7,
+        609.1,
+        130.3,
+        728.5
+      ],
+      "variantes": [
+        {
+          "codigo": "1233",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-1233.png"
+    },
+    {
+      "codigo": "ARB-1224",
+      "nombre": "BRUMA DE CONCENTRACIÓN Con limón, mentol y romero.",
+      "descripcion": null,
+      "categoria": "Bienestar",
+      "pagina": 92,
+      "precio": 9900,
+      "p_reg": 14900,
+      "presentacion": "75 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        366.0,
+        606.0,
+        461.5,
+        728.5
+      ],
+      "variantes": [
+        {
+          "codigo": "1224",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-1224.png"
+    },
+    {
+      "codigo": "ARB-1212",
+      "nombre": "BRUMA PARA ALMOHADA Con lavanda y melisa.",
+      "descripcion": null,
+      "categoria": "Bienestar",
+      "pagina": 93,
+      "precio": 9900,
+      "p_reg": 14900,
+      "presentacion": "75 ml.",
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        152.0,
+        632.9,
+        242.4,
+        741.0
+      ],
+      "variantes": [
+        {
+          "codigo": "1212",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-1212.png"
+    },
+    {
+      "codigo": "ARB-9514",
+      "nombre": "PASIFLORA Y TILO",
+      "descripcion": null,
+      "categoria": "Bienestar",
+      "pagina": 93,
+      "precio": 16900,
+      "p_reg": 16900,
+      "presentacion": "60 comprimidos.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.; la pagina tiene un combo o un regalo",
+      "bbox": [
+        24.1,
+        682.8,
+        116.6,
+        733.6
+      ],
+      "variantes": [
+        {
+          "codigo": "9514",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9514.png"
+    },
+    {
+      "codigo": "ARB-1225",
+      "nombre": "GEL ROLL ON Con Árnica, Mentol y Salicilato de Metilo.",
+      "descripcion": null,
+      "categoria": "Bienestar",
+      "pagina": 94,
+      "precio": 9900,
+      "p_reg": 13900,
+      "presentacion": "60 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        285.6,
+        634.8,
+        450.8,
+        737.5
+      ],
+      "variantes": [
+        {
+          "codigo": "1225",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-1225.png"
+    },
+    {
+      "codigo": "ARB-1223",
+      "nombre": "CREMA REPARADORA TEA TREE",
+      "descripcion": null,
+      "categoria": "Bienestar",
+      "pagina": 94,
+      "precio": 6900,
+      "p_reg": 18900,
+      "presentacion": "100 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        12.9,
+        611.2,
+        138.2,
+        740.8
+      ],
+      "variantes": [
+        {
+          "codigo": "1223",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-1223.png"
+    },
+    {
+      "codigo": "ARB-1210",
+      "nombre": "CREMA CORPORAL ENEBRO",
+      "descripcion": null,
+      "categoria": "Bienestar",
+      "pagina": 95,
+      "precio": 19900,
+      "p_reg": 19900,
+      "presentacion": "100 g.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.; la pagina tiene un combo o un regalo",
+      "bbox": [
+        18.1,
+        666.9,
+        110.8,
+        732.7
+      ],
+      "variantes": [
+        {
+          "codigo": "1210",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-1210.png"
+    },
+    {
+      "codigo": "ARB-9631",
+      "nombre": "CÚRCUMA + BIENESTAR",
+      "descripcion": null,
+      "categoria": "Bienestar",
+      "pagina": 95,
+      "precio": 13900,
+      "p_reg": 16900,
+      "presentacion": "60 comprimidos.",
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        146.0,
+        646.9,
+        257.5,
+        737.5
+      ],
+      "variantes": [
+        {
+          "codigo": "9631",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9631.png"
+    },
+    {
+      "codigo": "ARB-9644",
+      "nombre": "COLINA Y EXTRACTOS",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 97,
+      "precio": 24900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        319.4,
+        590.2,
+        419.0,
+        613.7
+      ],
+      "variantes": [
+        {
+          "codigo": "9644",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9644.png"
+    },
+    {
+      "codigo": "ARB-9611",
+      "nombre": "PROBIÓTICOS 60 cápsulas.",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 98,
+      "precio": 22900,
+      "p_reg": 29900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        23.9,
+        649.6,
+        125.3,
+        735.1
+      ],
+      "variantes": [
+        {
+          "codigo": "9611",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9611.png"
+    },
+    {
+      "codigo": "ARB-5509",
+      "nombre": "Alcachofa + Boldo",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 98,
+      "precio": 12900,
+      "p_reg": 16900,
+      "presentacion": "60 comprimidos.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        260.0,
+        648.6,
+        361.4,
+        735.1
+      ],
+      "variantes": [
+        {
+          "codigo": "5509",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-5509.png"
+    },
+    {
+      "codigo": "ARB-9634",
+      "nombre": "RESVERATROL Q10 30 cápsulas.",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 99,
+      "precio": 21900,
+      "p_reg": 27900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        14.0,
+        649.1,
+        115.4,
+        738.5
+      ],
+      "variantes": [
+        {
+          "codigo": "9634",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9634.png"
+    },
+    {
+      "codigo": "ARB-9635",
+      "nombre": "PRO COMPLEX 30 cápsulas.",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 99,
+      "precio": 21900,
+      "p_reg": 27900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        232.0,
+        650.4,
+        333.4,
+        738.5
+      ],
+      "variantes": [
+        {
+          "codigo": "9635",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9635.png"
+    },
+    {
+      "codigo": "ARB-9643",
+      "nombre": "VITAMINA D3 + K2 + BIXA ORELLANA",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 100,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        285.2,
+        618.2,
+        448.1,
+        641.8
+      ],
+      "variantes": [
+        {
+          "codigo": "9643",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9643.png"
+    },
+    {
+      "codigo": "ARB-9523",
+      "nombre": "POWERFULL",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 101,
+      "precio": 12900,
+      "p_reg": 16900,
+      "presentacion": "60 comprimidos.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        13.4,
+        649.6,
+        114.8,
+        735.1
+      ],
+      "variantes": [
+        {
+          "codigo": "9523",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9523.png"
+    },
+    {
+      "codigo": "ARB-9609",
+      "nombre": "KIDS ALIMENTO FORTIFICADO Sabor naranja.",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 101,
+      "precio": 12900,
+      "p_reg": 16900,
+      "presentacion": "100 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        250.0,
+        638.3,
+        381.3,
+        735.1
+      ],
+      "variantes": [
+        {
+          "codigo": "9609",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9609.png"
+    },
+    {
+      "codigo": "ARB-9563",
+      "nombre": "ARTROFLEX",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 102,
+      "precio": 14900,
+      "p_reg": 19900,
+      "presentacion": "100 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        234.0,
+        650.6,
+        333.5,
+        737.2
+      ],
+      "variantes": [
+        {
+          "codigo": "9563",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9563.png"
+    },
+    {
+      "codigo": "ARB-9636",
+      "nombre": "GINKGO BILOBA FOSFOSERINA",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 102,
+      "precio": 14900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        5.2,
+        631.1,
+        77.4,
+        664.9
+      ],
+      "variantes": [
+        {
+          "codigo": "9636",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9636.png"
+    },
+    {
+      "codigo": "ARB-9505",
+      "nombre": "VITAMINA C + E",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 103,
+      "precio": 12900,
+      "p_reg": 16900,
+      "presentacion": "60 comprimidos.",
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        19.6,
+        641.8,
+        121.0,
+        728.7
+      ],
+      "variantes": [
+        {
+          "codigo": "9505",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9505.png"
+    },
+    {
+      "codigo": "ARB-9642",
+      "nombre": "ACEITE DE ORÉGANO",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 103,
+      "precio": 18900,
+      "p_reg": 24900,
+      "presentacion": "30 ml.",
+      "confianza": "media",
+      "motivo": "la pagina tiene un combo o un regalo",
+      "bbox": [
+        152.1,
+        639.2,
+        253.5,
+        727.3
+      ],
+      "variantes": [
+        {
+          "codigo": "9642",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9642.png"
+    },
+    {
+      "codigo": "ARB-9640",
+      "nombre": "CONCENTRADO DE MORINGA Y ARÁNDANOS",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 104,
+      "precio": 14900,
+      "p_reg": 19900,
+      "presentacion": "30 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        266.6,
+        632.9,
+        367.9,
+        739.0
+      ],
+      "variantes": [
+        {
+          "codigo": "9640",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9640.png"
+    },
+    {
+      "codigo": "ARB-9595",
+      "nombre": "MAGNESIO",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 105,
+      "precio": 16900,
+      "p_reg": 16900,
+      "presentacion": "60 comprimidos.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.; la pagina tiene un combo o un regalo",
+      "bbox": [
+        12.0,
+        686.5,
+        104.5,
+        737.3
+      ],
+      "variantes": [
+        {
+          "codigo": "9595",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9595.png"
+    },
+    {
+      "codigo": "ARB-9641",
+      "nombre": "CONCENTRADO DE MACA,",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 106,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        312.6,
+        565.5,
+        428.7,
+        589.1
+      ],
+      "variantes": [
+        {
+          "codigo": "9641",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9641.png"
+    },
+    {
+      "codigo": "ARB-9616",
+      "nombre": "KRILL + OMEGA 3 30 cápsulas blandas",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 107,
+      "precio": 39900,
+      "p_reg": 49900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        250.0,
+        334.9,
+        351.4,
+        420.4
+      ],
+      "variantes": [
+        {
+          "codigo": "9616",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9616.png"
+    },
+    {
+      "codigo": "ARB-AC1039",
+      "nombre": "VITABELL PASTIBELL Medidas: 13cm alto x 11,5 ancho.",
+      "descripcion": "Material: Plástico. Descripción de las tomas: Mañana, Mediodía, Noche, Tarde. Planificación de Lunes a Domingo",
+      "categoria": "Suplementos",
+      "pagina": 107,
+      "precio": 39900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        251.0,
+        526.0,
+        428.5,
+        605.9
+      ],
+      "variantes": [
+        {
+          "codigo": "AC1039",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC1039.png"
+    },
+    {
+      "codigo": "ARB-9637",
+      "nombre": "HONGO REISHI 30 cápsulas",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 108,
+      "precio": 26900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        56.7,
+        653.9,
+        122.1,
+        688.4
+      ],
+      "variantes": [
+        {
+          "codigo": "9637",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9637.png"
+    },
+    {
+      "codigo": "ARB-9638",
+      "nombre": "HONGO MELENA DE LEON 30 cápsulas",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 108,
+      "precio": 26900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        281.7,
+        653.9,
+        395.4,
+        688.4
+      ],
+      "variantes": [
+        {
+          "codigo": "9638",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9638.png"
+    },
+    {
+      "codigo": "ARB-9601",
+      "nombre": "CLOROFILA + H´PAT",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 109,
+      "precio": 13900,
+      "p_reg": null,
+      "presentacion": "120 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        165.1,
+        633.8,
+        258.9,
+        668.4
+      ],
+      "variantes": [
+        {
+          "codigo": "9601",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9601.png"
+    },
+    {
+      "codigo": "ARB-9537",
+      "nombre": "ALOE VERA + D´TOX",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 109,
+      "precio": 13900,
+      "p_reg": null,
+      "presentacion": "150 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        22.0,
+        633.8,
+        108.5,
+        668.4
+      ],
+      "variantes": [
+        {
+          "codigo": "9537",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9537.png"
+    },
+    {
+      "codigo": "ARB-9518",
+      "nombre": "ESPIRULINA + NUTRICELL",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 110,
+      "precio": 11000,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        322.2,
+        620.8,
+        433.7,
+        644.4
+      ],
+      "variantes": [
+        {
+          "codigo": "9518",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9518.png"
+    },
+    {
+      "codigo": "ARB-F-JALEA-REAL",
+      "nombre": "JALEA REAL",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 111,
+      "precio": 14900,
+      "p_reg": 14900,
+      "presentacion": "30 comprimidos.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        306.0,
+        647.7,
+        398.6,
+        733.2
+      ],
+      "variantes": [
+        {
+          "codigo": "9512",
+          "color": null
+        },
+        {
+          "codigo": "9900",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-F-JALEA-REAL.png"
+    },
+    {
+      "codigo": "ARB-9608",
+      "nombre": "PROPÓLEOS JENGIBRE Y MIEL 2,5%",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 111,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "150 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        142.0,
+        589.5,
+        299.6,
+        625.4
+      ],
+      "variantes": [
+        {
+          "codigo": "9608",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9608.png"
+    },
+    {
+      "codigo": "ARB-9532",
+      "nombre": "PROPÓLEOS Y EUCALIPTO 5%",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 111,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "150 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        142.0,
+        635.1,
+        281.0,
+        671.0
+      ],
+      "variantes": [
+        {
+          "codigo": "9532",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9532.png"
+    },
+    {
+      "codigo": "ARB-9547",
+      "nombre": "TINTURA DE PROPÓLEOS",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 112,
+      "precio": 9900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        318.7,
+        541.5,
+        431.9,
+        565.0
+      ],
+      "variantes": [
+        {
+          "codigo": "9547",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9547.png"
+    },
+    {
+      "codigo": "ARB-9629",
+      "nombre": "TÉ GRANULADO JENGIBRE, EUCALIPTO Y MIEL",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 113,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "150 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        23.8,
+        507.9,
+        110.3,
+        567.7
+      ],
+      "variantes": [
+        {
+          "codigo": "9629",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9629.png"
+    },
+    {
+      "codigo": "ARB-9633",
+      "nombre": "TÉ GRANULADO ARÁNDANOS Y MIEL",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 113,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": "150 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        23.8,
+        577.5,
+        113.8,
+        625.3
+      ],
+      "variantes": [
+        {
+          "codigo": "9633",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9633.png"
+    },
+    {
+      "codigo": "ARB-9639",
+      "nombre": "TE PROLEOS+ LAPACHO + SAUCO",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 113,
+      "precio": 11900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        23.8,
+        633.3,
+        109.3,
+        667.1
+      ],
+      "variantes": [
+        {
+          "codigo": "9639",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9639.png"
+    },
+    {
+      "codigo": "ARB-F-TODOS",
+      "nombre": "TODOS",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 114,
+      "precio": 8900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        384.4,
+        556.0,
+        461.2,
+        629.2787475585938
+      ],
+      "variantes": [
+        {
+          "codigo": "9626",
+          "color": "MIEL, JENGIBRE"
+        },
+        {
+          "codigo": "9584",
+          "color": "PROPÓLEOS"
+        }
+      ],
+      "recorte": "ARB-F-TODOS.png"
+    },
+    {
+      "codigo": "ARB-9598",
+      "nombre": "JENGIBRE & NARANJA",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 114,
+      "precio": 8900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        286.7,
+        557.2,
+        343.7,
+        594.5
+      ],
+      "variantes": [
+        {
+          "codigo": "9598",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9598.png"
+    },
+    {
+      "codigo": "ARB-9599",
+      "nombre": "PÓLEN & JALEA",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 114,
+      "precio": 8900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        279.0,
+        604.0,
+        351.4,
+        629.3
+      ],
+      "variantes": [
+        {
+          "codigo": "9599",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9599.png"
+    },
+    {
+      "codigo": "ARB-9564",
+      "nombre": "REDUBELL Sabor limón.",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 115,
+      "precio": 14900,
+      "p_reg": 19900,
+      "presentacion": "100 g.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        66.2,
+        629.4,
+        164.5,
+        726.2
+      ],
+      "variantes": [
+        {
+          "codigo": "9564",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9564.png"
+    },
+    {
+      "codigo": "ARB-9548",
+      "nombre": "KETOFIT 30 cápsulas",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 115,
+      "precio": 21900,
+      "p_reg": 29900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        319.6,
+        641.0,
+        417.8,
+        725.5
+      ],
+      "variantes": [
+        {
+          "codigo": "9548",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9548.png"
+    },
+    {
+      "codigo": "ARB-9546",
+      "nombre": "KIT SOPA Kit de 14 días.",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 116,
+      "precio": 39900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        220.7,
+        597.9,
+        278.0,
+        632.4
+      ],
+      "variantes": [
+        {
+          "codigo": "9546",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9546.png"
+    },
+    {
+      "codigo": "ARB-9545",
+      "nombre": "KIT CHOCOLATE Kit de 14 días.",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 117,
+      "precio": 39900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        304.0,
+        597.9,
+        380.7,
+        632.4
+      ],
+      "variantes": [
+        {
+          "codigo": "9545",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9545.png"
+    },
+    {
+      "codigo": "ARB-F-ULTIMATE-GARCINIA-QUEMADOR-DE-GRASAS",
+      "nombre": "ULTIMATE GARCINIA Quemador de grasas.",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 118,
+      "precio": 18900,
+      "p_reg": null,
+      "presentacion": "90 comprimidos.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        333.5,
+        629.9,
+        427.8,
+        653.4
+      ],
+      "variantes": [
+        {
+          "codigo": "9603",
+          "color": "GARCINIA ULTIMATE"
+        }
+      ],
+      "recorte": "ARB-F-ULTIMATE-GARCINIA-QUEMADOR-DE-GRASAS.png"
+    },
+    {
+      "codigo": "ARB-9612",
+      "nombre": "MULTIVITAMÍNICO 30 cápsulas.",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 119,
+      "precio": 18900,
+      "p_reg": 22900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        21.1,
+        656.3,
+        122.5,
+        741.9
+      ],
+      "variantes": [
+        {
+          "codigo": "9612",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9612.png"
+    },
+    {
+      "codigo": "ARB-9613",
+      "nombre": "COLLAGEN Sabor naranja.100 g.",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 119,
+      "precio": 29900,
+      "p_reg": 35900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        260.0,
+        654.5,
+        361.4,
+        741.9
+      ],
+      "variantes": [
+        {
+          "codigo": "9613",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9613.png"
+    },
+    {
+      "codigo": "ARB-9594",
+      "nombre": "ACTIVA",
+      "descripcion": null,
+      "categoria": "Suplementos",
+      "pagina": 120,
+      "precio": 11000,
+      "p_reg": 18900,
+      "presentacion": "120 comprimidos.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        287.9,
+        621.8,
+        467.0,
+        742.6
+      ],
+      "variantes": [
+        {
+          "codigo": "9594",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-9594.png"
+    },
+    {
+      "codigo": "ARB-AC3027",
+      "nombre": "SET 4 COLLARES AMALFI Set de Importantes collares de 4",
+      "descripcion": "cadenas en diferentes largos con detalles de piedra color tuquesa. Baño de Oro 18k.",
+      "categoria": "Joyeria",
+      "pagina": 122,
+      "precio": 29900,
+      "p_reg": 29900,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        197.7,
+        368.1,
+        326.8,
+        456.0
+      ],
+      "variantes": [
+        {
+          "codigo": "AC3027",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC3027.png"
+    },
+    {
+      "codigo": "ARB-AC3043",
+      "nombre": "SILVER COLGANTE Importante colgante largos y eslabones",
+      "descripcion": "de 3 cadenas con diferentes Diámetro 41- 46 - 52 cm.",
+      "categoria": "Joyeria",
+      "pagina": 122,
+      "precio": 24900,
+      "p_reg": 24900,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        197.7,
+        479.5,
+        307.5,
+        566.7
+      ],
+      "variantes": [
+        {
+          "codigo": "AC3043",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC3043.png"
+    },
+    {
+      "codigo": "ARB-AC3030",
+      "nombre": "SET 2 CADENAS ROMA Set de 2 cadenas, una de símil el set",
+      "descripcion": "piedra turquesa y la otra cadena. Baño de plata con una cruz con vidrío. Cierre tipo mosquetón. Medidas: 38 cm + 7 de extensión.",
+      "categoria": "Joyeria",
+      "pagina": 122,
+      "precio": 29900,
+      "p_reg": 29900,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        42.1,
+        527.5,
+        172.4,
+        628.8
+      ],
+      "variantes": [
+        {
+          "codigo": "AC3030",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC3030.png"
+    },
+    {
+      "codigo": "ARB-AC3044",
+      "nombre": "TOLEDO COLGANTE Importante colgante con dije Largo 46 cm.",
+      "descripcion": "y tiras símil cuero color verde seco.",
+      "categoria": "Joyeria",
+      "pagina": 122,
+      "precio": 24900,
+      "p_reg": 24900,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        42.1,
+        641.1,
+        178.1,
+        719.3
+      ],
+      "variantes": [
+        {
+          "codigo": "AC3044",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC3044.png"
+    },
+    {
+      "codigo": "ARB-AC3015",
+      "nombre": "COLGANTE CIRCLE Cadena con dije en forma de",
+      "descripcion": "círculo, baño de oro y simil nacar. Largo 45 cm + 7 cm de extensor.",
+      "categoria": "Joyeria",
+      "pagina": 122,
+      "precio": 26000,
+      "p_reg": 26000,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        42.1,
+        359.6,
+        178.4,
+        436.0
+      ],
+      "variantes": [
+        {
+          "codigo": "AC3015",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC3015.png"
+    },
+    {
+      "codigo": "ARB-AC3009",
+      "nombre": "COLGANTE LOVE Cadena con dijes en baño + 7 cm de extensor.",
+      "descripcion": "de plata y oro. Largo 45 cm",
+      "categoria": "Joyeria",
+      "pagina": 122,
+      "precio": 26000,
+      "p_reg": 26000,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        42.1,
+        442.6,
+        150.9,
+        519.0
+      ],
+      "variantes": [
+        {
+          "codigo": "AC3009",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC3009.png"
+    },
+    {
+      "codigo": "ARB-AC3045",
+      "nombre": "COLGANTE SET CON AROS GOLDEN Set de collar + aros,",
+      "descripcion": "realizados en baño de oro 18k. Largo 40 cm + 7 cm de extension.",
+      "categoria": "Joyeria",
+      "pagina": 122,
+      "precio": 11900,
+      "p_reg": 24900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        197.7,
+        605.1,
+        336.3,
+        726.5
+      ],
+      "variantes": [
+        {
+          "codigo": "AC3045",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC3045.png"
+    },
+    {
+      "codigo": "ARB-AC3059",
+      "nombre": "SILVER SET X 3 ANILLOS baño de plata. Diámetro 17 mm.",
+      "descripcion": "Set de 3 diferentes anillos ajustables, cada set",
+      "categoria": "Joyeria",
+      "pagina": 123,
+      "precio": 9990,
+      "p_reg": 29900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        20.7,
+        622.9,
+        164.3,
+        725.3
+      ],
+      "variantes": [
+        {
+          "codigo": "AC3059",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC3059.png"
+    },
+    {
+      "codigo": "ARB-AC3053",
+      "nombre": "TRENDY SET X 3 AROS Set de 3 pares de aros super",
+      "descripcion": "modernos y combinables, Baño de plata. Pasante hipoalergénico.",
+      "categoria": "Joyeria",
+      "pagina": 123,
+      "precio": 21900,
+      "p_reg": 21900,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        20.6,
+        522.0,
+        138.2,
+        611.8
+      ],
+      "variantes": [
+        {
+          "codigo": "AC3053",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC3053.png"
+    },
+    {
+      "codigo": "ARB-AC3032",
+      "nombre": "SET DE 4 PULSERAS MARRUECOS Set de 4 pulseras diferentes,",
+      "descripcion": "con dijes de metal y piedra, con cierre de mosquetón. Medidas: 17 cm + 5 cm de extensión. Baño de Oro 18k.",
+      "categoria": "Joyeria",
+      "pagina": 123,
+      "precio": 25900,
+      "p_reg": 25900,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        301.2,
+        434.9,
+        417.1,
+        545.9
+      ],
+      "variantes": [
+        {
+          "codigo": "AC3032",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC3032.png"
+    },
+    {
+      "codigo": "ARB-AC3047",
+      "nombre": "CHIC PULSERAS SET X 4 Set de 4 pulseras con diferentes",
+      "descripcion": "tipos de eslabones y dijes. Se pueden usar juntas o separadas. Diámetro 19 cm + 5 cm de extensión. Baño de oro. cada set",
+      "categoria": "Joyeria",
+      "pagina": 123,
+      "precio": 12900,
+      "p_reg": 25900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        302.3,
+        582.8,
+        447.1,
+        719.8
+      ],
+      "variantes": [
+        {
+          "codigo": "AC3047",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC3047.png"
+    },
+    {
+      "codigo": "ARB-AC3005",
+      "nombre": "SET DE AROS GOLD X 6 Set de aros de diferentes tamaños",
+      "descripcion": "para lograr 6 looks diferentes, bañados en oro.",
+      "categoria": "Joyeria",
+      "pagina": 123,
+      "precio": 26900,
+      "p_reg": 26900,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        301.2,
+        325.0,
+        434.5,
+        401.4
+      ],
+      "variantes": [
+        {
+          "codigo": "AC3005",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC3005.png"
+    },
+    {
+      "codigo": "ARB-F-O-R-I-E-N-TA-L",
+      "nombre": "O R I E N TA L",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 125,
+      "precio": 19900,
+      "p_reg": null,
+      "presentacion": "65 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        305.0,
+        514.3,
+        377.8,
+        537.8
+      ],
+      "variantes": [
+        {
+          "codigo": "6001",
+          "color": "DIVA PERFUME"
+        }
+      ],
+      "recorte": "ARB-F-O-R-I-E-N-TA-L.png"
+    },
+    {
+      "codigo": "ARB-6127",
+      "nombre": "DIVA ELIXIR PERFUME",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 126,
+      "precio": 39900,
+      "p_reg": 39900,
+      "presentacion": "65 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        35.5,
+        620.9,
+        137.9,
+        671.2
+      ],
+      "variantes": [
+        {
+          "codigo": "6127",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6127.png"
+    },
+    {
+      "codigo": "ARB-6084",
+      "nombre": "DIVA GOLD PERFUME",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 126,
+      "precio": 24900,
+      "p_reg": 39900,
+      "presentacion": "65 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        182.9,
+        620.9,
+        316.5,
+        704.4
+      ],
+      "variantes": [
+        {
+          "codigo": "6084",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6084.png"
+    },
+    {
+      "codigo": "ARB-6121",
+      "nombre": "DIVA HEAVEN PERFUME",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 126,
+      "precio": 39900,
+      "p_reg": 39900,
+      "presentacion": "65 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        330.7,
+        620.9,
+        442.3,
+        671.2
+      ],
+      "variantes": [
+        {
+          "codigo": "6121",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6121.png"
+    },
+    {
+      "codigo": "ARB-7022",
+      "nombre": "DIVA HEAVEN DEO F LO R A L C Í T R I C A",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 127,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        304.9,
+        638.7,
+        408.8,
+        675.4
+      ],
+      "variantes": [
+        {
+          "codigo": "7022",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7022.png"
+    },
+    {
+      "codigo": "ARB-7021",
+      "nombre": "DIVA GOLD DEO F LO R A L F R U TA L",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 127,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        306.6,
+        592.7,
+        407.1,
+        629.4
+      ],
+      "variantes": [
+        {
+          "codigo": "7021",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7021.png"
+    },
+    {
+      "codigo": "ARB-7008",
+      "nombre": "DIVA DEO O R I E N TA L F LO R A L",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 127,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene un combo o un regalo",
+      "bbox": [
+        299.1,
+        546.5,
+        414.6,
+        583.2
+      ],
+      "variantes": [
+        {
+          "codigo": "7008",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-7008.png"
+    },
+    {
+      "codigo": "ARB-6116",
+      "nombre": "INTENSE EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 128,
+      "precio": 64900,
+      "p_reg": 64900,
+      "presentacion": "65 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        241.7,
+        588.4,
+        330.2,
+        649.4
+      ],
+      "variantes": [
+        {
+          "codigo": "6116",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6116.png"
+    },
+    {
+      "codigo": "ARB-6125",
+      "nombre": "PANDORA EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 128,
+      "precio": 64900,
+      "p_reg": 64900,
+      "presentacion": "90 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        109.1,
+        588.4,
+        197.6,
+        659.4
+      ],
+      "variantes": [
+        {
+          "codigo": "6125",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6125.png"
+    },
+    {
+      "codigo": "ARB-6099",
+      "nombre": "WILD & SEXY EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 129,
+      "precio": 34900,
+      "p_reg": 49900,
+      "presentacion": "100 ml",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        57.9,
+        629.7,
+        155.2,
+        723.9
+      ],
+      "variantes": [
+        {
+          "codigo": "6099",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6099.png"
+    },
+    {
+      "codigo": "ARB-6089",
+      "nombre": "SILVER ROSE EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 130,
+      "precio": 49900,
+      "p_reg": 49900,
+      "presentacion": "100 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        240.8,
+        597.9,
+        329.4,
+        668.9
+      ],
+      "variantes": [
+        {
+          "codigo": "6089",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6089.png"
+    },
+    {
+      "codigo": "ARB-6088",
+      "nombre": "PASSION EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 130,
+      "precio": 49900,
+      "p_reg": 49900,
+      "presentacion": "100 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        108.2,
+        597.9,
+        196.8,
+        658.8
+      ],
+      "variantes": [
+        {
+          "codigo": "6088",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6088.png"
+    },
+    {
+      "codigo": "ARB-6078",
+      "nombre": "WOMAN EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 131,
+      "precio": 44900,
+      "p_reg": 44900,
+      "presentacion": "50 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        266.6,
+        597.9,
+        355.2,
+        658.8
+      ],
+      "variantes": [
+        {
+          "codigo": "6078",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6078.png"
+    },
+    {
+      "codigo": "ARB-6087",
+      "nombre": "LOVE BELLE EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 131,
+      "precio": 44900,
+      "p_reg": 44900,
+      "presentacion": "50 ml.",
+      "confianza": "media",
+      "motivo": "sin precio de oferta, se usa P.REG.",
+      "bbox": [
+        107.5,
+        597.9,
+        196.0,
+        658.8
+      ],
+      "variantes": [
+        {
+          "codigo": "6087",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6087.png"
+    },
+    {
+      "codigo": "ARB-6123",
+      "nombre": "FRAGANCIA PREMIUM FEMENINA BLUME",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 132,
+      "precio": 75000,
+      "p_reg": 110000,
+      "presentacion": "100 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        289.3,
+        557.4,
+        395.9,
+        656.7
+      ],
+      "variantes": [
+        {
+          "codigo": "6123",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6123.png"
+    },
+    {
+      "codigo": "ARB-6122",
+      "nombre": "FRAGANCIA PREMIUM MASCULINA EMPIRE",
+      "descripcion": null,
+      "categoria": "Fragancias femeninas",
+      "pagina": 133,
+      "precio": 75000,
+      "p_reg": 110000,
+      "presentacion": "100 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        306.2,
+        553.3,
+        412.3,
+        653.8
+      ],
+      "variantes": [
+        {
+          "codigo": "6122",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6122.png"
+    },
+    {
+      "codigo": "ARB-6133",
+      "nombre": "MESSI THE FRAGRANCE EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias masculinas",
+      "pagina": 135,
+      "precio": 99900,
+      "p_reg": null,
+      "presentacion": "100 ml",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        248.0,
+        491.2,
+        363.3,
+        540.5
+      ],
+      "variantes": [
+        {
+          "codigo": "6133",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6133.png"
+    },
+    {
+      "codigo": "ARB-6086",
+      "nombre": "BLEU EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias masculinas",
+      "pagina": 136,
+      "precio": 34900,
+      "p_reg": 49900,
+      "presentacion": "90 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        97.3,
+        609.2,
+        198.6,
+        709.3
+      ],
+      "variantes": [
+        {
+          "codigo": "6086",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6086.png"
+    },
+    {
+      "codigo": "ARB-6113",
+      "nombre": "LEGEND EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias masculinas",
+      "pagina": 136,
+      "precio": 54900,
+      "p_reg": 79900,
+      "presentacion": "100 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        293.1,
+        609.2,
+        394.4,
+        709.3
+      ],
+      "variantes": [
+        {
+          "codigo": "6113",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6113.png"
+    },
+    {
+      "codigo": "ARB-6126",
+      "nombre": "ZENITH EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias masculinas",
+      "pagina": 137,
+      "precio": 54900,
+      "p_reg": null,
+      "presentacion": "100 ml",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        307.6,
+        596.1,
+        388.8,
+        645.4
+      ],
+      "variantes": [
+        {
+          "codigo": "6126",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6126.png"
+    },
+    {
+      "codigo": "ARB-6120",
+      "nombre": "SIGNATURE FOREST EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias masculinas",
+      "pagina": 138,
+      "precio": 29900,
+      "p_reg": null,
+      "presentacion": "50 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        373.7,
+        625.1,
+        472.6,
+        669.9
+      ],
+      "variantes": [
+        {
+          "codigo": "6120",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6120.png"
+    },
+    {
+      "codigo": "ARB-6104",
+      "nombre": "SIGNATURE EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias masculinas",
+      "pagina": 138,
+      "precio": 29900,
+      "p_reg": null,
+      "presentacion": "50 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        222.4,
+        625.1,
+        300.9,
+        669.9
+      ],
+      "variantes": [
+        {
+          "codigo": "6104",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6104.png"
+    },
+    {
+      "codigo": "ARB-6124",
+      "nombre": "QUANTUM EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias masculinas",
+      "pagina": 138,
+      "precio": 29900,
+      "p_reg": null,
+      "presentacion": "50 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        73.5,
+        625.1,
+        152.1,
+        669.9
+      ],
+      "variantes": [
+        {
+          "codigo": "6124",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6124.png"
+    },
+    {
+      "codigo": "ARB-6097",
+      "nombre": "BRAVO URBANO EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias masculinas",
+      "pagina": 139,
+      "precio": 34900,
+      "p_reg": null,
+      "presentacion": "100 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        228.5,
+        626.5,
+        304.6,
+        673.0
+      ],
+      "variantes": [
+        {
+          "codigo": "6097",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6097.png"
+    },
+    {
+      "codigo": "ARB-6095",
+      "nombre": "BRAVO EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias masculinas",
+      "pagina": 139,
+      "precio": 34900,
+      "p_reg": null,
+      "presentacion": "100 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        76.6,
+        625.6,
+        152.8,
+        672.1
+      ],
+      "variantes": [
+        {
+          "codigo": "6095",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6095.png"
+    },
+    {
+      "codigo": "ARB-6096",
+      "nombre": "BRAVO INTENSE EAU DE PARFUM",
+      "descripcion": null,
+      "categoria": "Fragancias masculinas",
+      "pagina": 139,
+      "precio": 34900,
+      "p_reg": null,
+      "presentacion": "100 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        380.3,
+        625.6,
+        456.4,
+        672.1
+      ],
+      "variantes": [
+        {
+          "codigo": "6096",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-6096.png"
+    },
+    {
+      "codigo": "ARB-F-ABSOLUTE",
+      "nombre": "Absolute",
+      "descripcion": null,
+      "categoria": "Fragancias masculinas",
+      "pagina": 140,
+      "precio": 19900,
+      "p_reg": null,
+      "presentacion": "50 ml.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        304.2,
+        577.8,
+        386.7,
+        603.0
+      ],
+      "variantes": [
+        {
+          "codigo": "6085",
+          "color": "ABSOLUTE NIGHT"
+        }
+      ],
+      "recorte": "ARB-F-ABSOLUTE.png"
+    },
+    {
+      "codigo": "ARB-2610",
+      "nombre": "SHAMPOO SIN LÁGRIMAS",
+      "descripcion": null,
+      "categoria": "Ninez",
+      "pagina": 143,
+      "precio": 8900,
+      "p_reg": 12900,
+      "presentacion": "125 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        342.4,
+        368.5,
+        465.4,
+        456.5
+      ],
+      "variantes": [
+        {
+          "codigo": "2610",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2610.png"
+    },
+    {
+      "codigo": "ARB-2611",
+      "nombre": "COLONIA BEBÉ",
+      "descripcion": null,
+      "categoria": "Ninez",
+      "pagina": 143,
+      "precio": 9900,
+      "p_reg": 14900,
+      "presentacion": "125 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        342.4,
+        280.9,
+        431.0,
+        368.9
+      ],
+      "variantes": [
+        {
+          "codigo": "2611",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2611.png"
+    },
+    {
+      "codigo": "ARB-AC1056",
+      "nombre": "ESPONJA BALLENA BEBÉ",
+      "descripcion": null,
+      "categoria": "Ninez",
+      "pagina": 143,
+      "precio": 2990,
+      "p_reg": 4900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        342.4,
+        457.1,
+        463.0,
+        533.8
+      ],
+      "variantes": [
+        {
+          "codigo": "AC1056",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AC1056.png"
+    },
+    {
+      "codigo": "ARB-2719",
+      "nombre": "GEL GLITTER Y CAPILAR",
+      "descripcion": null,
+      "categoria": "Ninez",
+      "pagina": 144,
+      "precio": 5900,
+      "p_reg": 8900,
+      "presentacion": "60 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        30.6,
+        611.0,
+        112.5,
+        720.7
+      ],
+      "variantes": [
+        {
+          "codigo": "2719",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2719.png"
+    },
+    {
+      "codigo": "ARB-2714",
+      "nombre": "BURBUJAS MÁGICAS Baño de espuma",
+      "descripcion": null,
+      "categoria": "Ninez",
+      "pagina": 144,
+      "precio": 5900,
+      "p_reg": 8900,
+      "presentacion": "125 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        262.0,
+        621.5,
+        356.8,
+        720.8
+      ],
+      "variantes": [
+        {
+          "codigo": "2714",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2714.png"
+    },
+    {
+      "codigo": "ARB-2717",
+      "nombre": "DESENREDANTE DE PELO SPRAY",
+      "descripcion": null,
+      "categoria": "Ninez",
+      "pagina": 144,
+      "precio": 8900,
+      "p_reg": 12900,
+      "presentacion": "130 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        358.4,
+        622.5,
+        446.9,
+        720.8
+      ],
+      "variantes": [
+        {
+          "codigo": "2717",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2717.png"
+    },
+    {
+      "codigo": "ARB-F-LABIAL-LINY",
+      "nombre": "LABIAL LINY",
+      "descripcion": null,
+      "categoria": "Ninez",
+      "pagina": 144,
+      "precio": 8900,
+      "p_reg": null,
+      "presentacion": "4 g.",
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        114.9,
+        120.05931854248047,
+        287.75323486328125,
+        160.0
+      ],
+      "variantes": [
+        {
+          "codigo": "2722",
+          "color": "CANDY"
+        },
+        {
+          "codigo": "2723",
+          "color": "SWEET ROSA"
+        }
+      ],
+      "recorte": "ARB-F-LABIAL-LINY.png"
+    },
+    {
+      "codigo": "ARB-AX00465",
+      "nombre": "PELOTA DE FÚTBOL",
+      "descripcion": null,
+      "categoria": "Ninez",
+      "pagina": 145,
+      "precio": 19900,
+      "p_reg": 39900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        331.9,
+        654.1,
+        427.8,
+        732.6
+      ],
+      "variantes": [
+        {
+          "codigo": "AX00465",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-AX00465.png"
+    },
+    {
+      "codigo": "ARB-2715",
+      "nombre": "CAMPEONES BODY SPLASH",
+      "descripcion": null,
+      "categoria": "Ninez",
+      "pagina": 145,
+      "precio": 9900,
+      "p_reg": 14900,
+      "presentacion": null,
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        104.6,
+        651.7,
+        291.1,
+        734.4
+      ],
+      "variantes": [
+        {
+          "codigo": "2715",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2715.png"
+    },
+    {
+      "codigo": "ARB-2716",
+      "nombre": "GLITTER BODY SPLASH",
+      "descripcion": null,
+      "categoria": "Ninez",
+      "pagina": 145,
+      "precio": 19900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        25.1,
+        653.8,
+        140.1,
+        679.0
+      ],
+      "variantes": [
+        {
+          "codigo": "2716",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-2716.png"
+    },
+    {
+      "codigo": "ARB-V046",
+      "nombre": "CAPULLO DE ALGODÓN JAZMINES Y FRESIAS",
+      "descripcion": null,
+      "categoria": "Hogar",
+      "pagina": 147,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        39.0,
+        415.4,
+        128.4,
+        443.8
+      ],
+      "variantes": [
+        {
+          "codigo": "V046",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-V046.png"
+    },
+    {
+      "codigo": "ARB-V047",
+      "nombre": "ROCÍO DE MIEL FRAGANCIA DE BEBÉ",
+      "descripcion": null,
+      "categoria": "Hogar",
+      "pagina": 147,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        150.2,
+        415.4,
+        220.5,
+        443.8
+      ],
+      "variantes": [
+        {
+          "codigo": "V047",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-V047.png"
+    },
+    {
+      "codigo": "ARB-V051",
+      "nombre": "GOTAS DE AMOR FLOR DE NARANJO Y ÁMBAR",
+      "descripcion": null,
+      "categoria": "Hogar",
+      "pagina": 147,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        234.9,
+        415.4,
+        331.6,
+        443.8
+      ],
+      "variantes": [
+        {
+          "codigo": "V051",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-V051.png"
+    },
+    {
+      "codigo": "ARB-V058",
+      "nombre": "FRESCURA CÍTRICA CÍTRICOS, LAVANDA, JAZMÍN",
+      "descripcion": null,
+      "categoria": "Hogar",
+      "pagina": 147,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        342.9,
+        415.4,
+        441.1,
+        443.8
+      ],
+      "variantes": [
+        {
+          "codigo": "V058",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-V058.png"
+    },
+    {
+      "codigo": "ARB-V073",
+      "nombre": "BRISA DE VERANO SANDÍA, MELÓN, FLORES DE ROBLE, SÁNDALO",
+      "descripcion": "BLANCAS Y VIOLETAS MUSGO",
+      "categoria": "Hogar",
+      "pagina": 147,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        17.7,
+        52.9,
+        120.9,
+        97.7
+      ],
+      "variantes": [
+        {
+          "codigo": "V073",
+          "color": null
+        }
+      ]
+    },
+    {
+      "codigo": "ARB-V074",
+      "nombre": "SUSPIRO DE LUNA CÍTRICOS Y FLORES",
+      "descripcion": null,
+      "categoria": "Hogar",
+      "pagina": 147,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        129.7,
+        52.9,
+        199.3,
+        81.3
+      ],
+      "variantes": [
+        {
+          "codigo": "V074",
+          "color": null
+        }
+      ]
+    },
+    {
+      "codigo": "ARB-V077",
+      "nombre": "OCÉANO AZUL CITRICOS, NOTAS ACUOSAS, BOUQUET FLORAL",
+      "descripcion": "Y MADERAS",
+      "categoria": "Hogar",
+      "pagina": 147,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque; la pagina tiene mas de un precio grande",
+      "bbox": [
+        213.7,
+        52.9,
+        276.2,
+        106.5
+      ],
+      "variantes": [
+        {
+          "codigo": "V077",
+          "color": null
+        }
+      ]
+    },
+    {
+      "codigo": "ARB-VO70",
+      "nombre": "Jazmines, frutas frescas y maderas S",
+      "descripcion": null,
+      "categoria": "Hogar",
+      "pagina": 148,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        148.2,
+        515.8,
+        210.8,
+        570.9
+      ],
+      "variantes": [
+        {
+          "codigo": "VO70",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-VO70.png"
+    },
+    {
+      "codigo": "ARB-VO71",
+      "nombre": "Melón, notas acuáticas, jazmines, rosas y madera A",
+      "descripcion": null,
+      "categoria": "Hogar",
+      "pagina": 148,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        148.2,
+        579.2,
+        204.2,
+        644.1
+      ],
+      "variantes": [
+        {
+          "codigo": "VO71",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-VO71.png"
+    },
+    {
+      "codigo": "ARB-VO72",
+      "nombre": "Notas verdes especiadas, jazmines, gardenias y musk N",
+      "descripcion": null,
+      "categoria": "Hogar",
+      "pagina": 148,
+      "precio": 12900,
+      "p_reg": null,
+      "presentacion": null,
+      "confianza": "media",
+      "motivo": "precio tomado de la pagina, no del bloque",
+      "bbox": [
+        148.2,
+        652.4,
+        212.3,
+        717.3
+      ],
+      "variantes": [
+        {
+          "codigo": "VO72",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-VO72.png"
+    },
+    {
+      "codigo": "ARB-F-AROMATIZANTE-SPRAY-DELUXE-N-1-N-2-N-3-N-",
+      "nombre": "AROMATIZANTE SPRAY DELUXE Nº 1 Nº 2 Nº 3 Nº 4",
+      "descripcion": null,
+      "categoria": "Hogar",
+      "pagina": 149,
+      "precio": 9900,
+      "p_reg": 13900,
+      "presentacion": "250 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        363.4,
+        576.9,
+        463.9,
+        722.8
+      ],
+      "variantes": [
+        {
+          "codigo": "VO66",
+          "color": null
+        },
+        {
+          "codigo": "VO67",
+          "color": null
+        },
+        {
+          "codigo": "VO68",
+          "color": null
+        },
+        {
+          "codigo": "VO69",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-F-AROMATIZANTE-SPRAY-DELUXE-N-1-N-2-N-3-N-.png"
+    },
+    {
+      "codigo": "ARB-F-AROMATIZANTE-SPRAY-DELUXE-EDICION-ARABES",
+      "nombre": "AROMATIZANTE SPRAY DELUXE EDICIÓN ÁRABES IARA ERBA PURE",
+      "descripcion": "ASSAD",
+      "categoria": "Hogar",
+      "pagina": 149,
+      "precio": 10900,
+      "p_reg": 14900,
+      "presentacion": "250 ml.",
+      "confianza": "alta",
+      "motivo": "",
+      "bbox": [
+        358.4,
+        202.6,
+        464.4,
+        356.6
+      ],
+      "variantes": [
+        {
+          "codigo": "V080",
+          "color": null
+        },
+        {
+          "codigo": "V078",
+          "color": null
+        },
+        {
+          "codigo": "V079",
+          "color": null
+        }
+      ],
+      "recorte": "ARB-F-AROMATIZANTE-SPRAY-DELUXE-EDICION-ARABES.png"
+    }
+  ]
+}
