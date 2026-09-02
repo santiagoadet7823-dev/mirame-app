@@ -58,6 +58,7 @@ class SyncStatus {
   const SyncStatus({
     this.estado = EstadoSync.inactivo,
     this.pendientes = 0,
+    this.trabados = 0,
     this.ultimoOk,
     this.error,
   });
@@ -67,12 +68,21 @@ class SyncStatus {
   /// Cuántas escrituras esperan en la cola. Es lo que la UI muestra como
   /// "faltan N por subir".
   final int pendientes;
+
+  /// Cuántas de esas ya agotaron sus intentos y **no se van a reintentar**.
+  ///
+  /// Se cuentan aparte porque no son lo mismo para quien mira: cinco esperando
+  /// a que vuelva la señal se resuelven solas, y cinco trabadas no se resuelven
+  /// nunca. Con un solo número, un alta rechazada por el servidor se ve igual
+  /// que estar en el subte, y así estuvo un día entero sin que nadie lo notara.
+  final int trabados;
   final DateTime? ultimoOk;
   final String? error;
 
   SyncStatus copyWith({
     EstadoSync? estado,
     int? pendientes,
+    int? trabados,
     DateTime? ultimoOk,
     String? error,
     bool limpiarError = false,
@@ -80,6 +90,7 @@ class SyncStatus {
       SyncStatus(
         estado: estado ?? this.estado,
         pendientes: pendientes ?? this.pendientes,
+        trabados: trabados ?? this.trabados,
         ultimoOk: ultimoOk ?? this.ultimoOk,
         error: limpiarError ? null : (error ?? this.error),
       );
@@ -141,6 +152,41 @@ class SyncEngine {
       ..where(_db.outbox.tenantId.equals(tenantId));
     final fila = await q.getSingle();
     return fila.read(_db.outbox.id.count()) ?? 0;
+  }
+
+  /// Las que ya agotaron sus intentos: no se reintentan más solas.
+  ///
+  /// Devuelve cuántas son y el error de la más vieja, que es el que explica
+  /// al resto — cuando un alta se traba, sus variantes y sus fotos se traban
+  /// detrás por foreign key, y mostrar ese error derivado en vez del primero
+  /// manda a mirar el lugar equivocado.
+  Future<({int cuantos, String? motivo})> trabados(String tenantId) async {
+    final filas = await (_db.select(_db.outbox)
+          ..where((o) =>
+              o.tenantId.equals(tenantId) &
+              o.intentos.isBiggerOrEqualValue(kMaxIntentos))
+          ..orderBy([(o) => OrderingTerm.asc(o.id)]))
+        .get();
+    return (
+      cuantos: filas.length,
+      motivo: filas.isEmpty ? null : filas.first.ultimoError,
+    );
+  }
+
+  /// Vuelve a poner en carrera lo que se había dado por perdido.
+  ///
+  /// Sin esto, una fila que el servidor rechazó ocho veces queda contada en
+  /// "sin subir" y excluida del push para siempre: la única salida era borrar
+  /// los datos de la app. Se usa después de arreglar lo que la rechazaba.
+  Future<void> revivirTrabados(String tenantId) async {
+    await (_db.update(_db.outbox)
+          ..where((o) =>
+              o.tenantId.equals(tenantId) &
+              o.intentos.isBiggerOrEqualValue(kMaxIntentos)))
+        .write(OutboxCompanion(
+      intentos: const Value(0),
+      reintentarAt: Value(DateTime.now()),
+    ));
   }
 
   /// Sube lo encolado. Devuelve cuántas filas se subieron bien.
@@ -223,10 +269,22 @@ class SyncEngine {
       case 'delete':
         // Tombstone, no DELETE: un borrado real no se puede propagar porque
         // el otro dispositivo nunca se entera de que la fila existió.
-        await sb.from(fila.tabla).update({
+        //
+        // El `select` no es cosmético. Cuando la RLS filtra las filas de un
+        // UPDATE, PostgREST devuelve OK con cero filas y sin error: el borrado
+        // se daba por subido, la fila salía de la cola y el cambio se perdía
+        // para siempre. Cero filas acá significa que algo está mal de verdad
+        // —la cola es FIFO por id, así que el alta de una prenda creada y
+        // borrada sin señal siempre se sube antes que su borrado.
+        final tocadas = await sb.from(fila.tabla).update({
           'deleted_at': DateTime.now().toUtc().toIso8601String(),
           'updated_at': DateTime.now().toUtc().toIso8601String(),
-        }).eq('id', fila.filaId);
+        }).eq('id', fila.filaId).select('id');
+        if (tocadas.isEmpty) {
+          throw StateError(
+              'el servidor no tiene esa fila de ${fila.tabla}, o no te deja '
+              'borrarla');
+        }
       default:
         await sb.from(fila.tabla).upsert(payload);
     }
@@ -499,6 +557,17 @@ class SyncController extends Notifier<SyncStatus> {
     await sincronizar();
   }
 
+  /// Vuelve a intentar lo que el servidor rechazó hasta agotar los intentos.
+  ///
+  /// Es la palanca que faltaba: sin ella, arreglar la causa de un rechazo no
+  /// alcanzaba, porque la fila ya no volvía a intentarse nunca.
+  Future<void> reintentarTrabados() async {
+    final tenant = _tenant;
+    if (tenant == null) return;
+    await ref.read(syncEngineProvider).revivirTrabados(tenant);
+    await sincronizar();
+  }
+
   Future<void> sincronizar() async {
     final tenant = _tenant;
     if (tenant == null || state.estado == EstadoSync.sincronizando) return;
@@ -508,10 +577,16 @@ class SyncController extends Notifier<SyncStatus> {
         estado: EstadoSync.sincronizando, limpiarError: true);
     try {
       await engine.ciclo(tenant);
+      // El ciclo puede terminar sin excepción y con filas rechazadas adentro:
+      // `empujar` aísla el fallo por fila para que una trabada no bloquee a las
+      // demás. Por eso el estado se arma mirando la cola, no el resultado.
+      final t = await engine.trabados(tenant);
       state = SyncStatus(
-        estado: EstadoSync.inactivo,
+        estado: t.cuantos > 0 ? EstadoSync.error : EstadoSync.inactivo,
         pendientes: await engine.pendientes(tenant),
+        trabados: t.cuantos,
         ultimoOk: DateTime.now(),
+        error: t.motivo,
       );
     } catch (e) {
       // Sin red NO es un error: es un estado normal de una app local-first.
@@ -523,6 +598,7 @@ class SyncController extends Notifier<SyncStatus> {
       state = state.copyWith(
         estado: sinRed ? EstadoSync.sinRed : EstadoSync.error,
         pendientes: await engine.pendientes(tenant),
+        trabados: (await engine.trabados(tenant)).cuantos,
         error: sinRed ? null : '$e',
       );
     }

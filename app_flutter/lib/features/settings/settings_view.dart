@@ -90,6 +90,16 @@ class SettingsView extends ConsumerWidget {
                     : '${sync.pendientes} '
                         '${sync.pendientes == 1 ? "cambio" : "cambios"}'
               ),
+              // Cinco esperando señal se resuelven solas; cinco rechazadas por
+              // el servidor no se resuelven nunca. Con un solo número se veían
+              // igual, y un alta trabada pasó un día entero sin que se notara.
+              if (sync.trabados > 0)
+                (
+                  'Trabados',
+                  '${sync.trabados} '
+                      '${sync.trabados == 1 ? "cambio" : "cambios"} '
+                      'que el servidor rechazó'
+                ),
               (
                 'Última vez',
                 sync.ultimoOk == null
@@ -125,6 +135,21 @@ class SettingsView extends ConsumerWidget {
                     style: sans(size: 13, weight: 600, color: MColors.tMuted),
                   ),
                 ),
+                // Una fila que agotó sus intentos queda fuera del push para
+                // siempre. Sin este botón, arreglar la causa del rechazo no
+                // alcanzaba: la única salida era borrar los datos de la app.
+                if (sync.trabados > 0)
+                  TextButton.icon(
+                    onPressed: () =>
+                        ref.read(syncProvider.notifier).reintentarTrabados(),
+                    icon: const Icon(Icons.refresh_rounded,
+                        size: 16, color: MColors.dangerText),
+                    label: Text(
+                      'Reintentar',
+                      style: sans(
+                          size: 13, weight: 600, color: MColors.dangerText),
+                    ),
+                  ),
               ],
             ),
           ),
