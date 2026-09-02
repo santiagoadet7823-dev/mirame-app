@@ -4,6 +4,7 @@
 /// primero: fotos, datos, talles, y al final la publicación en la tienda.
 library;
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -120,11 +121,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
 
     // El código se sugiere solo al crear. Se puede pisar, pero tenerlo desde
     // el principio es lo que hace que después se pueda buscar por él.
-    if (p == null) {
-      final usados =
-          (ref.read(productosProvider).value ?? const []).map((x) => x.codigo);
-      _codigo.text = proximoCodigo(usados);
-    }
+    if (p == null) unawaited(_sugerirCodigo());
 
     // Lo que Android se llevó mientras el picker estaba abierto. Va acá y no
     // en el botón porque el formulario se reconstruye desde cero justo después
@@ -207,6 +204,22 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
     final repo = ref.read(ropaRepoProvider);
     if (repo == null) return null;
     return repo.guardarDeposito(nombre: 'Principal', esPrincipal: true);
+  }
+
+  /// Propone el próximo código libre.
+  ///
+  /// Mira TODOS los códigos, borrados incluidos: en el servidor una prenda
+  /// borrada sigue ocupando el suyo, así que reciclarlo deja el alta rebotando
+  /// contra el índice único para siempre. Va contra la base y no contra
+  /// `productosProvider` justamente porque ese filtra las borradas.
+  ///
+  /// Si la usuaria alcanzó a escribir un código mientras tanto, no se le pisa.
+  Future<void> _sugerirCodigo() async {
+    final repo = ref.read(ropaRepoProvider);
+    if (repo == null) return;
+    final usados = await repo.codigosUsados();
+    if (!mounted || _codigo.text.isNotEmpty) return;
+    setState(() => _codigo.text = proximoCodigo(usados));
   }
 
   Future<void> _agregarFoto(bool camara) async {

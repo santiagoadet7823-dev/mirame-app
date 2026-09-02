@@ -58,6 +58,21 @@ class RopaRepository {
         ..orderBy([(p) => OrderingTerm.desc(p.createdAt)]))
       .watch();
 
+  /// Todos los códigos que alguna vez se usaron, **borrados incluidos**.
+  ///
+  /// `verProductos()` filtra las borradas, y alimentar el sugeridor con esa
+  /// lista hacía que el número volviera atrás al borrar una prenda. En el
+  /// servidor una prenda borrada sigue ocupando su código, así que el alta
+  /// nueva chocaba contra el índice único y quedaba rebotando con 409 en el
+  /// outbox hasta agotar sus intentos — sin un solo cartel.
+  Future<List<String?>> codigosUsados() async {
+    final filas = await (_db.selectOnly(_db.productos)
+          ..addColumns([_db.productos.codigo])
+          ..where(_db.productos.tenantId.equals(_tenantId)))
+        .get();
+    return [for (final f in filas) f.read(_db.productos.codigo)];
+  }
+
   Stream<List<ProductoVariante>> verVariantes() =>
       (_db.select(_db.productoVariantes)
             ..where((v) => v.tenantId.equals(_tenantId) & v.deletedAt.isNull()))
