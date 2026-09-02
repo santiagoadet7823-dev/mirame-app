@@ -75,18 +75,28 @@ Future<String?> elegirYComprimir({required bool desdeCamara}) async {
   }
 }
 
+/// Resultado de subir una foto: la URL, o el motivo por el que no se pudo.
+///
+/// Devolver `null` a secas costó dos días de diagnóstico: un rechazo de
+/// permisos y una falta de señal se veían exactamente igual —es decir, no se
+/// veían—, porque el error moría en un `debugPrint`. El motivo viaja hasta la
+/// pantalla.
+typedef ResultadoSubida = ({String? url, String? motivo});
+
 /// Sube una foto ya comprimida y devuelve su URL pública.
 ///
-/// Devuelve `null` si no se pudo — el llamador la deja marcada como pendiente
-/// en vez de perder la prenda.
-Future<String?> subirFoto({
+/// Si no se pudo, `url` viene en null y `motivo` explica por qué. El llamador
+/// la deja marcada como pendiente en vez de perder la prenda.
+Future<ResultadoSubida> subirFoto({
   required String rutaLocal,
   required String tenantId,
   required String productoId,
 }) async {
   try {
     final archivo = File(rutaLocal);
-    if (!archivo.existsSync()) return null;
+    if (!archivo.existsSync()) {
+      return (url: null, motivo: 'el archivo ya no está en el teléfono');
+    }
 
     // La ruta lleva el tenant adelante: es lo que permite borrar todo lo de un
     // salón de una, y lo que evita que dos salones colisionen en un nombre.
@@ -110,10 +120,21 @@ Future<String?> subirFoto({
         upsert: true,
       ),
     );
-    return storage.getPublicUrl(ruta);
+    return (url: storage.getPublicUrl(ruta), motivo: null);
+  } on StorageException catch (e) {
+    debugPrint('fotos: no se pudo subir (${e.statusCode} ${e.message})');
+    // 403/401 es la RLS del bucket, no la red. Distinguirlo importa: reintentar
+    // no lo arregla nunca, hay que tocar permisos.
+    final sinPermiso = e.statusCode == '403' || e.statusCode == '401';
+    return (
+      url: null,
+      motivo: sinPermiso
+          ? 'tu usuario no tiene permiso para subir fotos'
+          : 'el servidor rechazó la imagen (${e.message})',
+    );
   } catch (e) {
     debugPrint('fotos: no se pudo subir ($e)');
-    return null;
+    return (url: null, motivo: 'no hay conexión');
   }
 }
 

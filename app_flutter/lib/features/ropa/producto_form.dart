@@ -85,6 +85,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
   final _fotosNuevas = <String>[];
 
   var _guardando = false;
+  var _reintentando = false;
   String? _error;
 
   @override
@@ -200,6 +201,50 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
     if (ruta != null && mounted) setState(() => _fotosNuevas.add(ruta));
   }
 
+  /// Vuelve a intentar las fotos que quedaron en el teléfono.
+  ///
+  /// Reusa `guardarFoto` con el MISMO id, así que actualiza la fila en vez de
+  /// duplicarla: al pasarle un `path` no vacío deja de estar pendiente y recién
+  /// ahí se encola para el servidor.
+  Future<void> _reintentarFotos(List<db.ProductoFoto> pendientes) async {
+    final repo = ref.read(ropaRepoProvider);
+    if (repo == null) return;
+    final mensajero = ScaffoldMessenger.of(context);
+
+    setState(() => _reintentando = true);
+    var subidas = 0;
+    String? motivo;
+
+    for (final f in pendientes) {
+      final r = await subirFoto(
+        rutaLocal: f.rutaLocal!,
+        tenantId: repo.tenantId,
+        productoId: f.productoId,
+      );
+      if (r.url == null) {
+        motivo ??= r.motivo;
+        continue;
+      }
+      await repo.guardarFoto(
+        id: f.id,
+        productoId: f.productoId,
+        varianteId: f.varianteId,
+        path: r.url!,
+        rutaLocal: f.rutaLocal,
+        orden: f.orden,
+      );
+      subidas++;
+    }
+
+    if (!mounted) return;
+    setState(() => _reintentando = false);
+    mensajero.showSnackBar(SnackBar(
+      content: Text(subidas == pendientes.length
+          ? (subidas == 1 ? 'Foto subida.' : '$subidas fotos subidas.')
+          : 'Subieron $subidas de ${pendientes.length}: ${motivo ?? "falló"}.'),
+    ));
+  }
+
   Future<void> _guardar() async {
     final nombre = _nombre.text.trim();
     if (nombre.isEmpty) {
@@ -226,6 +271,9 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
       _error = null;
     });
     final nav = Navigator.of(context);
+    // Se toma antes del await: después del pop este `context` ya no sirve para
+    // buscar el ScaffoldMessenger.
+    final mensajero = ScaffoldMessenger.of(context);
 
     try {
       final id = await repo.guardarProducto(
@@ -267,21 +315,40 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
       final previas = ref.read(fotosProvider).value?[id] ?? const [];
       var orden = previas.fold<int>(-1, (a, f) => f.orden > a ? f.orden : a) + 1;
 
+      String? motivoFalla;
+      var pendientes = 0;
       for (final local in _fotosNuevas) {
-        final url = await subirFoto(
+        final r = await subirFoto(
           rutaLocal: local,
           tenantId: repo.tenantId,
           productoId: id,
         );
+        if (r.url == null) {
+          pendientes++;
+          motivoFalla ??= r.motivo;
+        }
         await repo.guardarFoto(
           productoId: id,
-          path: url ?? '',
+          path: r.url ?? '',
           rutaLocal: local,
           orden: orden++,
         );
       }
 
       nav.pop();
+
+      // La prenda se guardó igual, pero callarse que la foto no subió es lo
+      // que hace que después nadie entienda por qué la vitrina la muestra sin
+      // imagen. Se avisa DESPUÉS del pop, sobre la pantalla que queda.
+      if (pendientes > 0 && motivoFalla != null) {
+        mensajero.showSnackBar(SnackBar(
+          content: Text(pendientes == 1
+              ? 'La prenda se guardó, pero la foto quedó pendiente: '
+                  '$motivoFalla.'
+              : 'La prenda se guardó, pero $pendientes fotos quedaron '
+                  'pendientes: $motivoFalla.'),
+        ));
+      }
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -539,6 +606,9 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
         : (ref.watch(fotosProvider).value?[widget.producto!.id] ??
             const <db.ProductoFoto>[]);
     final total = yaCargadas.length + _fotosNuevas.length;
+    final pendientes = yaCargadas
+        .where((f) => f.pendienteDeSubir && f.rutaLocal != null)
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -580,6 +650,42 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
                   : '$total fotos. La primera es la portada; en la ficha se '
                       'pasan de a una.',
               style: sans(size: 11, color: MColors.tMuted),
+            ),
+          ),
+        // Una foto que falló una vez no se reintentaba NUNCA: quedaba marcada
+        // "falta subir" en el teléfono y la vitrina mostraba la prenda sin
+        // imagen para siempre. Con el botón, cuando vuelve la señal —o se
+        // arregla el permiso— se recupera sin volver a sacar la foto.
+        if (pendientes.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8, left: 2),
+            child: GestureDetector(
+              onTap: _reintentando ? null : () => _reintentarFotos(pendientes),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _reintentando
+                        ? Icons.hourglass_empty_rounded
+                        : Icons.cloud_upload_outlined,
+                    size: 16,
+                    color: MColors.tSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _reintentando
+                        ? 'Subiendo…'
+                        : pendientes.length == 1
+                            ? 'Falta subir 1 foto. Reintentar'
+                            : 'Faltan subir ${pendientes.length} fotos. '
+                                'Reintentar',
+                    style: sans(
+                        size: 11.5,
+                        weight: 600,
+                        color: MColors.tSecondary),
+                  ),
+                ],
+              ),
             ),
           ),
       ],
