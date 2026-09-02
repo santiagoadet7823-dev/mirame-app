@@ -30,6 +30,12 @@ mixin _Sincronizable on Table {
   Set<Column> get primaryKey => {id};
 }
 
+// NOTA: en Postgres esta tabla tiene además `activo`, y `proveedores` tiene
+// `tenant_proveedor_id`. Acá no están, y hasta la v4 eso hacía que el pull de
+// las dos fallara fila por fila con "no such column" —en silencio, tapado por
+// el try/catch de `_traerTabla`—. Lo resuelve el filtro de columnas
+// desconocidas de `_aplicar`, no una columna nueva: la app no usa ninguna de
+// las dos. Si algún día hace falta `activo`, se agrega acá con su migración.
 class Professionals extends Table with _Sincronizable {
   TextColumn get nombre => text()();
   TextColumn get telefono => text().nullable()();
@@ -405,7 +411,7 @@ class MirameDb extends _$MirameDb {
   }
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -456,6 +462,29 @@ class MirameDb extends _$MirameDb {
           // de la columna: no hay nada que rellenar a mano.
           if (desde < 3) {
             await m.addColumn(productos, productos.rubro);
+          }
+          // v4 · recrea `appointment_services`.
+          if (desde < 4) {
+            // `appointment_services` nació con el mixin `_Sincronizable`, o
+            // sea con `id` y `tenant_id` NOT NULL. Después se le sacó el mixin
+            // y se le puso PK compuesta, pero SIN subir `schemaVersion`: los
+            // teléfonos que ya la tenían se quedaron con la tabla vieja, y el
+            // pull moría en cada ciclo con
+            //   NOT NULL constraint failed: appointment_services.id
+            // porque el insert de hoy manda solo tres columnas.
+            //
+            // Se RECREA en vez de parchear `id`: la tabla vieja también tiene
+            // `tenant_id` NOT NULL, así que arreglar una columna sola deja el
+            // mismo error corrido un renglón. Tirarla no pierde nada: es una
+            // tabla puente sin escritura local propia, que el pull vuelve a
+            // bajar entera en cada ciclo (`_traerServiciosDeTurnos`).
+            await m.deleteTable('appointment_services');
+            await m.createTable(appointmentServices);
+            // El índice vivía en `onCreate` y `deleteTable` se lo llevó.
+            await customStatement(
+              'create index if not exists ix_appt_srv_appt '
+              'on appointment_services (appointment_id)',
+            );
           }
         },
         beforeOpen: (details) async {

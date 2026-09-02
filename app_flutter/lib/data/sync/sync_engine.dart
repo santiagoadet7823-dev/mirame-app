@@ -297,8 +297,23 @@ class SyncEngine {
         updates: {_db.appointmentServices},
         updateKind: UpdateKind.delete,
       );
+      // Por fila y no en bloque, igual que `_traerTabla`. Era la única tabla
+      // que quedaba con el `for` pelado, y por eso un solo registro raro acá
+      // hacía que `traer()` relanzara y el sync NUNCA reportara éxito: la
+      // barra roja quedaba fija aunque el resto de las tablas hubiera bajado
+      // bien.
+      var fallaron = 0;
       for (final f in filas) {
-        await _aplicar('appointment_services', f as Map<String, dynamic>);
+        try {
+          await _aplicar('appointment_services', f as Map<String, dynamic>);
+        } catch (e) {
+          fallaron++;
+          debugPrint('sync: no se pudo aplicar un appointment_service ($e)');
+        }
+      }
+      if (fallaron > 0) {
+        debugPrint('sync: $fallaron de ${filas.length} servicios de turno '
+            'quedaron sin aplicar');
       }
     });
     return filas.length;
@@ -380,13 +395,27 @@ class SyncEngine {
         columnas[k] = v is bool ? (v ? 1 : 0) : v;
       }
     });
+    final t = _db.tablaPorNombre(tabla);
+
+    // Columnas que el servidor tiene y esta versión de la app no. Pasa cada
+    // vez que el backend agrega una y el APK todavía no se actualizó, y hasta
+    // ahora costaba la fila ENTERA: el insert fallaba con "no such column" y
+    // la tabla no bajaba nada. Les venía pasando en silencio a `proveedores`
+    // (`tenant_proveedor_id`) y a `professionals` (`activo`), tapado por el
+    // try/catch por fila.
+    //
+    // Ignorarlas es lo correcto: los datos que la app SÍ entiende llegan
+    // igual, y el que quiera la columna nueva la agrega y sube la versión.
+    final locales = t?.$columns.map((c) => c.name).toSet();
+    if (locales != null) {
+      columnas.removeWhere((k, _) => !locales.contains(k));
+    }
     if (columnas.isEmpty) return;
 
     final nombres = columnas.keys.toList();
     final marcas = List.filled(nombres.length, '?').join(', ');
     // `customInsert` y no `customStatement`: el segundo escribe pero no avisa,
     // asi que nada de lo que bajaba del servidor refrescaba la pantalla.
-    final t = _db.tablaPorNombre(tabla);
     await _db.customInsert(
       'insert or replace into $tabla (${nombres.join(', ')}) '
       'values ($marcas)',
