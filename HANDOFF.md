@@ -661,3 +661,37 @@ agenda con el mismo 1299. Son 27 usos de `.hora`; merece su propio cambio.
 **Próximo:** publicar el APK con la v4. Mientras tanto, el teléfono de Candela se desbloquea
 borrando los datos de la app (el outbox está vacío, así que no se pierde nada) y volviendo a
 cargar las fotos.
+
+### 2026-09-01 (noche) — La portada de la vitrina, editable por salón
+
+Estaban quemadas las tres cosas que la dueña más quiere cambiar: la foto de portada era un
+archivo fijo que viaja con la página (`hero-blazer.webp`), el título un literal, y el «logo» de
+arriba a la izquierda **la inicial del nombre**. Servía para un salón; con el segundo, los dos
+abrían con la misma foto de ropa.
+
+Cuatro columnas nullable en `tenants` — `logo_path`, `hero_path`, `hero_titulo`, `hero_bajada`
+—, expuestas por `tienda_salon`, y los campos en **Mi tienda**. Con las cuatro en null la
+vitrina cae al comportamiento de siempre: un salón recién creado abre bien sin que nadie cargue
+nada.
+
+**El grant sobre `tenants` va POR COLUMNA.** `tienda_salon` es `security_invoker`, así que
+agregarle columnas a la vista no alcanza: sin `grant select (logo_path, …) to anon`, la vitrina
+entera devuelve `42501 permission denied for table tenants` — no un salón sin logo, la tienda
+**caída**. Se detectó probando local contra la base real antes de publicar; de haber ido
+derecho al deploy, la tienda quedaba rota para las clientas.
+
+Sirve como recordatorio: **cada columna nueva que la vitrina necesite lleva su grant**, y
+`tenants` nunca se concede entera porque tiene `estado`, `plan` y `creado_por`.
+
+Otras decisiones: las imágenes se suben **al guardar y no al elegir**, para no dejar en el
+bucket archivos que nadie referencia; «sacar la foto» es distinto de «no la toqué» (sin esa
+marca no habría forma de volver a la inicial); y el archivo lleva timestamp en el nombre porque
+el `cacheControl` es de un año y un `logo.webp` fijo se seguiría viendo viejo.
+
+**Publicado:** PWA + **APK 1.17.0**, `app_config` actualizado. `min_version` sigue en 1.0.0 a
+propósito: no se fuerza la flota hasta probar la versión.
+
+`flutter analyze` limpio, 294 tests pasando.
+
+**Próximo:** que Candela cargue logo, portada y textos desde Mi tienda, y las fotos de los
+productos Arbell.
