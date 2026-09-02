@@ -144,6 +144,7 @@ tuyo y del revendedor. Requiere que cada uno entre a la app una vez para que exi
 | 06 | `05-equipo-y-roles.md` | implementado | Rol `encargado`, permisos más finos, pantalla de Equipo y limpieza de nombres |
 | 07 | `06-catalogo-arbell.md` | implementado | Carga masiva del catálogo Arbell desde el PDF, y el procedimiento para actualizar precios con el PDF de cada bimestre |
 | 08 | `07-tienda-pulido-y-fotos.md` | en curso | Por qué ningún repo de ecommerce sirve de base; arreglo de la carga de fotos; pulido de la vitrina; y las fases 3 y 4 |
+| 09 | `08-arreglos-tienda-y-sync.md` | implementado | El código que se reciclaba (409 eterno), la marca de la vitrina para el encargado, y la cola de sync visible y recuperable |
 
 > El contenido de `planes/` es local. Este índice es lo único que se versiona.
 > Al crear un plan nuevo, agregar la fila acá.
@@ -760,3 +761,70 @@ release hasta que se cargue el secret.**
 
 **Próximo:** cargar ese secret; probar las 5 fotos en el teléfono; y después el pulido de la
 vitrina (carrusel por arrastre, OG por producto) antes de las fases 3 y 4.
+
+### 2026-09-02 (madrugada) — El código que se reciclaba y la cola que se moría callada
+
+Tres síntomas reportados desde el teléfono del estudio: una prenda borrada que seguía en la
+vitrina, «Chomba Polo» que no aparecía nunca, y el logo que no se publicaba. Se diagnosticó
+contra la base y los logs en vivo. **El primero no era un bug** — el borrado llegó a las
+04:46:45 y la vitrina ya no lo muestra; se miró antes de que corriera el ciclo, que es cada 3
+minutos. Los otros dos son agujeros viejos que recién ahora se ven, porque recién ahora se usa
+la app con una cuenta `encargado`.
+
+**El 409 que no se podía ganar.** Los logs lo repetían cada 3 minutos desde las 03:51:
+`duplicate key ... productos_tenant_id_codigo_key`, y detrás las variantes y las fotos
+rebotando por foreign key contra un producto que nunca aterrizaba. Dos mitades: el constraint
+era `UNIQUE (tenant_id, codigo)` **sin excluir borrados**, así que `MIR-001` y `MIR-002`
+seguían tomados por Remeras borradas; y `proximoCodigo` —que está bien escrito, numera desde
+el máximo justo para no reciclar— recibía la lista de `productosProvider`, que filtra
+`deleted_at is null`. Borradas las dos, el máximo volvió a cero.
+
+| Dónde | Qué |
+|---|---|
+| `sql/11_arreglos_tienda.sql` | Índice único **parcial** `productos_tenant_codigo_idx`, con el patrón de `variantes_tenant_sku_idx`: el código es único entre lo que existe, no entre lo que existió |
+| `ropa_repository.dart` | `codigosUsados()` — lee los códigos del salón **borrados incluidos** |
+| `producto_form.dart` | Sugiere desde esa lista, no desde la de visibles |
+
+Las dos mitades hacen falta: el índice arregla lo de ahora, el código evita que vuelva.
+
+**El logo se guardaba en la nada.** `guardarDatosPublicos` escribía directo contra `tenants`,
+cuyas únicas policies de escritura son `tenants_owner_update` (owner) y `tenants_write`
+(superadmin). `cardixteam` es `encargado`: no pasa ninguna. Y **cuando la RLS filtra las filas
+de un UPDATE, PostgREST no devuelve error — devuelve OK con cero filas**, así que la pantalla
+decía «Datos guardados» sin haber escrito nada.
+
+Decisión: el encargado también edita la marca de la vitrina, **pero no abriendo la RLS de
+`tenants`**. Una policy de UPDATE es por fila, no por columna: dejar entrar a `opera()` le
+daría `estado`, `plan` y `creado_por`, o sea la licencia. Va por
+`actualizar_marca_tienda()`, `security definer`, que verifica `opera()`, toca solo las columnas
+de la vitrina y **devuelve el id** para que el cliente pueda comprobar que algo pasó. Devuelve
+el id y no la fila: `tenants` tiene columnas que un encargado no tiene por qué leer.
+
+**La cola no se podía mirar ni recuperar.** Es lo que hizo falta un rato de logs para
+descubrir, y el arreglo de fondo:
+
+- El tombstone era un `update ... eq id`. Si afectaba cero filas se daba por subido y **la fila
+  salía de la cola**: el borrado se perdía para siempre. Ahora lleva `.select('id')` y cero
+  filas es un fallo. Es seguro porque la cola es FIFO por `id`: el alta de una prenda creada y
+  borrada sin señal siempre se sube antes que su borrado.
+- `SyncStatus` distingue **`pendientes`** de **`trabados`** (`intentos >= kMaxIntentos`). Cinco
+  esperando señal se resuelven solas; cinco rechazadas no se resuelven nunca, y con un solo
+  número se veían igual.
+- Botón **«Reintentar»** en Ajustes: pone `intentos = 0` y sincroniza. Sin él, arreglar la
+  causa del rechazo no alcanzaba — la fila ya estaba excluida del push para siempre y la
+  única salida era borrar los datos de la app. Verificado en los logs que las filas de
+  «Chomba Polo» ya habían agotado los 8 intentos: la migración sola no las revive.
+- `mi_tienda.dart` deja de decir «fijate si tenés internet» ante un `42501`.
+
+**De paso, buena noticia:** que `producto_fotos` llegara a intentarse contra el servidor
+significa que las fotos **sí se subieron al bucket**. El arreglo de 1.17.1 funciona; fallaban
+de rebote.
+
+`flutter analyze` limpio, **294 tests pasando**.
+
+**Fuera de alcance, anotado:** `tienda.html` trae todos los productos, variantes y fotos sin
+`limit` (líneas 609-627). Con los ~330 Arbell publicados se cae la promesa de un segundo; hoy
+están en borrador.
+
+**Próximo:** actualizar el APK, tocar «Reintentar» en Ajustes y confirmar que «Chomba Polo»
+sube y que el logo se publica. Después, el pulido de la vitrina.
