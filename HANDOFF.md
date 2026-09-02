@@ -748,5 +748,15 @@ están en borrador, así que no urge.
 y que aparezcan las 5; mandar la app a segundo plano en el medio y que no se pierda ninguna. Si
 igual falla, el motivo ahora sale escrito en el SnackBar y en `flutter logs`.
 
-**Próximo:** publicar el APK con esto, y después el pulido de la vitrina (carrusel por arrastre,
-OG por producto) antes de las fases 3 y 4.
+**Publicado:** PWA + **APK 1.17.1**. `min_version` sigue en 1.0.0: la actualización aparece
+disponible, no forzada, hasta probar que anda.
+
+**⚠️ Falta el secret `SUPABASE_SERVICE_ROLE_KEY` en GitHub.** El paso «Avisar a la flota» de
+`apk.yml` no falla cuando no está — avisa y sigue —, así que el APK se publicó y `app_config`
+quedó en 1.17.0: ningún teléfono habría visto la actualización. Se corrigió a mano por SQL
+(`latest_version` + `apk_url`, sin tocar `min_version`) y se verificó que la URL del release
+resuelve y sirve `application/vnd.android.package-archive`. **Va a volver a pasar en cada
+release hasta que se cargue el secret.**
+
+**Próximo:** cargar ese secret; probar las 5 fotos en el teléfono; y después el pulido de la
+vitrina (carrusel por arrastre, OG por producto) antes de las fases 3 y 4.
