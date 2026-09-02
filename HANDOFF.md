@@ -142,6 +142,7 @@ tuyo y del revendedor. Requiere que cada uno entre a la app una vez para que exi
 | 04 | `03-tienda-diseno.md` | implementado (fase 0) | Diagnóstico de la vitrina, arreglos de identidad y WhatsApp, y el brief de diseño (`12-BRIEF-TIENDA.md`) |
 | 05 | `04-tienda-implementacion.md` | fases 1 y 2 implementadas | La entrega del diseñador portada al HTML plano; cuentas de clienta y mails quedan para las fases 3 y 4 |
 | 06 | `05-equipo-y-roles.md` | implementado | Rol `encargado`, permisos más finos, pantalla de Equipo y limpieza de nombres |
+| 07 | `06-catalogo-arbell.md` | implementado | Carga masiva del catálogo Arbell desde el PDF, y el procedimiento para actualizar precios con el PDF de cada bimestre |
 
 > El contenido de `planes/` es local. Este índice es lo único que se versiona.
 > Al crear un plan nuevo, agregar la fila acá.
@@ -551,3 +552,112 @@ dice **Estética**, solo la etiqueta — el valor guardado sigue siendo `insumos
 fuelle se ensucia y la curva inferior se lee como una carita.
 
 **Próximo:** fases 3 y 4 del plan de la tienda (cuentas de clienta y avisos por mail).
+
+### 2026-08-30 (noche) — El catálogo Arbell cargado, y el procedimiento para el próximo
+
+La tienda declaraba el rubro **Arbell** desde el primer día (`tienda.html:484`,
+`producto_form.dart:324`) y no tenía un solo producto adentro. Se cargó el catálogo
+`cat-4-2026` (vigencia 08/05 al 09/07): **274 productos, 372 códigos, todos despublicados**.
+
+**Lo primero que hubo que aclarar:** «el salón de Candela» **es** el tenant `mirame`. Candela
+Gil figura como `owner` de Mírame Lash Studio y no existe un segundo tenant. El proveedor
+`arbell` ya estaba creado.
+
+**Las herramientas viven en `scripts/arbell/`** y no tocan la app Flutter:
+
+| | |
+|---|---|
+| `extraer.py` | PDF → `catalogo.json` + `revision.csv` + recortes + hoja de contactos |
+| `cargar.py` | Emite un SQL autocontenido e idempotente; se pega en el SQL Editor |
+| `subir_fotos.py` | Sube a Storage los recortes aprobados, en WebP |
+| `README.md` | **El procedimiento completo para el catálogo siguiente** |
+| `secciones.json` | Rangos de página → categoría. Se revisa con cada PDF |
+| `catalogos/2026-04.json` | El catálogo congelado, para diffear precios |
+
+**La clave de actualización es `producto_variantes.sku`**, con el código de Arbell crudo
+(`3154`, `C905`, `AC3027`, `VO70`). Es lo único estable entre catálogos: los nombres cambian
+de redacción y los precios cambian por definición. Se agregó el índice único
+`variantes_tenant_sku_idx` sobre `(tenant_id, sku)` — sin él cada corrida duplicaría todo.
+
+**Cargar no pisa lo que ella escribió.** El upsert actualiza **solo el precio**; `nombre` y
+`categoria` quedan como estén, porque si Candela corrigió un nombre a mano el catálogo
+siguiente no puede deshacérselo (`--actualizar-nombres` lo fuerza). Y **nunca borra**: un
+código que desaparece se despublica y sale en el informe.
+
+Verificado contra la base: idempotencia (correr dos veces da 0 altas, 0 variantes, 0 cambios),
+la ruta de actualización de precios (9900 → 10900 sin tocar el nombre), y que con `role anon`
+la vitrina ve **0** productos Arbell mientras estén en borrador.
+
+**Dos cosas que el parser no puede resolver solo.** El catálogo es una pieza editorial, no una
+lista: 90 de 274 productos salen con el precio en el mismo bloque que el código; el resto toma
+el precio de la página y **queda marcado para revisar** en `revision.csv`. Y los recortes de
+foto aciertan en las páginas de fondo claro (la 40, la 6) y fallan en las de panel oscuro a
+sangre (la 30) — por eso el script propone el candidato y la hoja de contactos decide.
+
+**⚠️ Todo entró con stock 0.** Cualquier producto Arbell que se publique con stock 0 se va a
+leer **«Agotado»** en la vitrina (`tienda.html:582`). El orden es: cargar la cantidad de lo
+que ella pidió, y recién ahí publicar. Si alguna vez se quiere publicar el catálogo entero
+como «por pedido», hay que hacer que `rubro === 'arbell'` no muestre estado de stock — la
+vitrina ya declara `sub: 'Por pedido'` para ese rubro, pero el estado todavía no lo respeta.
+
+**Próximo:** que Candela revise `revision.csv`, apruebe fotos y publique lo que tenga stock.
+Sigue pendiente lo de antes: fases 3 y 4 del plan de la tienda.
+
+### 2026-09-01 — El sync roto (1299), las fotos, y el codegen de Drift caído
+
+**El sync fallaba en cada ciclo y la causa no era el catálogo.** El detalle en pantalla decía
+`NOT NULL constraint failed: appointment_services.id`. Es deriva de esquema entre el código y
+la base del teléfono: en `c5a2077` la tabla nació con el mixin `_Sincronizable` (`id` y
+`tenant_id` NOT NULL) y en `e9a5e1f` se le sacó el mixin **sin subir `schemaVersion`**. Drift
+no recrea una tabla si la versión no cambia, así que todo teléfono que ya la tenía se quedó con
+la vieja, y el insert de hoy —que manda tres columnas— dejaba `id` en NULL.
+
+Reventaba fuerte porque `_traerServiciosDeTurnos` era **el único pull sin try/catch por fila**.
+La excepción subía, `traer()` la relanzaba, y el ciclo nunca reportaba éxito: barra roja fija y
+"Última vez: Todavía no", aunque las demás tablas sí bajaran.
+
+**Arreglos** (`schemaVersion` 3 → 4):
+
+| Dónde | Qué |
+|---|---|
+| `database.dart` | v4 **recrea** `appointment_services` (`deleteTable` + `createTable` + su índice). Recrear y no parchear `id`: la tabla vieja también tiene `tenant_id` NOT NULL |
+| `sync_engine.dart` | `_traerServiciosDeTurnos` aísla la fila, como ya hacía `_traerTabla` |
+| `sync_engine.dart` | `_aplicar` **descarta las columnas que la tabla local no conoce** |
+
+Lo último tapa un agujero que venía de fábrica: `proveedores.tenant_proveedor_id` y
+`professionals.activo` existen en Postgres y no en Drift, así que **esas dos tablas no
+sincronizaban ni una fila** desde que existen, en silencio. Ahora la fila entra con lo que la
+app sí entiende, y el backend puede agregar columnas sin romper APKs viejos.
+
+**Las fotos eran un problema aparte.** Las policies de Storage usaban `administra()`
+(owner|admin) mientras las de `productos`/`producto_fotos` usaban `opera()`
+(owner|admin|**encargado**). `cardixteam@gmail.com` es `encargado`: podía crear y publicar el
+producto pero **no subir el archivo**. Migración `storage_fotos_permite_encargado` aplicada;
+verificado que `opera()` pasó de `false` a `true` para ese usuario.
+
+Y no se arreglaba solo: `subirFoto` se comía el rechazo con un `debugPrint`, y
+`fotosPendientes()` **no lo llamaba nadie** — una foto que fallaba una vez no se reintentaba
+nunca. Ahora `subirFoto` devuelve el motivo (distingue RLS de falta de señal), el formulario lo
+dice en un SnackBar en vez de cerrar como si nada, y hay un botón **«Reintentar»** cuando
+quedan fotos pendientes.
+
+**⚠️ El codegen de Drift está caído en este entorno.** `dart run build_runner build` corre sin
+error, escribe 185 artefactos de análisis, **no emite el `.drift.g.part`** y de paso **borra
+`lib/data/local/database.g.dart`** (build_runner lo considera output suyo y lo limpia por
+obsoleto). `drift_dev` 2.34.5 ya es la última y `pubspec.lock` no cambió, así que apunta a
+`build` 4.x / `source_gen` 4.x o al analyzer del SDK.
+
+**Si vas a correr build_runner: hacé `git checkout` de `database.g.dart` después.** Este cambio
+se hizo *sin* codegen a propósito — por eso `professionals.activo` no se agregó como columna:
+el filtro de `_aplicar` resuelve el pull sin tocar el esquema. Arreglar el generador es su
+propia tarea.
+
+**Fuera de alcance, anotado:** `appointments.hora` es nullable en Postgres y NOT NULL en Drift.
+Hoy no explota (los 96 turnos tienen hora), pero el primer turno sin hora rompe el pull de la
+agenda con el mismo 1299. Son 27 usos de `.hora`; merece su propio cambio.
+
+`flutter analyze` limpio, **294 tests pasando**.
+
+**Próximo:** publicar el APK con la v4. Mientras tanto, el teléfono de Candela se desbloquea
+borrando los datos de la app (el outbox está vacío, así que no se pierde nada) y volviendo a
+cargar las fotos.
