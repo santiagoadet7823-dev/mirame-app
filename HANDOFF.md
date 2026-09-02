@@ -143,6 +143,7 @@ tuyo y del revendedor. Requiere que cada uno entre a la app una vez para que exi
 | 05 | `04-tienda-implementacion.md` | fases 1 y 2 implementadas | La entrega del diseñador portada al HTML plano; cuentas de clienta y mails quedan para las fases 3 y 4 |
 | 06 | `05-equipo-y-roles.md` | implementado | Rol `encargado`, permisos más finos, pantalla de Equipo y limpieza de nombres |
 | 07 | `06-catalogo-arbell.md` | implementado | Carga masiva del catálogo Arbell desde el PDF, y el procedimiento para actualizar precios con el PDF de cada bimestre |
+| 08 | `07-tienda-pulido-y-fotos.md` | en curso | Por qué ningún repo de ecommerce sirve de base; arreglo de la carga de fotos; pulido de la vitrina; y las fases 3 y 4 |
 
 > El contenido de `planes/` es local. Este índice es lo único que se versiona.
 > Al crear un plan nuevo, agregar la fila acá.
@@ -695,3 +696,57 @@ propósito: no se fuerza la flota hasta probar la versión.
 
 **Próximo:** que Candela cargue logo, portada y textos desde Mi tienda, y las fotos de los
 productos Arbell.
+
+### 2026-09-02 — Las fotos que se pierden antes de subir, y el repo de ecommerce que no existe
+
+**La pregunta era otra.** Se buscó en GitHub un repo de ecommerce que resolviera la tienda de
+una. No existe, y no por suerte: todo lo que hay con Supabase (HiyoRi, ecommerce-supabase-Nextjs,
+supabase-nuxt-ecommerce) es Next o Nuxt **con build**, y la vitrina es un HTML plano servido por
+Pages que tiene que abrir en ~1 s con datos móviles — la decisión de `planes/02-modulo-ropa.md`
+§1. Adoptar cualquiera obliga a tirar el modelo de consignación (porcentajes congelados,
+revendedores, depósitos) y la estética del diseñador. Lo que sí sirve son piezas oficiales
+sueltas, anotadas en el plan: el ejemplo de **Resend + Edge Functions** para la fase 4, la guía
+de **OG images con Deno** para la preview del link (y por producto), y `mercadopago/sdk-js` para
+cuando toque cobrar.
+
+**Shopify también se evaluó y se descartó, con números.** USD 39/mes por salón, más 2% de
+recargo de Shopify por no usar Shopify Payments (no opera en Argentina) sobre el ~7,85% de
+Mercado Pago: ~10% por venta. Y rompe tres cosas que no son negociables — el offline (la Admin
+API es online y con rate limit), la fuente de verdad única (el stock quedaría en dos lados) y
+la economía del SaaS (cada salón, su propia suscripción en dólares). Para cobrar con tarjeta, el
+camino es Checkout Pro directo: misma comisión, sin el fijo ni el recargo.
+
+**El bug real:** se carga una foto y las siguientes no llegan. Se descartó el outbox mirando el
+código — `empujar()` no corta el bucle cuando una fila falla y `guardarFoto()` genera un id por
+foto, así que no se pisan. Y las policies de Storage ya se habían arreglado el 01/09. Queda la
+otra punta: `elegirYComprimir` usaba `pickImage`, **una foto por vez**, así que cargar cinco son
+cinco saltos a la actividad del picker, y en cada salto Android puede matar la app por memoria.
+Al volver, `_fotosNuevas` arranca vacía y lo elegido antes desaparece sin un solo error.
+`image_picker` documenta el caso y se recupera con `retrieveLostData()`, **que no estaba
+implementado en ningún archivo del proyecto**.
+
+| Dónde | Qué |
+|---|---|
+| `fotos.dart` | `elegirVariasYComprimir()` con `pickMultiImage`: la galería se elige entera en un viaje en vez de cinco. La cámara sigue de a una |
+| `fotos.dart` | `recuperarFotosPerdidas()` — la red que atrapa lo que Android igual se lleve |
+| `fotos.dart` | Compresión extraída a `_comprimir` / `_comprimirTodas`, **en serie**: cinco bitmaps de 12 MP en paralelo son justo la presión de memoria que dispara el problema |
+| `fotos.dart` | El nombre del archivo lleva contador además del timestamp: dos fotos de la misma tanda pueden caer en el mismo microsegundo, y el nombre es lo que las identifica en el bucket |
+| `producto_form.dart` | `_recuperarPerdidas()` en `initState` — es el primer momento en que hay dónde poner lo recuperado |
+| `producto_form.dart` + `vistas_comunes.dart` | El botón dice **«Subiendo 2 de 5»**. Un spinner mudo durante media subida con datos móviles se lee como colgado, y ahí se toca atrás |
+
+Lo recuperado **puede ser de otra prenda** —la que se estaba editando cuando el sistema mató la
+app— y no hay forma de saber de cuál era. Por eso se avisa en vez de sumarlo en silencio: la
+miniatura se quita con un toque.
+
+**Fuera de alcance, anotado:** `tienda.html` trae todos los productos, variantes y fotos sin
+`limit` (líneas 609-627). Con los ~330 Arbell publicados se cae la promesa de un segundo. Hoy
+están en borrador, así que no urge.
+
+`flutter analyze` limpio, **294 tests pasando**.
+
+**Pendiente de verificar en el teléfono — no lo puedo probar yo:** cargar 5 fotos de una prenda
+y que aparezcan las 5; mandar la app a segundo plano en el medio y que no se pierda ninguna. Si
+igual falla, el motivo ahora sale escrito en el SnackBar y en `flutter logs`.
+
+**Próximo:** publicar el APK con esto, y después el pulido de la vitrina (carrusel por arrastre,
+OG por producto) antes de las fases 3 y 4.
