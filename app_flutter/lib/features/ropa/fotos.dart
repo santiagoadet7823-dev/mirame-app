@@ -91,6 +91,18 @@ Future<ResultadoSubida> subirFoto({
   required String rutaLocal,
   required String tenantId,
   required String productoId,
+}) {
+  // La ruta lleva el tenant adelante: es lo que permite borrar todo lo de un
+  // salón de una, y lo que evita que dos salones colisionen en un nombre.
+  final nombre = rutaLocal.split(Platform.pathSeparator).last;
+  return _subir(rutaLocal: rutaLocal, ruta: '$tenantId/$productoId/$nombre');
+}
+
+/// El envío en sí. Lo comparten la foto de producto y las de marca: cambia la
+/// ruta, no el manejo de errores —que es la parte que importa acertar.
+Future<ResultadoSubida> _subir({
+  required String rutaLocal,
+  required String ruta,
 }) async {
   try {
     final archivo = File(rutaLocal);
@@ -98,14 +110,9 @@ Future<ResultadoSubida> subirFoto({
       return (url: null, motivo: 'el archivo ya no está en el teléfono');
     }
 
-    // La ruta lleva el tenant adelante: es lo que permite borrar todo lo de un
-    // salón de una, y lo que evita que dos salones colisionen en un nombre.
-    final nombre = rutaLocal.split(Platform.pathSeparator).last;
-    final ruta = '$tenantId/$productoId/$nombre';
-
     // El tipo sale de la extensión y no de una constante: la compresión
     // devuelve webp, pero el camino de respaldo devuelve el jpg original.
-    final tipo = nombre.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+    final tipo = ruta.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
 
     final storage = Supabase.instance.client.storage.from(kBucketProductos);
     await storage.upload(
@@ -136,6 +143,25 @@ Future<ResultadoSubida> subirFoto({
     debugPrint('fotos: no se pudo subir ($e)');
     return (url: null, motivo: 'no hay conexión');
   }
+}
+
+/// Sube el logo o la foto de portada de la vitrina.
+///
+/// Van al mismo bucket que los productos, bajo `{tenant}/_marca/`. Las policies
+/// son por carpeta —miran `foldername(name)[1]`, o sea el tenant— así que
+/// autorizan esto sin tocar nada. Y el nombre lleva timestamp: si se guardara
+/// siempre como `logo.webp`, el navegador y el CDN seguirían mostrando el
+/// anterior durante un año, que es el `cacheControl` que ponemos.
+Future<ResultadoSubida> subirImagenMarca({
+  required String rutaLocal,
+  required String tenantId,
+  required String cual,
+}) {
+  final ext = rutaLocal.endsWith('.webp') ? 'webp' : 'jpg';
+  return _subir(
+    rutaLocal: rutaLocal,
+    ruta: '$tenantId/_marca/$cual-${DateTime.now().microsecondsSinceEpoch}.$ext',
+  );
 }
 
 /// Borra una foto del bucket. Que falle no es grave: un archivo huérfano ocupa

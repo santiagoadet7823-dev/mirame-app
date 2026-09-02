@@ -6,6 +6,8 @@
 /// ve completo.
 library;
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +21,7 @@ import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
 import '../auth/session_controller.dart';
 import '../shell/vistas_comunes.dart';
+import 'fotos.dart';
 import 'ropa_view.dart';
 
 Future<void> mostrarMiTienda(BuildContext context) => showModalBottomSheet(
@@ -42,14 +45,45 @@ class _MiTiendaState extends ConsumerState<_MiTienda> {
       text: ref.read(tenantActivoProvider)?.direccion ?? '');
   late final _ig = TextEditingController(
       text: ref.read(tenantActivoProvider)?.instagram ?? '');
+  late final _titulo = TextEditingController(
+      text: ref.read(tenantActivoProvider)?.heroTitulo ?? '');
+  late final _bajada = TextEditingController(
+      text: ref.read(tenantActivoProvider)?.heroBajada ?? '');
   var _guardando = false;
+
+  /// Elegidas en el teléfono y todavía sin subir. Se suben al guardar, no al
+  /// elegir: si se sube y después no se guarda, el bucket queda con basura que
+  /// nadie referencia.
+  String? _logoLocal;
+  String? _heroLocal;
+
+  /// "Sacala" es distinto de "no la toqué". Sin esta marca, guardar los textos
+  /// dejaría el logo intacto y no habría forma de volver a la inicial.
+  var _logoBorrado = false;
+  var _heroBorrado = false;
 
   @override
   void dispose() {
     _tel.dispose();
     _dir.dispose();
     _ig.dispose();
+    _titulo.dispose();
+    _bajada.dispose();
     super.dispose();
+  }
+
+  Future<void> _elegirImagen({required bool logo}) async {
+    final ruta = await elegirYComprimir(desdeCamara: false);
+    if (ruta == null || !mounted) return;
+    setState(() {
+      if (logo) {
+        _logoLocal = ruta;
+        _logoBorrado = false;
+      } else {
+        _heroLocal = ruta;
+        _heroBorrado = false;
+      }
+    });
   }
 
   Future<void> _guardar() async {
@@ -57,12 +91,47 @@ class _MiTiendaState extends ConsumerState<_MiTienda> {
     if (tenant == null) return;
     setState(() => _guardando = true);
     try {
+      // Las imágenes primero: si una falla, se avisa y NO se guarda una URL
+      // vacía encima de la que ya estaba.
+      String? logoUrl;
+      String? heroUrl;
+      String? falla;
+      for (final (local, esLogo) in [(_logoLocal, true), (_heroLocal, false)]) {
+        if (local == null) continue;
+        final r = await subirImagenMarca(
+          rutaLocal: local,
+          tenantId: tenant.id,
+          cual: esLogo ? 'logo' : 'hero',
+        );
+        if (r.url == null) {
+          falla ??= r.motivo;
+          continue;
+        }
+        if (esLogo) {
+          logoUrl = r.url;
+        } else {
+          heroUrl = r.url;
+        }
+      }
+
       await const AccessRepository().guardarDatosPublicos(
         tenant.id,
         telefono: _tel.text,
         direccion: _dir.text,
         instagram: _ig.text,
+        heroTitulo: _titulo.text,
+        heroBajada: _bajada.text,
+        tocarLogo: logoUrl != null || _logoBorrado,
+        logoPath: logoUrl,
+        tocarHero: heroUrl != null || _heroBorrado,
+        heroPath: heroUrl,
       );
+
+      if (falla != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('La imagen no se pudo subir: $falla.')),
+        );
+      }
       // Sin esto el Tenant en memoria sigue con el teléfono viejo y la pantalla
       // mostraría el aviso de "falta el WhatsApp" recién guardado.
       await ref.read(sessionProvider.notifier).refrescar();
@@ -214,6 +283,60 @@ class _MiTiendaState extends ConsumerState<_MiTienda> {
                 controlador: _ig,
                 etiqueta: 'Instagram (sin la arroba)',
               ),
+
+              const SizedBox(height: 16),
+              const EtiquetaSeccion('LA PORTADA'),
+              Text(
+                'Lo primero que ve la clienta al abrir el link. Si dejás algo '
+                'vacío, la tienda usa lo de siempre.',
+                style: sans(size: 12, color: MColors.tSecondary),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _Imagen(
+                    etiqueta: 'Logo',
+                    ayuda: 'Cuadrado',
+                    redondo: true,
+                    alto: 72,
+                    local: _logoLocal,
+                    remota: tenant?.logoPath,
+                    onElegir: () => _elegirImagen(logo: true),
+                    onQuitar: () => setState(() {
+                      _logoLocal = null;
+                      _logoBorrado = true;
+                    }),
+                    borrada: _logoBorrado,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _Imagen(
+                      etiqueta: 'Foto de portada',
+                      ayuda: 'Apaisada',
+                      alto: 72,
+                      local: _heroLocal,
+                      remota: tenant?.heroPath,
+                      onElegir: () => _elegirImagen(logo: false),
+                      onQuitar: () => setState(() {
+                        _heroLocal = null;
+                        _heroBorrado = true;
+                      }),
+                      borrada: _heroBorrado,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              CampoTexto(
+                controlador: _titulo,
+                etiqueta: 'Título — ej. "Lo que hay, ahora mismo"',
+              ),
+              CampoTexto(
+                controlador: _bajada,
+                etiqueta: 'Bajada — la frase chica debajo del título',
+                lineas: 2,
+              ),
               _Boton(
                 icono: Icons.check_rounded,
                 texto: _guardando ? 'Guardando…' : 'Guardar',
@@ -317,6 +440,78 @@ class _Boton extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// Una imagen de la portada: la que hay, la que se acaba de elegir, o el hueco
+/// para elegirla. Con el hueco explícito y no un botón aparte: así se ve de un
+/// vistazo si el salón tiene logo o está saliendo con la inicial.
+class _Imagen extends StatelessWidget {
+  const _Imagen({
+    required this.etiqueta,
+    required this.ayuda,
+    required this.alto,
+    required this.local,
+    required this.remota,
+    required this.onElegir,
+    required this.onQuitar,
+    required this.borrada,
+    this.redondo = false,
+  });
+
+  final String etiqueta;
+  final String ayuda;
+  final double alto;
+  final String? local;
+  final String? remota;
+  final VoidCallback onElegir;
+  final VoidCallback onQuitar;
+  final bool borrada;
+  final bool redondo;
+
+  @override
+  Widget build(BuildContext context) {
+    final hay = local != null || (!borrada && (remota ?? '').isNotEmpty);
+    final radio = BorderRadius.circular(redondo ? alto / 2 : MRadius.md);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(etiqueta, style: sans(size: 11.5, color: MColors.tSecondary)),
+        const SizedBox(height: 6),
+        GestureDetector(
+          onTap: onElegir,
+          child: Container(
+            height: alto,
+            width: redondo ? alto : null,
+            decoration: BoxDecoration(
+              color: MColors.bg2,
+              border: Border.all(color: MColors.border),
+              borderRadius: radio,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: hay
+                ? (local != null
+                    ? Image.file(File(local!), fit: BoxFit.cover)
+                    : Image.network(remota!, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox()))
+                : Center(
+                    child: Text(ayuda,
+                        style: sans(size: 11, color: MColors.tMuted)),
+                  ),
+          ),
+        ),
+        if (hay)
+          GestureDetector(
+            onTap: onQuitar,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text('Sacar',
+                  style: sans(size: 11, color: MColors.tSecondary)),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _Dato extends StatelessWidget {

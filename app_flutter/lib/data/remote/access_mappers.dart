@@ -59,6 +59,10 @@ Tenant tenantDesdeFila(Map<String, dynamic> f) => Tenant(
       telefono: f['telefono'] as String?,
       direccion: f['direccion'] as String?,
       instagram: f['instagram'] as String?,
+      logoPath: f['logo_path'] as String?,
+      heroPath: f['hero_path'] as String?,
+      heroTitulo: f['hero_titulo'] as String?,
+      heroBajada: f['hero_bajada'] as String?,
     );
 
 License licenseDesdeFila(Map<String, dynamic> f) => License(

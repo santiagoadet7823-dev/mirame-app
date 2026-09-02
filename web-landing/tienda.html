@@ -127,6 +127,7 @@ img{display:block}
 .top .caps{font:500 8.5px var(--sans);letter-spacing:.28em;text-transform:uppercase;
   color:var(--tx-4);margin:3px 0 0 2px}
 .logo{width:46px;height:46px;border-radius:var(--r-pill);background:var(--ac-xl);
+      object-fit:cover;
   border:1px solid rgba(0,0,0,.06);flex:none;display:flex;align-items:center;
   justify-content:center;font:400 26px/1 var(--script);color:var(--ac-d);padding-bottom:4px}
 .ico-btn{position:relative;width:var(--tap);height:var(--tap);flex:none;
@@ -674,7 +675,9 @@ function vHeader() {
   const partes = (A.salon?.nombre || 'Tienda').trim().split(/\s+/);
   const n = A.carrito.reduce((a, l) => a + l.cant, 0);
   return '<div class="top">' +
-    '<div class="logo">' + esc(partes[0].charAt(0)) + '</div>' +
+    (A.salon?.logo_path
+      ? '<img class="logo" src="' + esc(A.salon.logo_path) + '" alt="">'
+      : '<div class="logo">' + esc(partes[0].charAt(0)) + '</div>') +
     '<div class="marca">' +
       '<div class="script">' + esc(partes[0]) + '</div>' +
       (partes.length > 1
@@ -686,12 +689,28 @@ function vHeader() {
   '</div>';
 }
 
+/// El título y la bajada salen de `tienda_salon`, con los de siempre como
+/// respaldo: un salón recién creado tiene que abrir bien sin que nadie cargue
+/// nada. Los saltos de línea que escriba la dueña se respetan.
+const TITULO_POR_DEFECTO = 'Lo que hay,\nahora mismo';
+const BAJADA_POR_DEFECTO =
+  'Elegís, reservás, y te lo guardamos 48 horas. Pagás cuando lo ves, en el estudio.';
+
+const enLineas = t => esc(t).replace(/\r?\n/g, '<br>');
+
 function vHero() {
+  const titulo = enLineas(A.salon?.hero_titulo || TITULO_POR_DEFECTO);
+  const bajada = A.salon?.hero_bajada || BAJADA_POR_DEFECTO;
+  // La foto propia del salón manda; si no cargó ninguna queda la del
+  // diseñador, que es de ropa y no sirve para el segundo salón — por eso
+  // `hero-blazer.webp` es respaldo y ya no la única opción.
+  const foto = A.salon?.hero_path || 'hero-blazer.webp';
+
   if (A.heroOk) {
     return '<div class="hero">' +
-      '<img src="hero-blazer.webp" alt="" fetchpriority="high" onerror="sinHero()">' +
+      '<img src="' + esc(foto) + '" alt="" fetchpriority="high" onerror="sinHero()">' +
       '<div class="velo"></div>' +
-      '<div class="txt"><h1>Lo que hay,<br>ahora mismo</h1></div>' +
+      '<div class="txt"><h1>' + titulo + '</h1></div>' +
     '</div>';
   }
   const rubros = Object.keys(RUBROS)
@@ -699,9 +718,9 @@ function vHero() {
     .map(r => RUBROS[r].t).join(' · ');
   return '<div class="hero-tipo">' +
     '<div class="rot">' + esc(rubros || 'Tienda') + '</div>' +
-    '<h1>Lo que hay,<br>ahora mismo</h1>' +
+    '<h1>' + titulo + '</h1>' +
     '<div class="regla"><i></i><b></b><i></i></div>' +
-    '<p>Elegís, reservás, y te lo guardamos 48 horas. Pagás cuando lo ves, en el estudio.</p>' +
+    '<p>' + esc(bajada) + '</p>' +
   '</div>';
 }
 function sinHero() { A.heroOk = false; pintar(); }

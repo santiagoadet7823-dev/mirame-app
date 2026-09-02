@@ -52,6 +52,10 @@ class Tenant {
     this.telefono,
     this.direccion,
     this.instagram,
+    this.logoPath,
+    this.heroPath,
+    this.heroTitulo,
+    this.heroBajada,
   });
 
   final String id;
@@ -67,6 +71,17 @@ class Tenant {
   final String? telefono;
   final String? direccion;
   final String? instagram;
+
+  /// La portada de la vitrina, editable por salón.
+  ///
+  /// Las cuatro pueden venir en null y la vitrina cae al comportamiento de
+  /// siempre: la inicial del nombre como logo, la portada tipográfica sin
+  /// foto, y los textos por defecto. Un salón recién creado tiene que abrir
+  /// bien sin que nadie cargue nada.
+  final String? logoPath;
+  final String? heroPath;
+  final String? heroTitulo;
+  final String? heroBajada;
 
   /// `suspendido` y `cancelado` cierran la puerta aunque la licencia no haya
   /// vencido: son decisiones de la plataforma, no del calendario.

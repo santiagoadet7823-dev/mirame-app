@@ -24,6 +24,15 @@ class AccessRepository {
     String? telefono,
     String? direccion,
     String? instagram,
+    String? heroTitulo,
+    String? heroBajada,
+    // Las fotos se manejan aparte de los textos: `null` acá significa "no la
+    // toques", no "borrala". Si fueran iguales, guardar los textos borraría el
+    // logo que se subió en otra sesión.
+    bool tocarLogo = false,
+    String? logoPath,
+    bool tocarHero = false,
+    String? heroPath,
   }) async {
     String? limpiar(String? v) {
       final t = v?.trim();
@@ -35,6 +44,10 @@ class AccessRepository {
       'direccion': limpiar(direccion),
       // Sin la arroba: la vitrina la agrega, y guardarla doble la duplicaría.
       'instagram': limpiar(instagram)?.replaceFirst(RegExp(r'^@'), ''),
+      'hero_titulo': limpiar(heroTitulo),
+      'hero_bajada': limpiar(heroBajada),
+      if (tocarLogo) 'logo_path': limpiar(logoPath),
+      if (tocarHero) 'hero_path': limpiar(heroPath),
     }).eq('id', tenantId);
   }
 
