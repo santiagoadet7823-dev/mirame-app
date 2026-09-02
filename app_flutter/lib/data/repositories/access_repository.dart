@@ -14,11 +14,20 @@ class AccessRepository {
   const AccessRepository();
 
   /// Guarda los datos que la vitrina muestra: el WhatsApp del botón de
-  /// contacto, y la dirección y el Instagram del pie.
+  /// contacto, la dirección y el Instagram del pie, y el logo, la portada y
+  /// sus textos.
   ///
-  /// Escribe directo contra Supabase y no por el outbox: `tenants` no es una
-  /// tabla de negocio ni vive en Drift, se lee una vez al entrar. La RLS
-  /// `tenants_owner_update` deja hacerlo solo al owner del salón.
+  /// Va por el RPC `actualizar_marca_tienda` y no por un `update` directo. El
+  /// update directo mentía: cuando la RLS de `tenants` filtra las filas,
+  /// PostgREST **no devuelve error**, devuelve OK con cero filas modificadas,
+  /// así que un encargado guardaba el logo, la pantalla decía «Datos
+  /// guardados» y no se había escrito nada. La función es `security definer`,
+  /// verifica `opera()` ella misma, toca **solo** las columnas de la vitrina
+  /// —abrirle `tenants` entero a `opera()` le daría `estado` y `plan`, o sea
+  /// la licencia— y devuelve el id para que acá se pueda comprobar que algo
+  /// pasó de verdad.
+  ///
+  /// Tira si el servidor rechaza. El llamador tiene que decirlo, no taparlo.
   Future<void> guardarDatosPublicos(
     String tenantId, {
     String? telefono,
@@ -34,21 +43,26 @@ class AccessRepository {
     bool tocarHero = false,
     String? heroPath,
   }) async {
-    String? limpiar(String? v) {
-      final t = v?.trim();
-      return (t == null || t.isEmpty) ? null : t;
-    }
+    // El recorte y el quitar la arroba viven en el RPC: así valen igual para
+    // cualquier cliente que escriba, no solo para este.
+    final id = await sb.rpc('actualizar_marca_tienda', params: {
+      'p_tenant': tenantId,
+      'p_telefono': telefono,
+      'p_direccion': direccion,
+      'p_instagram': instagram,
+      'p_hero_titulo': heroTitulo,
+      'p_hero_bajada': heroBajada,
+      'p_tocar_logo': tocarLogo,
+      'p_logo_path': logoPath,
+      'p_tocar_hero': tocarHero,
+      'p_hero_path': heroPath,
+    });
 
-    await sb.from('tenants').update({
-      'telefono': limpiar(telefono),
-      'direccion': limpiar(direccion),
-      // Sin la arroba: la vitrina la agrega, y guardarla doble la duplicaría.
-      'instagram': limpiar(instagram)?.replaceFirst(RegExp(r'^@'), ''),
-      'hero_titulo': limpiar(heroTitulo),
-      'hero_bajada': limpiar(heroBajada),
-      if (tocarLogo) 'logo_path': limpiar(logoPath),
-      if (tocarHero) 'hero_path': limpiar(heroPath),
-    }).eq('id', tenantId);
+    // Sin fila de vuelta no hubo escritura. Es el caso que este cambio vino a
+    // dejar de ocultar.
+    if (id == null) {
+      throw StateError('no se pudo guardar la tienda de este salón');
+    }
   }
 
   /// Carga perfil, membresías, salones y licencias del usuario logueado.

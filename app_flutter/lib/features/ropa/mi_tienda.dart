@@ -6,6 +6,7 @@
 /// ve completo.
 library;
 
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -140,11 +141,19 @@ class _MiTiendaState extends ConsumerState<_MiTienda> {
           const SnackBar(content: Text('Datos guardados')),
         );
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
+        // Un rechazo de permisos no se arregla mirando la señal. Decir
+        // "fijate si tenés internet" ante un 42501 manda a buscar donde no
+        // está — y esto ya pasó: un encargado guardaba el logo, la pantalla
+        // decía que lo había guardado, y no se escribía nada.
+        final sinPermiso = e is PostgrestException && e.code == '42501';
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('No se pudo guardar. Fijate si tenés internet.')),
+          SnackBar(
+            content: Text(sinPermiso
+                ? 'Tu usuario no puede editar la tienda de este salón.'
+                : 'No se pudo guardar. Fijate si tenés internet.'),
+          ),
         );
       }
     } finally {
