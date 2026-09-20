@@ -4,7 +4,7 @@
 > Dice en qué estado está el proyecto, qué se decidió y cuál es el próximo paso.
 > Actualizarlo al terminar cada sesión no es opcional.
 
-**Última actualización:** 2026-08-30
+**Última actualización:** 2026-09-19
 **Estado general:** PWA publicada y APK distribuyéndose solo. Repo `mirame-app` vivo.
 **Fase actual:** 5 — falta solo Estadísticas. Después: fase 6 (panel) y 7 (notificaciones)
 
@@ -828,3 +828,56 @@ están en borrador.
 
 **Próximo:** actualizar el APK, tocar «Reintentar» en Ajustes y confirmar que «Chomba Polo»
 sube y que el logo se publica. Después, el pulido de la vitrina.
+
+### 2026-09-19 — Los teléfonos que se quedaban en el logo
+
+Reporte: en algunos celulares la app no abre; queda en «el video de inicio». No hay video: es el
+`SplashScreen` de Flutter (el logo con `FadeSlideIn`). El splash nativo de Android es blanco
+liso, así que si se ve el logo animado `main()` ya terminó —`Supabase.initialize` no bloquea,
+la recuperación de sesión corre en background (verificado en `supabase_flutter 2.17.2`)— y
+el que no termina es el gate: el router deja al usuario en `/` mientras
+`sessionProvider.cargando == true`, y `SessionController.refrescar()` tenía **dos formas de no
+terminar nunca**:
+
+1. **Sin tope de red.** `_repo.cargar()` son cuatro selects a PostgREST (y antes el refresh del
+   JWT si venció) sin `timeout`. Ni `http` ni `dart:io` imponen uno: una red «colgada» (portal
+   cautivo, DNS que no contesta, VPN a medias) no da error nunca, y sin error no se cae al cache.
+2. **Excepción fuera del `try`.** Si el servidor respondía bien pero la base local fallaba en
+   `_cache.guardar`, se caía al `catch`, y ahí `_cache.leer()` volvía a tocar Drift sin
+   protección. La excepción se escapaba, `state` no se tocaba y el splash quedaba para siempre.
+
+Y en ninguno de los dos casos había un botón ni un texto: una app que no dice nada no se
+distingue de una rota. Pasa **también reinstalando limpio**, lo que
+cuadra con Android Auto Backup: `allowBackup` no estaba declarado (default `true`), y al
+reinstalar Android restaura las `shared_prefs` (con la sesión de Supabase) y la base Drift.
+
+Descartado con evidencia, para no volver a mirarlo: ABIs (el APK 1.17.2 trae `libsqlite3.so`
+para arm64-v8a, armeabi-v7a y x86_64), alineación 16 KB de las libs nativas (todas OK), builds
+de CI (verdes), `dart-define` faltante (mostraría «No se pudo iniciar»).
+
+| Dónde | Qué |
+|---|---|
+| `session_controller.dart` | `refrescar()` ahora **siempre termina con `cargando: false`**: un `try/catch` exterior manda a login con el motivo en `SessionState.error`. `_repo.cargar()` con `timeout` de 15 s (`kEsperaServidor`) → cae al camino offline. `_cache.guardar` y `_cache.leer` protegidos por separado: una base rota no descarta la decisión del servidor ni traba el arranque |
+| `session_controller.dart` | `cerrarSesion()` tolera que la base, las prefs o el push fallen: salir es justamente la salida que le queda al usuario |
+| `auth_screens.dart` | A los 8 s (`kEsperaSplash`) el splash muestra «Está tardando más de lo normal», **Reintentar**, **Cerrar sesión**, el error si lo hay y la versión. El bloque es un `ConsumerWidget` aparte que recién se construye entonces, así el primer segundo sigue sin depender de nada |
+| `AndroidManifest.xml` + `res/xml/data_extraction_rules.xml` | `allowBackup="false"`: desinstalar y reinstalar vuelve a ser un arranque limpio |
+| `auth_screens_test.dart` | Un `SessionController` falso trabado en `cargando`; a los 9 s aparecen los botones y el motivo |
+
+**Lo que NO se pudo confirmar:** cuál de las dos ramas era en esos teléfonos —no hubo logs—.
+El arreglo cubre las dos y, sobre todo, a partir de 1.17.3 el motivo queda **escrito en
+pantalla** (en el splash y en el login), así que el próximo reporte trae la causa. Si todavía
+hace falta más, con el teléfono por USB: `adb logcat -c && adb logcat | findstr /i "flutter
+mirame AndroidRuntime"` mientras se abre la app.
+
+**Entorno en esta compu (nueva):** el clon estaba en `android/` con 146 archivos borrados del
+disco pero intactos en `.git` (`git checkout -- .` los recuperó). Flutter instalado en
+`C:\src\flutter` (misma ruta que la otra máquina), `local.properties` apuntando al SDK de este
+usuario, `env.json` recreado con la publishable key.
+
+`flutter analyze` limpio, **296 tests pasando**.
+
+**Publicado:** APK 1.17.3. `min_version` sigue en 1.0.0.
+
+**Próximo:** que un teléfono de los que fallaban instale 1.17.3 y, si sigue sin entrar, leer el
+motivo que ahora muestra. Después, lo que quedó del 02/09: el secret
+`SUPABASE_SERVICE_ROLE_KEY`, las 5 fotos en el teléfono y el pulido de la vitrina.
