@@ -32,8 +32,79 @@
   <title>Mírame Lash Studio</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#faf8f5">
+
+  <!-- Pantalla de carga propia. Hasta que Flutter pinta el primer frame el
+       navegador muestra esto; si nunca lo pinta (un CDN bloqueado, un
+       navegador sin WebAssembly, un error al arrancar), a los 20 s dice que
+       paso y ofrece recargar. Sin esto la PWA quedaba en blanco y muda, y
+       una app que no dice nada no se distingue de una rota. Los colores son
+       los tokens del design system; sin fuentes externas a proposito. -->
+  <style>
+    #cargando {
+      position: fixed; inset: 0; z-index: 1;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 10px; padding: 32px; text-align: center;
+      background: #faf8f5; color: #5c5248;
+      font: 14px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      transition: opacity .25s ease;
+    }
+    #cargando.oculto { opacity: 0; pointer-events: none; }
+    #cargando .nombre { font: 500 28px/1.2 Georgia, "Times New Roman", serif;
+      color: #1a1612; letter-spacing: .5px; margin-bottom: 4px; }
+    #cargando .detalle { font-size: 12px; color: #9c9088; max-width: 320px;
+      word-break: break-word; }
+    #cargando button { margin-top: 14px; padding: 10px 24px; border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.11); background: #fff; color: #5c5248;
+      font: 500 13px inherit; cursor: pointer; }
+  </style>
 </head>
 <body>
+  <div id="cargando">
+    <div class="nombre">Mírame</div>
+    <div id="cargando-estado">Cargando…</div>
+    <div id="cargando-detalle" class="detalle"></div>
+  </div>
+  <script>
+    (function () {
+      var cargando = document.getElementById('cargando');
+      var estado = document.getElementById('cargando-estado');
+      var detalle = document.getElementById('cargando-detalle');
+      var ultimoError = '';
+      var listo = false;
+
+      function ocultar() {
+        listo = true;
+        cargando.classList.add('oculto');
+      }
+      // Flutter lo dispara cuando ya hay algo en pantalla.
+      window.addEventListener('flutter-first-frame', ocultar);
+
+      function anotar(e) {
+        // Un <script> o un import que no carga llega como evento sobre el
+        // elemento, sin mensaje: se anota la URL que fallo, que es lo util.
+        var t = e && e.target;
+        var src = t && (t.src || t.href);
+        var m = e && (e.reason || e.error || e.message);
+        var texto = m && m.message ? m.message : (m || (src ? 'no cargo ' + src : ''));
+        if (texto) ultimoError = String(texto).slice(0, 200);
+      }
+      window.addEventListener('error', anotar, true);
+      window.addEventListener('unhandledrejection', anotar);
+
+      setTimeout(function () {
+        if (listo) return;
+        estado.textContent = 'No se pudo cargar la app.';
+        detalle.textContent = ultimoError
+          ? 'Revisá si un bloqueador de anuncios o la prevención de rastreo ' +
+            'del navegador la está frenando. Detalle: ' + ultimoError
+          : 'Está tardando más de lo normal. Revisá la conexión.';
+        var b = document.createElement('button');
+        b.textContent = 'Recargar';
+        b.onclick = function () { location.reload(); };
+        cargando.appendChild(b);
+      }, 20000);
+    })();
+  </script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader

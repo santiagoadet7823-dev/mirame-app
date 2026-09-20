@@ -4,7 +4,7 @@
 > Dice en qué estado está el proyecto, qué se decidió y cuál es el próximo paso.
 > Actualizarlo al terminar cada sesión no es opcional.
 
-**Última actualización:** 2026-09-19
+**Última actualización:** 2026-09-20
 **Estado general:** PWA publicada y APK distribuyéndose solo. Repo `mirame-app` vivo.
 **Fase actual:** 5 — falta solo Estadísticas. Después: fase 6 (panel) y 7 (notificaciones)
 
@@ -881,3 +881,27 @@ usuario, `env.json` recreado con la publishable key.
 **Próximo:** que un teléfono de los que fallaban instale 1.17.3 y, si sigue sin entrar, leer el
 motivo que ahora muestra. Después, lo que quedó del 02/09: el secret
 `SUPABASE_SERVICE_ROLE_KEY`, las 5 fotos en el teléfono y el pulido de la vitrina.
+
+### 2026-09-20 — La PWA en blanco
+
+Reporte: en el Edge de la compu la PWA abre **en blanco**; nunca había funcionado ahí. En un
+Edge headless con perfil limpio carga hasta el login, así que el sitio estaba sano: el problema
+era del lado del navegador. **Causa, reproducida con Playwright:** `flutter_bootstrap.js` carga
+CanvasKit —el motor de dibujo— desde `www.gstatic.com`, el CDN de Google, aunque el build ya
+trae la copia en `canvaskit/`. Con ese dominio bloqueado (prevención de rastreo estricta de
+Edge, un bloqueador de anuncios, una red que filtra Google) el `import` falla y Flutter no
+pinta el primer frame: blanco, y sin un solo error visible.
+
+| Dónde | Qué |
+|---|---|
+| `pwa.yml` | `flutter build web --no-web-resources-cdn`: CanvasKit se sirve desde el propio sitio (`useLocalCanvasKit: true` en el bootstrap) |
+| `web/index.html` | Overlay «Cargando…» con los tokens del design system y sin fuentes externas. Se oculta con el evento `flutter-first-frame`; si a los 20 s sigue, dice «No se pudo cargar la app», el recurso o error que falló y un botón **Recargar** |
+
+Verificado en local sirviendo `build/web` bajo `/mirame-app/`: con `gstatic.com` bloqueado
+ahora llega al login (antes: blanco); con `main.dart.js` bloqueado muestra el aviso con la URL
+que no cargó. Al compilar desde Git Bash hay que usar `MSYS_NO_PATHCONV=1`, si no
+`--base-href /mirame-app/` se convierte en una ruta de Windows.
+
+**Próximo:** que el usuario abra https://santiagoadet7823-dev.github.io/mirame-app/ en su Edge
+(y en InPrivate si sigue en blanco, para descartar extensiones). Sigue pendiente la prueba del
+APK 1.17.3 en un teléfono de los que fallaban.

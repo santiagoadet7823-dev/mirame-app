@@ -52,7 +52,14 @@ jobs:
           test -n "$SUPABASE_PUBLISHABLE_KEY" || { echo "Falta el secret SUPABASE_PUBLISHABLE_KEY"; exit 1; }
           # base-href tiene que terminar en / y coincidir con el nombre del
           # repo, o todos los assets dan 404 en GitHub Pages.
+          #
+          # --no-web-resources-cdn: CanvasKit (el motor de dibujo) se sirve
+          # desde este mismo sitio y no desde www.gstatic.com. Con el CDN, un
+          # Edge con prevencion de rastreo estricta o cualquier bloqueador
+          # corta ese dominio y la PWA queda EN BLANCO, sin error: Flutter no
+          # llega a pintar el primer frame. Reproducido bloqueando gstatic.
           flutter build web --release \
+            --no-web-resources-cdn \
             --base-href "/mirame-app/" \
             --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
