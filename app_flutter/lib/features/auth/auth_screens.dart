@@ -4,6 +4,8 @@
 /// textos son los del original, palabra por palabra: la dueña ya los conoce.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -25,47 +27,142 @@ const kWhatsappAdmin = '5493877404245';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Cuánto se espera antes de ofrecer una salida desde el splash.
+///
+/// Más que la validación contra el servidor ([kEsperaServidor]) no hace
+/// falta: si el gate anda, para entonces ya decidió. Se muestra un poco antes
+/// para que quien está mirando el logo sepa que la app no se colgó.
+const kEsperaSplash = Duration(seconds: 8);
+
 /// `#splash` — logo, nombre y tagline. Se ve menos de un segundo.
-class SplashScreen extends StatelessWidget {
+///
+/// …salvo que el gate no termine. Pasado [kEsperaSplash] aparece debajo una
+/// salida —reintentar o cerrar sesión— y el motivo si lo hay. Hubo teléfonos
+/// trabados acá durante días sin un solo texto en pantalla: una app que no
+/// dice nada no se distingue de una rota, y no hay forma de dar soporte.
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  Timer? _demora;
+  bool _demorado = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _demora = Timer(kEsperaSplash, () {
+      if (mounted) setState(() => _demorado = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _demora?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: MColors.bg,
         body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FadeSlideIn(
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: MColors.surface,
-                    boxShadow: MShadow.md,
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Image.asset(
-                    'assets/brand/logo-mirame.jpg',
-                    fit: BoxFit.cover,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FadeSlideIn(
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: MColors.surface,
+                      boxShadow: MShadow.md,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Image.asset(
+                      'assets/brand/logo-mirame.jpg',
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 150),
-                child: Text('Mírame', style: MText.splashName),
-              ),
-              const SizedBox(height: 16),
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 250),
-                child: Text('LASH STUDIO', style: MText.splashSub),
-              ),
-            ],
+                const SizedBox(height: 16),
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 150),
+                  child: Text('Mírame', style: MText.splashName),
+                ),
+                const SizedBox(height: 16),
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 250),
+                  child: Text('LASH STUDIO', style: MText.splashSub),
+                ),
+                // Se construye recién cuando hace falta: observa
+                // `sessionProvider`, y eso exige Supabase inicializado. Así el
+                // primer segundo del splash sigue sin depender de nada.
+                if (_demorado) ...[
+                  const SizedBox(height: 36),
+                  const FadeSlideIn(child: _SplashDemora()),
+                ],
+              ],
+            ),
           ),
         ),
       );
+}
+
+/// La salida del splash cuando el gate tarda de más.
+class _SplashDemora extends ConsumerWidget {
+  const _SplashDemora();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final estado = ref.watch(sessionProvider);
+    final notifier = ref.read(sessionProvider.notifier);
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 300),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Está tardando más de lo normal.',
+            textAlign: TextAlign.center,
+            style: MText.cuerpoSec,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Revisá la conexión o probá de nuevo.',
+            textAlign: TextAlign.center,
+            style: MText.menor,
+          ),
+          if (estado.error != null) ...[
+            const SizedBox(height: 16),
+            AuthError(estado.error!),
+          ],
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              GhostButton(
+                texto: 'Reintentar',
+                onTap: estado.cargando ? null : notifier.refrescar,
+              ),
+              const SizedBox(width: 10),
+              GhostButton(
+                texto: 'Cerrar sesión',
+                onTap: notifier.cerrarSesion,
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          const VersionLabel(),
+        ],
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -6,6 +6,7 @@ import 'package:mirame/core/theme/app_theme.dart';
 import 'package:mirame/domain/entities/access.dart';
 import 'package:mirame/domain/rules/access.dart';
 import 'package:mirame/features/auth/auth_screens.dart';
+import 'package:mirame/features/auth/session_controller.dart';
 
 /// Monta una pantalla con el tema real de la app.
 ///
@@ -29,6 +30,40 @@ void main() {
       await montar(t, const SplashScreen());
       expect(find.text('Mírame'), findsOneWidget);
       expect(find.text('LASH STUDIO'), findsOneWidget);
+    });
+
+    testWidgets('el primer segundo no ofrece ninguna salida', (t) async {
+      await montar(t, const SplashScreen());
+      expect(find.text('Reintentar'), findsNothing);
+      expect(find.text('Cerrar sesión'), findsNothing);
+    });
+
+    // Cuando el gate no termina, el splash tiene que ofrecer una salida y
+    // decir por qué. Es lo que faltaba en los teléfonos que quedaban en el
+    // logo para siempre.
+    testWidgets('pasada la demora ofrece salir y muestra el motivo',
+        (t) async {
+      await t.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sessionProvider.overrideWith(
+              () => _SesionTrabada(error: 'StateError: base rota'),
+            ),
+          ],
+          child: MaterialApp(
+            theme: buildMirameTheme(),
+            home: const SplashScreen(),
+          ),
+        ),
+      );
+      await t.pump(const Duration(seconds: 1));
+      expect(find.text('Reintentar'), findsNothing);
+
+      await t.pump(kEsperaSplash);
+      await t.pump(const Duration(seconds: 1));
+      expect(find.text('Reintentar'), findsOneWidget);
+      expect(find.text('Cerrar sesión'), findsOneWidget);
+      expect(find.textContaining('base rota'), findsOneWidget);
     });
   });
 
@@ -132,4 +167,16 @@ void main() {
       );
     });
   });
+}
+
+/// Un gate que nunca decide: es exactamente el estado en el que el splash
+/// tiene que ofrecer una salida. No toca Supabase ni la base local.
+class _SesionTrabada extends SessionController {
+  _SesionTrabada({this.error});
+
+  final String? error;
+
+  @override
+  SessionState build() =>
+      SessionState(decision: const GoToLogin(), cargando: true, error: error);
 }

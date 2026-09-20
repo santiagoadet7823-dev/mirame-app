@@ -21,10 +21,20 @@
          app es su propio installer of record (ver MirameUpdater.kt). -->
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION"/>
 
+    <!-- Sin backup automatico. Con el default (true) Android restaura al
+         reinstalar las shared_prefs (donde vive la sesion de Supabase) y la
+         base Drift, asi que "desinstalar y volver a instalar" no era un
+         arranque limpio: el telefono volvia con la sesion y los datos de
+         antes, y con ellos el mismo problema. La sesion es de un tercero y
+         los datos se vuelven a bajar del servidor; no hay nada que valga la
+         pena restaurar. -->
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules">
         <activity
             android:name=".MainActivity"
             android:exported="true"

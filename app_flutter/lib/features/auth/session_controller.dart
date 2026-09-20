@@ -21,6 +21,10 @@ import '../../domain/rules/access.dart';
 const _kTenantActivo = 'mirame.tenant_activo';
 const _kUltimaValidacion = 'mirame.ultima_validacion';
 
+/// Tope para la validación contra el servidor al arrancar. Pasado esto se
+/// decide con el cache y la gracia, como si no hubiera red.
+const kEsperaServidor = Duration(seconds: 15);
+
 class SessionState {
   const SessionState({
     required this.decision,
@@ -90,8 +94,32 @@ class SessionController extends Notifier<SessionState> {
   /// Recalcula el gate. Si el servidor no responde, cae al último estado
   /// conocido y deja que la gracia decida — es exactamente lo que hace falta
   /// para abrir la app en un salón sin señal.
+  ///
+  /// **Invariante: siempre termina con `cargando: false`.** Mientras es
+  /// `true` el router deja al usuario en el splash, sin botón ni mensaje, así
+  /// que cualquier camino que salga de acá sin publicar una decisión es un
+  /// teléfono trabado en el logo para siempre. Pasó de verdad: la carga
+  /// contra el servidor no tenía tope de tiempo, y si la base local fallaba
+  /// dentro del `catch` la excepción se escapaba sin que nadie la viera.
   Future<void> refrescar() async {
     state = state.copyWith(cargando: true, limpiarError: true);
+    try {
+      await _refrescar();
+    } catch (e) {
+      // Lo que llegue acá no es "sin red" (eso lo absorbe `_refrescar`): es
+      // la base local, las preferencias o el propio gate rompiéndose. Se va
+      // al login, que es el lado seguro, y se deja el motivo escrito para que
+      // el splash lo muestre y soporte sepa qué pasó en ese teléfono.
+      state = SessionState(
+        decision: const GoToLogin(),
+        error: 'No se pudo abrir la sesión en este dispositivo.\n'
+            '${e.runtimeType}: $e',
+      );
+      ref.read(syncProvider.notifier).detener();
+    }
+  }
+
+  Future<void> _refrescar() async {
     final prefs = await _p;
     final tenantActivo = prefs.getString(_kTenantActivo);
     final ultimaMs = prefs.getInt(_kUltimaValidacion);
@@ -103,29 +131,37 @@ class SessionController extends Notifier<SessionState> {
       return;
     }
 
+    AccessContext ctx;
     try {
-      final ctx = await _repo.cargar(
-        tenantActivoId: tenantActivo,
-        ultimaValidacion: ultima,
-      );
+      // Con tope: sin él, una red "colgada" (portal cautivo, DNS que no
+      // contesta, VPN a medias) no da error nunca, y un error es lo que hace
+      // falta para caer al cache. Quince segundos alcanzan para un 3G malo;
+      // más que eso ya se ve como una app rota.
+      ctx = await _repo
+          .cargar(tenantActivoId: tenantActivo, ultimaValidacion: ultima)
+          .timeout(kEsperaServidor);
       await prefs.setInt(
           _kUltimaValidacion, DateTime.now().millisecondsSinceEpoch);
       // Se guarda DESPUÉS de resolver bien: cachear un contexto a medias
       // dejaría a la app abriendo offline con datos peores que los que ya
-      // tenía.
-      await _cache.guardar(ctx);
-      final decision = resolveAccess(ctx, DateTime.now());
-      state = SessionState(
-        decision: decision,
-        esSuperadmin: ctx.profile?.esSuperadmin ?? false,
-      );
-      _arrancarSyncSiCorresponde(decision);
+      // tenía. Y si la base local no se deja escribir, la decisión del
+      // servidor vale igual: no se descarta por eso.
+      try {
+        await _cache.guardar(ctx);
+      } catch (_) {}
     } catch (_) {
       // Sin red o servidor caído: se decide con lo último que se supo.
-      final ctx = await _cache.leer(
-            tenantActivoId: tenantActivo,
-            ultimaValidacion: ultima,
-          ) ??
+      AccessContext? cacheado;
+      try {
+        cacheado = await _cache.leer(
+          tenantActivoId: tenantActivo,
+          ultimaValidacion: ultima,
+        );
+      } catch (_) {
+        // Una base local rota no puede trabar el arranque: se sigue como si
+        // no hubiera cache.
+      }
+      ctx = cacheado ??
           // Sin cache no se puede afirmar nada del usuario, y el gate manda a
           // login: el lado seguro.
           AccessContext(
@@ -133,13 +169,14 @@ class SessionController extends Notifier<SessionState> {
             ultimaValidacion: ultima,
             hayRed: false,
           );
-      final decision = resolveAccess(ctx, DateTime.now());
-      state = SessionState(
-        decision: decision,
-        esSuperadmin: ctx.profile?.esSuperadmin ?? false,
-      );
-      _arrancarSyncSiCorresponde(decision);
     }
+
+    final decision = resolveAccess(ctx, DateTime.now());
+    state = SessionState(
+      decision: decision,
+      esSuperadmin: ctx.profile?.esSuperadmin ?? false,
+    );
+    _arrancarSyncSiCorresponde(decision);
   }
 
   /// El sync solo corre estando adentro de un salón, y **nunca** cuando un
@@ -197,17 +234,32 @@ class SessionController extends Notifier<SessionState> {
   }
 
   Future<void> cerrarSesion() async {
-    final prefs = await _p;
     ref.read(syncProvider.notifier).detener();
-    // El cache se borra al salir: en un dispositivo compartido, dejarlo
-    // permitiría abrir offline con la sesión de quien lo usó antes.
-    await _cache.limpiar();
-    await prefs.remove(_kTenantActivo);
-    await prefs.remove(_kUltimaValidacion);
-    // ANTES del signOut: la RPC valida `auth.uid()`, y sin sesión no borraría
-    // nada y el teléfono seguiría recibiendo avisos de quien ya se fue.
-    await Push.instancia.olvidar();
-    await signOut();
+    // Nada de lo previo al signOut puede impedirlo: si la base local o el
+    // push fallan en este teléfono, salir de la sesión es justamente la
+    // salida que le queda al usuario, y tiene que funcionar.
+    try {
+      // El cache se borra al salir: en un dispositivo compartido, dejarlo
+      // permitiría abrir offline con la sesión de quien lo usó antes.
+      await _cache.limpiar();
+    } catch (_) {}
+    try {
+      final prefs = await _p;
+      await prefs.remove(_kTenantActivo);
+      await prefs.remove(_kUltimaValidacion);
+    } catch (_) {}
+    try {
+      // ANTES del signOut: la RPC valida `auth.uid()`, y sin sesión no
+      // borraría nada y el teléfono seguiría recibiendo avisos de quien ya se
+      // fue.
+      await Push.instancia.olvidar().timeout(kEsperaServidor);
+    } catch (_) {}
+    try {
+      await signOut().timeout(kEsperaServidor);
+    } catch (_) {
+      // Sin red el servidor no se entera, pero la sesión local sí se borra:
+      // `signOut` limpia el storage antes de fallar contra el servidor.
+    }
     state = const SessionState(decision: GoToLogin());
   }
 }
