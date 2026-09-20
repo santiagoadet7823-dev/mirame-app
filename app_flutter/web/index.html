@@ -35,7 +35,7 @@
 
   <!-- Pantalla de carga propia. Hasta que Flutter pinta el primer frame el
        navegador muestra esto; si nunca lo pinta (un CDN bloqueado, un
-       navegador sin WebAssembly, un error al arrancar), a los 20 s dice que
+       navegador sin WebAssembly, un error al arrancar), a los 30 s dice que
        paso y ofrece recargar. Sin esto la PWA quedaba en blanco y muda, y
        una app que no dice nada no se distingue de una rota. Los colores son
        los tokens del design system; sin fuentes externas a proposito. -->
@@ -93,16 +93,20 @@
 
       setTimeout(function () {
         if (listo) return;
-        estado.textContent = 'No se pudo cargar la app.';
+        // Sin un error anotado puede ser solo una conexión lenta (la app
+        // pesa ~5 MB): se avisa, pero no se da por rota.
+        estado.textContent = ultimoError
+          ? 'No se pudo cargar la app.'
+          : 'Está tardando más de lo normal.';
         detalle.textContent = ultimoError
           ? 'Revisá si un bloqueador de anuncios o la prevención de rastreo ' +
             'del navegador la está frenando. Detalle: ' + ultimoError
-          : 'Está tardando más de lo normal. Revisá la conexión.';
+          : 'Podés esperar un poco más o recargar.';
         var b = document.createElement('button');
         b.textContent = 'Recargar';
         b.onclick = function () { location.reload(); };
         cargando.appendChild(b);
-      }, 20000);
+      }, 30000);
     })();
   </script>
   <!--

@@ -895,7 +895,7 @@ pinta el primer frame: blanco, y sin un solo error visible.
 | Dónde | Qué |
 |---|---|
 | `pwa.yml` | `flutter build web --no-web-resources-cdn`: CanvasKit se sirve desde el propio sitio (`useLocalCanvasKit: true` en el bootstrap) |
-| `web/index.html` | Overlay «Cargando…» con los tokens del design system y sin fuentes externas. Se oculta con el evento `flutter-first-frame`; si a los 20 s sigue, dice «No se pudo cargar la app», el recurso o error que falló y un botón **Recargar** |
+| `web/index.html` | Overlay «Cargando…» con los tokens del design system y sin fuentes externas. Se oculta con el evento `flutter-first-frame`; si a los 30 s sigue, dice «No se pudo cargar la app», el recurso o error que falló y un botón **Recargar** |
 
 Verificado en local sirviendo `build/web` bajo `/mirame-app/`: con `gstatic.com` bloqueado
 ahora llega al login (antes: blanco); con `main.dart.js` bloqueado muestra el aviso con la URL
