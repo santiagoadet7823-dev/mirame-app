@@ -31,6 +31,28 @@ Future<void> initSupabase() async {
   );
 }
 
+/// A dónde vuelve el OAuth.
+///
+/// En Android es el deep link `com.mirame.app://auth`. En web es la URL de la
+/// propia PWA, **explícita**: con `null`, Supabase manda al *Site URL* del
+/// proyecto, y ese campo apuntaba a `localhost` de cuando se desarrollaba —
+/// así que en producción Google autenticaba y el navegador terminaba en un
+/// localhost que no existe. Se manda solo origen + ruta: sin el fragmento
+/// (`#/login`), porque Supabase pega `?code=…` y con un `#` en el medio el
+/// código queda en el lugar equivocado; y sin la query, porque la URL tiene
+/// que coincidir EXACTA con la lista blanca y un `?algo` cualquiera la
+/// sacaría de ahí.
+///
+/// La URL tiene que estar en Authentication → URL Configuration → Redirect
+/// URLs (ver `04-AUTH-Y-ROLES.md`); si no está, Supabase cae al Site URL en
+/// silencio.
+String get _authRedirect {
+  if (!kIsWeb) return AppConfig.authRedirectNativo;
+  final b = Uri.base;
+  return Uri(scheme: b.scheme, host: b.host, port: b.port, path: b.path)
+      .toString();
+}
+
 /// Login con Google.
 ///
 /// En web redirige y vuelve a la misma URL; en Android abre el navegador del
@@ -39,7 +61,7 @@ Future<void> initSupabase() async {
 Future<void> signInConGoogle() async {
   await sb.auth.signInWithOAuth(
     OAuthProvider.google,
-    redirectTo: kIsWeb ? null : AppConfig.authRedirectNativo,
+    redirectTo: _authRedirect,
   );
 }
 
@@ -48,7 +70,7 @@ Future<void> signInConGoogle() async {
 Future<void> enviarMagicLink(String email) async {
   await sb.auth.signInWithOtp(
     email: email,
-    emailRedirectTo: kIsWeb ? null : AppConfig.authRedirectNativo,
+    emailRedirectTo: _authRedirect,
   );
 }
 

@@ -929,3 +929,34 @@ decide el próximo paso. Se pausa acá porque el usuario retoma otro trabajo.
 3. Si nada de eso alcanza: `F12` → pestaña Consola, y mandar el primer error en rojo.
 
 Sigue pendiente también la prueba del **APK 1.17.3** en un teléfono de los que fallaban.
+
+### 2026-09-21 — La PWA abre, pero Google devolvía a `localhost`
+
+Se resolvió el punto anterior: el usuario **sí llega al login** en su Edge. El problema
+siguiente era que, al tocar Google, Supabase devolvía el navegador a un `localhost` que no
+existe.
+
+**Causa.** En web `signInWithOAuth` se llamaba con `redirectTo: null`. Con `null`, Supabase
+usa el **Site URL** del proyecto, que quedó en `http://localhost:8899` de cuando se
+desarrollaba. Google autenticaba bien; el rebote final era el que estaba mal.
+
+**Arreglo en la app** (`lib/data/remote/supabase_client.dart`): un getter `_authRedirect`
+que en web pide volver a **la propia URL de la PWA** (origen + ruta de `Uri.base`, sin
+fragmento ni query, para que coincida exacta con la lista blanca) y en Android sigue con
+`com.mirame.app://auth`. Lo usan Google y el magic link. Sin bump ni tag: el push a `main`
+republica la PWA.
+
+**Paso manual que NO se puede hacer desde acá** (el MCP de Supabase no toca la config de
+Auth). En Supabase → Authentication → URL Configuration:
+
+- **Site URL:** `https://santiagoadet7823-dev.github.io/mirame-app/`
+- **Redirect URLs:** `https://santiagoadet7823-dev.github.io/mirame-app/`,
+  `com.mirame.app://auth`, y `http://localhost:*` solo para desarrollo.
+
+Si la URL de la PWA no está en Redirect URLs, Supabase la ignora **sin error** y vuelve al
+Site URL — o sea, el mismo síntoma. Si después del push sigue yendo a localhost, es este paso.
+
+**Cómo verificar sin loguearse:** abrir la PWA, tocar Google y mirar la primera navegación:
+`…/auth/v1/authorize?provider=google&redirect_to=…` tiene que llevar la URL de GitHub Pages.
+
+Sigue pendiente la prueba del **APK 1.17.3** en un teléfono de los que fallaban.
