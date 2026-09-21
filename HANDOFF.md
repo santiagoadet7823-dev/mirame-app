@@ -4,7 +4,7 @@
 > Dice en qué estado está el proyecto, qué se decidió y cuál es el próximo paso.
 > Actualizarlo al terminar cada sesión no es opcional.
 
-**Última actualización:** 2026-09-20
+**Última actualización:** 2026-09-21
 **Estado general:** PWA publicada y APK distribuyéndose solo. Repo `mirame-app` vivo.
 **Fase actual:** 5 — falta solo Estadísticas. Después: fase 6 (panel) y 7 (notificaciones)
 
@@ -905,3 +905,27 @@ que no cargó. Al compilar desde Git Bash hay que usar `MSYS_NO_PATHCONV=1`, si 
 **Próximo:** que el usuario abra https://santiagoadet7823-dev.github.io/mirame-app/ en su Edge
 (y en InPrivate si sigue en blanco, para descartar extensiones). Sigue pendiente la prueba del
 APK 1.17.3 en un teléfono de los que fallaban.
+
+### 2026-09-21 — Cierre de sesión: la PWA sigue sin abrir en el Edge del usuario
+
+Lo publicado en `8562fe8` está en línea y verificado con Playwright contra la URL real:
+CanvasKit se sirve local (cero pedidos a `gstatic.com`), el overlay «Cargando…» aparece y
+la app llega al login. **Pero en el Edge del usuario sigue sin abrir.** No hay más datos
+todavía —no se sabe si ve el overlay, el aviso de los 30 s, o blanco puro—, y eso es lo que
+decide el próximo paso. Se pausa acá porque el usuario retoma otro trabajo.
+
+**Para retomar, en este orden:**
+
+1. Pedir **qué se ve exactamente** en https://santiagoadet7823-dev.github.io/mirame-app/ :
+   - *Blanco puro, sin «Mírame / Cargando…»* → ni el HTML nuevo está llegando: caché del
+     navegador o un service worker viejo. `Ctrl+F5`; si no, `edge://serviceworker-internals`
+     → «Unregister» el de `mirame-app`, y borrar datos del sitio.
+   - *«Cargando…» eterno o el aviso de los 30 s con un «Detalle: …»* → el detalle dice qué
+     recurso falló. Pedir captura.
+   - *Llega al login pero Google no vuelve* → tema de Redirect URLs en Supabase (el flujo
+     hasta Google ya se verificó que arranca bien con PKCE).
+2. Probar en **ventana InPrivate** (descarta extensiones) y en otro navegador de la misma
+   compu. Si en InPrivate anda, es una extensión o la caché.
+3. Si nada de eso alcanza: `F12` → pestaña Consola, y mandar el primer error en rojo.
+
+Sigue pendiente también la prueba del **APK 1.17.3** en un teléfono de los que fallaban.
