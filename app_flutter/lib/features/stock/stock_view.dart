@@ -340,6 +340,7 @@ Widget _tablaStock(
         ),
         ColumnaTabla(
           titulo: 'Categoría',
+          opcional: true,
           flex: 2,
           ordenarPor: (i) => (i.categoria ?? '').toLowerCase(),
           celda: (_, i) => CeldaTexto(
@@ -349,6 +350,7 @@ Widget _tablaStock(
         ),
         ColumnaTabla(
           titulo: 'Nivel',
+          opcional: true,
           ancho: 140,
           ordenarPor: (i) => stockBarPct(i),
           celda: (_, i) {
@@ -401,6 +403,7 @@ Widget _tablaStock(
         ),
         ColumnaTabla(
           titulo: 'Mínimo',
+          opcional: true,
           ancho: 80,
           numerica: true,
           ordenarPor: (i) => i.minimo,

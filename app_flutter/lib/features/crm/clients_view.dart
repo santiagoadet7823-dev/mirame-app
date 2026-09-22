@@ -251,6 +251,7 @@ Widget _tablaClientas(
         ),
         ColumnaTabla(
           titulo: 'Teléfono',
+          opcional: true,
           flex: 2,
           celda: (_, c) => CeldaTexto(
             c.telefono?.isNotEmpty ?? false ? c.telefono! : '—',
@@ -284,6 +285,7 @@ Widget _tablaClientas(
         ),
         ColumnaTabla(
           titulo: 'Alta',
+          opcional: true,
           ancho: 110,
           ordenarPor: (c) => c.createdAt,
           celda: (_, c) => CeldaTexto(

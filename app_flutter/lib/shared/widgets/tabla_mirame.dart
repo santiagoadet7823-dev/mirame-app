@@ -28,6 +28,7 @@ class ColumnaTabla<T> {
     this.flex = 1,
     this.numerica = false,
     this.ordenarPor,
+    this.opcional = false,
   });
 
   final String titulo;
@@ -42,6 +43,12 @@ class ColumnaTabla<T> {
 
   /// Clave de orden. Null = no se puede ordenar por esta columna.
   final Comparable<dynamic> Function(T fila)? ordenarPor;
+
+  /// Se puede esconder si no entra. Con el panel lateral abierto la tabla
+  /// pierde 400 px; antes que aplastar todo o scrollear de costado, se
+  /// sacan las columnas que no hacen falta para reconocer la fila (la fecha
+  /// de alta, el teléfono), de la última hacia la primera.
+  final bool opcional;
 }
 
 /// Texto de celda con el estilo por defecto: 13 px, tabular si es número.
@@ -149,12 +156,26 @@ class _TablaMirameState<T> extends State<TablaMirame<T>> {
         }
       });
 
-  /// Ancho mínimo para que ninguna columna se aplaste: las fijas completas y
-  /// 120 por cada flexible.
-  double get _anchoMinimo => widget.columnas.fold<double>(
-        32,
-        (acc, c) => acc + (c.ancho ?? 120.0 * c.flex),
+  static const _gap = 20.0;
+
+  /// Ancho mínimo para que ninguna columna se aplaste: las fijas completas,
+  /// 110 por cada flexible, más los espacios.
+  static double _anchoMinimo(List<ColumnaTabla<dynamic>> cols) => cols.fold<double>(
+        32 + _gap * (cols.length - 1),
+        (acc, c) => acc + (c.ancho ?? 110.0 * c.flex),
       );
+
+  /// Las columnas que entran en [ancho]: se van sacando las opcionales, de
+  /// atrás para adelante, hasta que el mínimo quepa.
+  List<ColumnaTabla<T>> _visibles(double ancho) {
+    var cols = widget.columnas;
+    while (_anchoMinimo(cols) > ancho) {
+      final i = cols.lastIndexWhere((c) => c.opcional);
+      if (i < 0) break;
+      cols = [...cols]..removeAt(i);
+    }
+    return cols;
+  }
 
   Widget _celda(ColumnaTabla<T> c, Widget hijo) {
     final alineado = Align(
@@ -166,7 +187,7 @@ class _TablaMirameState<T> extends State<TablaMirame<T>> {
         : Expanded(flex: c.flex, child: alineado);
   }
 
-  Widget _cabecera() => Container(
+  Widget _cabecera(List<ColumnaTabla<T>> cols) => Container(
         height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: const BoxDecoration(
@@ -175,25 +196,30 @@ class _TablaMirameState<T> extends State<TablaMirame<T>> {
         ),
         child: Row(
           children: [
-            for (var i = 0; i < widget.columnas.length; i++) ...[
-              if (i > 0) const SizedBox(width: 12),
+            for (var i = 0; i < cols.length; i++) ...[
+              if (i > 0) const SizedBox(width: _gap),
               _celda(
-                  widget.columnas[i],
+                  cols[i],
                   _TituloColumna(
-                    texto: widget.columnas[i].titulo,
-                    numerica: widget.columnas[i].numerica,
-                    activa: _columnaOrden == i,
+                    texto: cols[i].titulo,
+                    numerica: cols[i].numerica,
+                    activa: _columnaOrden == widget.columnas.indexOf(cols[i]),
                     ascendente: _ascendente,
-                    onTap: widget.columnas[i].ordenarPor == null
+                    onTap: cols[i].ordenarPor == null
                         ? null
-                        : () => _ordenarPor(i),
+                        : () => _ordenarPor(widget.columnas.indexOf(cols[i])),
                   )),
             ],
           ],
         ),
       );
 
-  Widget _fila(BuildContext context, T fila, {required bool ultima}) {
+  Widget _fila(
+    BuildContext context,
+    List<ColumnaTabla<T>> cols,
+    T fila, {
+    required bool ultima,
+  }) {
     final clave = widget.claveDe?.call(fila) ?? fila;
     final elegida = widget.seleccionada != null && clave == widget.seleccionada;
     return ConHover(
@@ -216,10 +242,9 @@ class _TablaMirameState<T> extends State<TablaMirame<T>> {
           ),
           child: Row(
             children: [
-              for (var i = 0; i < widget.columnas.length; i++) ...[
-                if (i > 0) const SizedBox(width: 12),
-                _celda(widget.columnas[i],
-                    widget.columnas[i].celda(context, fila)),
+              for (var i = 0; i < cols.length; i++) ...[
+                if (i > 0) const SizedBox(width: _gap),
+                _celda(cols[i], cols[i].celda(context, fila)),
               ],
             ],
           ),
@@ -231,33 +256,6 @@ class _TablaMirameState<T> extends State<TablaMirame<T>> {
   @override
   Widget build(BuildContext context) {
     final filas = _ordenadas;
-
-    Widget cuerpo;
-    if (filas.isEmpty) {
-      cuerpo = widget.vacio ?? const SizedBox(height: 80);
-    } else if (widget.expandir) {
-      cuerpo = ListView.builder(
-        padding: EdgeInsets.zero,
-        itemCount: filas.length,
-        itemBuilder: (ctx, i) =>
-            _fila(ctx, filas[i], ultima: i == filas.length - 1),
-      );
-    } else {
-      cuerpo = Column(
-        children: [
-          for (var i = 0; i < filas.length; i++)
-            _fila(context, filas[i], ultima: i == filas.length - 1),
-        ],
-      );
-    }
-
-    final tabla = Column(
-      mainAxisSize: widget.expandir ? MainAxisSize.max : MainAxisSize.min,
-      children: [
-        _cabecera(),
-        if (widget.expandir) Expanded(child: cuerpo) else cuerpo,
-      ],
-    );
 
     // `.card`: mismo contenedor que las tarjetas, sin padding, recortando
     // las filas al radio.
@@ -271,9 +269,39 @@ class _TablaMirameState<T> extends State<TablaMirame<T>> {
       ),
       child: LayoutBuilder(
         builder: (_, restricciones) {
-          final minimo = _anchoMinimo;
+          final cols = _visibles(restricciones.maxWidth);
+
+          Widget cuerpo;
+          if (filas.isEmpty) {
+            cuerpo = widget.vacio ?? const SizedBox(height: 80);
+          } else if (widget.expandir) {
+            cuerpo = ListView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: filas.length,
+              itemBuilder: (ctx, i) =>
+                  _fila(ctx, cols, filas[i], ultima: i == filas.length - 1),
+            );
+          } else {
+            cuerpo = Column(
+              children: [
+                for (var i = 0; i < filas.length; i++)
+                  _fila(context, cols, filas[i], ultima: i == filas.length - 1),
+              ],
+            );
+          }
+
+          final tabla = Column(
+            mainAxisSize: widget.expandir ? MainAxisSize.max : MainAxisSize.min,
+            children: [
+              _cabecera(cols),
+              if (widget.expandir) Expanded(child: cuerpo) else cuerpo,
+            ],
+          );
+
+          final minimo = _anchoMinimo(cols);
           if (restricciones.maxWidth >= minimo) return tabla;
-          // No entra: scroll horizontal antes que columnas aplastadas.
+          // Ni sacando las opcionales entra: scroll horizontal antes que
+          // columnas aplastadas.
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(width: minimo, child: tabla),

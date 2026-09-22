@@ -33,6 +33,7 @@ Widget tabla(List<Fila> filas, {void Function(Fila)? onTap, String? sel}) =>
     );
 
 void main() {
+  _opcionales();
   final datos = <Fila>[
     (nombre: 'Zoe', total: 5),
     (nombre: 'Ana', total: 30),
@@ -82,5 +83,44 @@ void main() {
     await t.tap(find.text('Mia'));
     await t.pumpAndSettle();
     expect(tocada?.nombre, 'Mia');
+  });
+}
+
+void _opcionales() {
+  testWidgets('si no entra, esconde las columnas opcionales', (t) async {
+    Widget con(double ancho) => MaterialApp(
+          theme: buildMirameTheme(),
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: ancho,
+                child: TablaMirame<Fila>(
+                  filas: const [(nombre: 'Ana', total: 1)],
+                  expandir: false,
+                  columnas: [
+                    ColumnaTabla(
+                      titulo: 'Nombre',
+                      ancho: 200,
+                      celda: (_, f) => CeldaTexto(f.nombre),
+                    ),
+                    ColumnaTabla(
+                      titulo: 'Extra',
+                      ancho: 200,
+                      opcional: true,
+                      celda: (_, f) => const CeldaTexto('x'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+    await t.pumpWidget(con(600));
+    await t.pumpAndSettle();
+    expect(find.text('EXTRA'), findsOneWidget);
+    await t.pumpWidget(con(300));
+    await t.pumpAndSettle();
+    expect(find.text('EXTRA'), findsNothing);
+    expect(find.text('NOMBRE'), findsOneWidget);
   });
 }

@@ -349,6 +349,7 @@ Widget _tablaMovimientos(
         ),
         ColumnaTabla(
           titulo: 'Categoría',
+          opcional: true,
           flex: 2,
           ordenarPor: (m) => (m.categoria ?? '').toLowerCase(),
           celda: (_, m) => CeldaTexto(
@@ -358,6 +359,7 @@ Widget _tablaMovimientos(
         ),
         ColumnaTabla(
           titulo: 'Método',
+          opcional: true,
           ancho: 120,
           celda: (_, m) => CeldaTexto(
             _FilaMovimiento._metodo(m.metodo),
