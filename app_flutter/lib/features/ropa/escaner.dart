@@ -13,7 +13,8 @@ import '../../core/theme/typography.dart';
 /// Abre la cámara y devuelve el primer código que lea, o `null` si se cancela.
 Future<String?> escanearCodigo(BuildContext context) =>
     Navigator.of(context).push<String>(
-      MaterialPageRoute(builder: (_) => const _Escaner(), fullscreenDialog: true),
+      MaterialPageRoute(
+          builder: (_) => const _Escaner(), fullscreenDialog: true),
     );
 
 class _Escaner extends StatefulWidget {
@@ -51,9 +52,9 @@ class _EscanerState extends State<_Escaner> {
 
   void _detectado(BarcodeCapture captura) {
     if (_yaLeyo) return;
-    final codigo = captura.barcodes
-        .map((b) => b.rawValue)
-        .firstWhere((v) => v != null && v.trim().isNotEmpty, orElse: () => null);
+    final codigo = captura.barcodes.map((b) => b.rawValue).firstWhere(
+        (v) => v != null && v.trim().isNotEmpty,
+        orElse: () => null);
     if (codigo == null) return;
 
     _yaLeyo = true;

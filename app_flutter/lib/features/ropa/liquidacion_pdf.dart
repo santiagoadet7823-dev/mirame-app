@@ -64,8 +64,7 @@ Future<Uint8List> construirLiquidacionPdf({
       footer: (ctx) => pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text(salon,
-              style: pw.TextStyle(fontSize: 8, color: _grisClaro)),
+          pw.Text(salon, style: pw.TextStyle(fontSize: 8, color: _grisClaro)),
           pw.Text('Página ${ctx.pageNumber} de ${ctx.pagesCount}',
               style: pw.TextStyle(fontSize: 8, color: _grisClaro)),
         ],
@@ -110,8 +109,7 @@ pw.Widget _encabezado(DetalleLiquidacion d, String salon, DateTime emitido) =>
             pw.Text('Emitido ${claveFecha(emitido)}',
                 style: pw.TextStyle(fontSize: 9, color: _gris)),
             pw.SizedBox(height: 2),
-            pw.Text(
-                'Período ${claveFecha(d.desde)} — ${claveFecha(d.hasta)}',
+            pw.Text('Período ${claveFecha(d.desde)} — ${claveFecha(d.hasta)}',
                 style: pw.TextStyle(fontSize: 9, color: _gris)),
           ],
         ),
@@ -243,8 +241,7 @@ pw.Widget _pie(DetalleLiquidacion d) => pw.Column(
             borderRadius: pw.BorderRadius.circular(8),
           ),
           child: pw.Row(mainAxisSize: pw.MainAxisSize.min, children: [
-            pw.Text('TOTAL  ',
-                style: pw.TextStyle(fontSize: 10, color: _gris)),
+            pw.Text('TOTAL  ', style: pw.TextStyle(fontSize: 10, color: _gris)),
             pw.Text(formatMoney(d.total),
                 style: pw.TextStyle(
                     fontSize: 15,
@@ -272,8 +269,7 @@ pw.Widget _firma(String rotulo) => pw.Expanded(
         children: [
           pw.Container(height: .5, color: _grisClaro),
           pw.SizedBox(height: 4),
-          pw.Text(rotulo,
-              style: pw.TextStyle(fontSize: 8, color: _grisClaro)),
+          pw.Text(rotulo, style: pw.TextStyle(fontSize: 8, color: _grisClaro)),
         ],
       ),
     );

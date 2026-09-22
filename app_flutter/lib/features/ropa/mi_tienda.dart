@@ -424,8 +424,8 @@ class _Boton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             color: principal ? MColors.brand : MColors.surface,
-            border: Border.all(
-                color: principal ? MColors.brand : MColors.borderMd),
+            border:
+                Border.all(color: principal ? MColors.brand : MColors.borderMd),
             borderRadius: BorderRadius.circular(MRadius.full),
           ),
           child: Row(
@@ -499,7 +499,8 @@ class _Imagen extends StatelessWidget {
             child: hay
                 ? (local != null
                     ? Image.file(File(local!), fit: BoxFit.cover)
-                    : Image.network(remota!, fit: BoxFit.cover,
+                    : Image.network(remota!,
+                        fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const SizedBox()))
                 : Center(
                     child: Text(ayuda,

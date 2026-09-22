@@ -358,6 +358,27 @@ Bajo 900 px el botón de modo desktop se oculta. El modo se persiste en `localSt
 Implementación: `LayoutBuilder` + un `AppShell` que conmuta `BottomNavigationBar` ↔ `NavigationRail`,
 y un helper `showAppSheet()` que decide entre `showModalBottomSheet` y `showDialog` según el ancho.
 
+### 7.1 Lo que se hizo de verdad en Flutter (2026-09-22)
+
+Un solo lugar decide el modo: `lib/core/layout/layout.dart` (`modoDe`, `esEscritorio`,
+`padVista`, `columnasPara`, `ContenidoEscritorio`). Ninguna vista compara anchos por su cuenta.
+
+| Pieza | Móvil (< 600) | Tablet (600–899) | Escritorio (≥ 900) |
+|---|---|---|---|
+| Shell | bottom nav de 5 | igual, contenido a 430 centrado | sidebar 248 (≥ 1200) o **rail de 72** (900–1199 o plegado a mano, se recuerda en `SharedPreferences`) |
+| `.view` padding | `16 16 96` | `16 16 96` | `30 32 40` (`padVista`) |
+| Contenido | ancho completo | 430 | **1040** en Inicio/Stats/Ajustes · **1360** en Agenda/Clientas/Caja/Insumos/Tienda |
+| Modales | sheet desde abajo | sheet | **diálogo centrado** de 560, radio 26, `sheetDesktop` (`showAppSheet`) |
+| Acción primaria | FAB 54 | FAB | botón píldora en la `BarraVista`, sin FAB (`fabVista` devuelve null) |
+| Buscador | ancho completo | completo | 340 fijo, filtros al lado, acción a la derecha |
+| Grillas | 2 columnas fijas | 2 | por **ancho máximo de celda** (`SliverGridDelegateWithMaxCrossAxisExtent`): 260 acciones rápidas, 230 tienda; KPI de Stats a 4 |
+| Agenda | calendario arriba, lista abajo | igual | **dos paneles**: mes a 380 px a la izquierda, día a la derecha |
+| Listas largas | tarjetas | tarjetas | **tablas** (`TablaMirame`) en Clientas, Caja e Insumos |
+| Detalle | sheet | sheet | **panel lateral** de 400 (`MaestroDetalle` + `PanelLateral`) en Clientas y Tienda |
+| Puntero | — | — | manito en todo lo clickeable (`PressableScale`), hover `bg2` en filas e ítems (`ConHover`) |
+
+`manifest.json` pasó a `orientation: any` y `index.html` tiene `<meta name="viewport">`.
+
 ---
 
 ## 8. Navegación
@@ -434,3 +455,15 @@ No se aprueba "a ojo". El procedimiento es:
 6. Revisar con reduced motion activado.
 
 Cualquier desvío se documenta acá con el motivo, o se corrige. No se deja sin registrar.
+
+### Desvíos registrados
+
+- **2026-09-22 · Tablas, panel lateral y tope de 1360 en escritorio.** El `index.html` era una app
+  de teléfono: su modo desktop solo centraba las mismas tarjetas a 1040. En un monitor, cien tarjetas
+  de 1300 px con tres datos cada una desperdician la pantalla y no permiten comparar. Se agregaron
+  `TablaMirame` (cabecera ordenable, hover, fila seleccionada; dibujada con los tokens de `.card` y
+  las etiquetas de sección, **no** `DataTable`), `MaestroDetalle`/`PanelLateral`, y un tope de
+  1360 para las vistas de tabla (1040 se mantiene para las de lectura). El sidebar se pliega a un
+  rail de 72 bajo 1200 px, cosa que el CSS no contemplaba. Colores, tipografía, radios, sombras y
+  motion siguen siendo los de este documento; el desvío es de composición, no de estilo. El
+  teléfono no cambió.

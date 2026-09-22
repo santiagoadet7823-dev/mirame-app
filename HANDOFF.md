@@ -4,7 +4,7 @@
 > Dice en qué estado está el proyecto, qué se decidió y cuál es el próximo paso.
 > Actualizarlo al terminar cada sesión no es opcional.
 
-**Última actualización:** 2026-09-21
+**Última actualización:** 2026-09-22
 **Estado general:** PWA publicada y APK distribuyéndose solo. Repo `mirame-app` vivo.
 **Fase actual:** 5 — falta solo Estadísticas. Después: fase 6 (panel) y 7 (notificaciones)
 
@@ -960,3 +960,42 @@ Site URL — o sea, el mismo síntoma. Si después del push sigue yendo a localh
 `…/auth/v1/authorize?provider=google&redirect_to=…` tiene que llevar la URL de GitHub Pages.
 
 Sigue pendiente la prueba del **APK 1.17.3** en un teléfono de los que fallaban.
+
+### 2026-09-22 — La PWA en escritorio dejó de ser "el celular estirado"
+
+El login con Google ya vuelve bien (el usuario cargó las Redirect URLs). Lo siguiente que se
+vio, con capturas de su Edge a 1600×900: el shell tenía sidebar, pero adentro iba la vista de
+teléfono a 1330 px de ancho — calendario con celdas de 185 px, buscadores de un metro, KPIs 2×2
+gigantes, sheets a pantalla completa y un FAB flotando en la esquina del monitor.
+
+**Qué se hizo** (tres commits: `f76f6ae`, `be08462` y el de tanda 3):
+
+- `lib/core/layout/layout.dart`: **un solo lugar decide el modo** (`esEscritorio`, `padVista`,
+  `ContenidoEscritorio.lectura|tabla`). Todo es fluido: grillas por ancho de celda, contenido con
+  tope, paneles de ancho fijo — no hay ningún "si la pantalla mide 1600".
+- `showAppSheet()` reemplaza a todos los `showModalBottomSheet`: sheet en el teléfono, diálogo
+  centrado de 560 en escritorio. `SheetFormulario` no dibuja la manija en diálogo (`EnDialogo`).
+- `BarraVista` + `BotonPrimario` + `fabVista`: buscador de 340, filtros, botón de crear a la
+  derecha; el FAB solo en móvil.
+- Sidebar plegable a rail de 72 (bajo 1200 o a pedido; se guarda en `SharedPreferences`).
+- Agenda en dos paneles; acciones rápidas, KPIs y tienda en grillas fluidas.
+- `shared/widgets/tabla_mirame.dart` y `panel_lateral.dart`: **tablas ordenables** en Clientas,
+  Caja e Insumos; **ficha en panel lateral** en Clientas y Tienda.
+- Cursor de mano y hover en todo lo clickeable (`PressableScale`, `ConHover`).
+- Tests: `test/core/layout_test.dart`, `test/core/tabla_test.dart` y
+  `test/features/vistas_escritorio_test.dart` (humo: cada vista a 390/1000/1400 px sin
+  excepciones de layout — atrapó un `stretch` dentro de un ListView y dos overflows).
+
+Documentado como desvío en `02-DESIGN-SYSTEM.md` §7.1 y §11. **El teléfono no cambió.**
+
+**Cómo se verificó:** no hay login headless posible (Google), así que se capturó la ventana real
+de la PWA instalada en el Edge del usuario con un script de PowerShell
+(`SetForegroundWindow` + `CopyFromScreen`, clic por coordenadas en el sidebar), maximizada y a
+1050 px. Para repetirlo hace falta rehacer el script: era del scratchpad de la sesión.
+
+**Pendiente / ideas que quedaron afuera:**
+- Atajos de teclado (`/` al buscador, `Esc` cierra el panel lateral). Los diálogos ya cierran con
+  `Esc` porque son `showDialog`.
+- Las secciones no tienen URL propia (`/app` es una sola ruta con `IndexedStack`); en escritorio
+  se extraña el botón "atrás" del navegador entre secciones.
+- Sigue pendiente la prueba del **APK 1.17.3** en un teléfono de los que fallaban.

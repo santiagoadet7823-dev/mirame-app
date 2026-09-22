@@ -106,13 +106,13 @@ class _ProgramadorAvisosState extends ConsumerState<ProgramadorAvisos> {
           .map(aClient),
       // Los servicios del turno viven en la tabla puente: sin unirlos, la
       // regla de retoque no encuentra los días y no avisa nunca.
-      appointments: turnos.map(
-          (t) => aAppointment(t, serviceIds: porTurno[t.id] ?? const [])),
+      appointments: turnos
+          .map((t) => aAppointment(t, serviceIds: porTurno[t.id] ?? const [])),
       services: (ref.read(serviciosProvider).value ?? const <db.Service>[])
           .map(aService),
-      transactions:
-          (ref.read(movimientosDelMesProvider).value ?? const <db.Transaction>[])
-              .map(aTransaction),
+      transactions: (ref.read(movimientosDelMesProvider).value ??
+              const <db.Transaction>[])
+          .map(aTransaction),
       ahora: ahora,
     );
   }

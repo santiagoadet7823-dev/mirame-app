@@ -36,7 +36,8 @@ class Aviso {
 /// Los avisos de hoy. Se calcula acá y no en la vista para que la campanita
 /// pueda mostrar el número sin abrir el panel.
 final avisosProvider = Provider<List<Aviso>>((ref) {
-  final turnos = ref.watch(turnosDeHoyProvider).value ?? const <db.Appointment>[];
+  final turnos =
+      ref.watch(turnosDeHoyProvider).value ?? const <db.Appointment>[];
   final stock = (ref.watch(stockProvider).value ?? const <db.StockItem>[])
       .map(aStockItem)
       .toList();
@@ -67,8 +68,7 @@ final avisosProvider = Provider<List<Aviso>>((ref) {
   ];
 });
 
-Future<void> mostrarNotificaciones(BuildContext context) =>
-    showAppSheet<void>(
+Future<void> mostrarNotificaciones(BuildContext context) => showAppSheet<void>(
       context,
       builder: (_) => const _PanelNotificaciones(),
     );
@@ -158,8 +158,7 @@ class _FilaAviso extends StatelessWidget {
                 children: [
                   Text(
                     aviso.titulo,
-                    style:
-                        sans(size: 13, weight: 500, color: aviso.color),
+                    style: sans(size: 13, weight: 500, color: aviso.color),
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 1),

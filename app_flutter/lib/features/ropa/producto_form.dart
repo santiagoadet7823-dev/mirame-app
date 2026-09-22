@@ -148,9 +148,8 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
     // El provider emite despues del primer build, asi que la preseleccion se
     // hace aca y no en `initState`.
     if (_depositoId == null || !deps.any((d) => d.id == _depositoId)) {
-      _depositoId = deps
-          .firstWhere((d) => d.esPrincipal, orElse: () => deps.first)
-          .id;
+      _depositoId =
+          deps.firstWhere((d) => d.esPrincipal, orElse: () => deps.first).id;
     }
 
     return Padding(
@@ -184,9 +183,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
   String? _depositoPrincipal() {
     final deps = ref.read(depositosProvider).value ?? const [];
     if (deps.isEmpty) return null;
-    return deps
-        .firstWhere((d) => d.esPrincipal, orElse: () => deps.first)
-        .id;
+    return deps.firstWhere((d) => d.esPrincipal, orElse: () => deps.first).id;
   }
 
   /// Dónde va a entrar el stock, garantizado.
@@ -365,15 +362,16 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
       // agregar una segunda tanda de fotos chocaba con la primera y la portada
       // pasaba a ser cualquiera.
       final previas = ref.read(fotosProvider).value?[id] ?? const [];
-      var orden = previas.fold<int>(-1, (a, f) => f.orden > a ? f.orden : a) + 1;
+      var orden =
+          previas.fold<int>(-1, (a, f) => f.orden > a ? f.orden : a) + 1;
 
       String? motivoFalla;
       var pendientes = 0;
       for (var i = 0; i < _fotosNuevas.length; i++) {
         final local = _fotosNuevas[i];
         if (mounted && _fotosNuevas.length > 1) {
-          setState(() => _progresoFotos =
-              'Subiendo ${i + 1} de ${_fotosNuevas.length}');
+          setState(() =>
+              _progresoFotos = 'Subiendo ${i + 1} de ${_fotosNuevas.length}');
         }
         final r = await subirFoto(
           rutaLocal: local,
@@ -440,7 +438,6 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
         _seccion('FOTOS'),
         _fotos(),
         const SizedBox(height: 6),
-
         _seccion('QUÉ ES'),
         Padding(
           padding: const EdgeInsets.only(bottom: 14),
@@ -454,7 +451,6 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
             onElegir: (v) => setState(() => _rubro = v),
           ),
         ),
-
         _seccion('EL PRODUCTO'),
         CampoTexto(controlador: _nombre, etiqueta: 'Nombre'),
         Row(
@@ -472,8 +468,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
               child: Row(
                 children: [
                   Expanded(
-                    child: CampoTexto(
-                        controlador: _codigo, etiqueta: 'Código'),
+                    child: CampoTexto(controlador: _codigo, etiqueta: 'Código'),
                   ),
                   // Escanear el código de fábrica evita tipear trece dígitos y
                   // evita el error de tipearlos mal, que es peor: el producto
@@ -532,14 +527,11 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
         ),
         CampoTexto(
             controlador: _descripcion, etiqueta: 'Descripción', lineas: 2),
-
         _seccion('REPARTO'),
         _reparto(proveedores),
-
         _seccion(_rubro == 'ropa' ? 'TALLES Y CANTIDADES' : 'PRESENTACIONES'),
         _selectorDeposito(),
         _listaVariantes(),
-
         _seccion('EN LA TIENDA'),
         SwitchListTile.adaptive(
           value: _publicado,
@@ -547,9 +539,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
           contentPadding: EdgeInsets.zero,
           title: Text('Mostrar en la tienda', style: sans(size: 13)),
           subtitle: Text(
-            _publicado
-                ? 'Las clientas la ven en el link'
-                : 'Solo la ves vos',
+            _publicado ? 'Las clientas la ven en el link' : 'Solo la ves vos',
             style: sans(size: 11, color: MColors.tMuted),
           ),
         ),
@@ -569,8 +559,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
 
   /// El porcentaje: el del proveedor, o uno propio de esta prenda.
   Widget _reparto(List<db.Proveedore> proveedores) {
-    final prov =
-        proveedores.where((p) => p.id == _proveedorId).firstOrNull;
+    final prov = proveedores.where((p) => p.id == _proveedorId).firstOrNull;
     final pctProveedor = prov?.pctSalon ?? 100;
     final pct = _pctPropio
         ? (num.tryParse(_pct.text.replaceAll(',', '.')) ?? 0)
@@ -640,8 +629,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
   Widget _linea(String etiqueta, num monto, {bool fuerte = false}) => Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(etiqueta,
-              style: sans(size: 12, color: MColors.tSecondary)),
+          Text(etiqueta, style: sans(size: 12, color: MColors.tSecondary)),
           Text(formatMoney(monto),
               style: sans(size: 13, weight: fuerte ? 700 : 500)),
         ],
@@ -652,10 +640,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
         child: Text(
           texto,
           style: sans(
-              size: 10,
-              weight: 600,
-              color: MColors.tMuted,
-              letterSpacing: 0.8),
+              size: 10, weight: 600, color: MColors.tMuted, letterSpacing: 0.8),
         ),
       );
 
@@ -739,9 +724,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
                             : 'Faltan subir ${pendientes.length} fotos. '
                                 'Reintentar',
                     style: sans(
-                        size: 11.5,
-                        weight: 600,
-                        color: MColors.tSecondary),
+                        size: 11.5, weight: 600, color: MColors.tSecondary),
                   ),
                 ],
               ),
@@ -759,8 +742,8 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
       builder: (ctx) => AlertDialog(
         backgroundColor: MColors.surface,
         title: Text('¿Sacar la foto?', style: serif(size: 20, weight: 600)),
-        content: Text('No se puede deshacer desde la app.',
-            style: MText.cuerpoSec),
+        content:
+            Text('No se puede deshacer desde la app.', style: MText.cuerpoSec),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -769,8 +752,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text('Sacar',
-                style: sans(
-                    size: 13, weight: 600, color: MColors.dangerText)),
+                style: sans(size: 13, weight: 600, color: MColors.dangerText)),
           ),
         ],
       ),
@@ -812,7 +794,8 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
         ),
       );
 
-  Widget _miniatura({required Widget hijo, VoidCallback? onQuitar}) => Container(
+  Widget _miniatura({required Widget hijo, VoidCallback? onQuitar}) =>
+      Container(
         width: 76,
         margin: const EdgeInsets.only(right: 8),
         clipBehavior: Clip.antiAlias,
@@ -902,8 +885,7 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Text('+ Agregar talle o color',
-                    style:
-                        sans(size: 12, weight: 600, color: MColors.brand)),
+                    style: sans(size: 12, weight: 600, color: MColors.brand)),
               ),
             ),
           ),

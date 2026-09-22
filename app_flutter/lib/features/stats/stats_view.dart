@@ -235,8 +235,9 @@ class StatsView extends ConsumerWidget {
               titulo: 'Ingresos semanales',
               subtitulo: 'Últimas 8 semanas',
               hijo: SizedBox(
-                // `.bars-wrap { height:90px }`
-                height: 90,
+                // `.bars-wrap { height:90px }`. En escritorio la tarjeta mide
+                // 1000 px de ancho y 90 de alto es una tira: se le da aire.
+                height: esEscritorio(context) ? 160 : 90,
                 child: CustomPaint(
                   painter: _BarrasPainter(
                     valores: [for (final s in semanas) s.pctAlto],
@@ -257,8 +258,8 @@ class StatsView extends ConsumerWidget {
                 hijo: Row(
                   children: [
                     SizedBox(
-                      width: 108,
-                      height: 108,
+                      width: esEscritorio(context) ? 150 : 108,
+                      height: esEscritorio(context) ? 150 : 108,
                       child: CustomPaint(
                         painter: _DonutPainter(
                           porciones: [for (final g in gastos) g.pct],

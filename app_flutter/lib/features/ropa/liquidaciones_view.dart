@@ -22,8 +22,7 @@ import '../shell/vistas_comunes.dart';
 import 'liquidacion_pdf.dart';
 import 'ropa_view.dart';
 
-Future<void> mostrarLiquidaciones(BuildContext context) =>
-    showAppSheet(
+Future<void> mostrarLiquidaciones(BuildContext context) => showAppSheet(
       context,
       builder: (_) => const _Panel(),
     );
@@ -93,8 +92,8 @@ class _PanelState extends ConsumerState<_Panel> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child:
-                Text('Todavía no', style: sans(size: 13, color: MColors.tMuted)),
+            child: Text('Todavía no',
+                style: sans(size: 13, color: MColors.tMuted)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -149,8 +148,8 @@ class _PanelState extends ConsumerState<_Panel> {
                     behavior: HitTestBehavior.opaque,
                     onTap: () => setState(() => _detalle = null),
                     child: Text('Volver',
-                        style: sans(
-                            size: 13, weight: 600, color: MColors.brand)),
+                        style:
+                            sans(size: 13, weight: 600, color: MColors.brand)),
                   ),
               ],
             ),
@@ -160,7 +159,8 @@ class _PanelState extends ConsumerState<_Panel> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _flecha(Icons.chevron_left_rounded,
+                _flecha(
+                    Icons.chevron_left_rounded,
                     () => setState(() {
                           _offset--;
                           _detalle = null;
@@ -232,8 +232,8 @@ class _PanelState extends ConsumerState<_Panel> {
                 onTap: () => _calcular(p.id as String, p.nombre as String),
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 7),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 13),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                   decoration: BoxDecoration(
                     color: MColors.bg2,
                     borderRadius: BorderRadius.circular(MRadius.sm),
@@ -301,7 +301,6 @@ class _PanelState extends ConsumerState<_Panel> {
           ),
         ),
         const SizedBox(height: 14),
-
         const EtiquetaSeccion('DETALLE'),
         for (final f in d.filas)
           Padding(
@@ -330,19 +329,16 @@ class _PanelState extends ConsumerState<_Panel> {
                     ],
                   ),
                 ),
-                Text(formatMoney(f.monto),
-                    style: sans(size: 13, weight: 600)),
+                Text(formatMoney(f.monto), style: sans(size: 13, weight: 600)),
               ],
             ),
           ),
-
         const SizedBox(height: 14),
         _BotonAncho(
           icono: Icons.picture_as_pdf_outlined,
           texto: 'Mandar el comprobante',
           principal: true,
-          onTap: () => compartirLiquidacion(context,
-              detalle: d, salon: salon),
+          onTap: () => compartirLiquidacion(context, detalle: d, salon: salon),
         ),
         const SizedBox(height: 8),
         _BotonAncho(
@@ -382,8 +378,8 @@ class _BotonAncho extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             color: principal ? MColors.brand : MColors.surface,
-            border: Border.all(
-                color: principal ? MColors.brand : MColors.borderMd),
+            border:
+                Border.all(color: principal ? MColors.brand : MColors.borderMd),
             borderRadius: BorderRadius.circular(MRadius.full),
           ),
           child: Row(

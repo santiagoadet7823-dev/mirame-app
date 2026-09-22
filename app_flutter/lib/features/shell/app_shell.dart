@@ -824,8 +824,7 @@ class FabMirame extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [...MShadow.brand, ...MShadow.md],
           ),
-          child:
-              const Icon(Icons.add_rounded, size: 26, color: MColors.tWhite),
+          child: const Icon(Icons.add_rounded, size: 26, color: MColors.tWhite),
         ),
       );
 }

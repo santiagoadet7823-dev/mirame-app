@@ -19,7 +19,8 @@ import '../dashboard/dashboard_view.dart';
 import '../shell/vistas_comunes.dart';
 import 'ropa_view.dart';
 
-Future<void> abrirVenta(BuildContext context, {db.ProductoVariante? variante}) =>
+Future<void> abrirVenta(BuildContext context,
+        {db.ProductoVariante? variante}) =>
     showAppSheet<void>(
       context,
       builder: (_) => _FormVenta(inicial: variante),
@@ -86,8 +87,8 @@ class _FormVentaState extends ConsumerState<_FormVenta> {
   RepartoVenta get _reparto {
     final proveedores = ref.read(proveedoresProvider).value ?? const [];
     final descuento = num.tryParse(_descuento.text.replaceAll(',', '.')) ?? 0;
-    final bruto = _lineas.fold<num>(
-        0, (a, l) => a + l.producto.precio * l.cantidad);
+    final bruto =
+        _lineas.fold<num>(0, (a, l) => a + l.producto.precio * l.cantidad);
 
     return repartirVenta([
       for (final l in _lineas)
@@ -155,8 +156,7 @@ class _FormVentaState extends ConsumerState<_FormVenta> {
                 cantidad: l.cantidad,
                 precioUnit: l.producto.precio,
                 pctSalon: l.producto.pctSalon ?? prov?.pctSalon ?? 100,
-                descuentoLoAbsorbeSalon:
-                    prov?.descuentoLoAbsorbeSalon ?? true,
+                descuentoLoAbsorbeSalon: prov?.descuentoLoAbsorbeSalon ?? true,
               );
             }(),
         ],
@@ -239,8 +239,7 @@ class _FormVentaState extends ConsumerState<_FormVenta> {
                         value: 'efectivo', child: Text('Efectivo')),
                     DropdownMenuItem(
                         value: 'transferencia', child: Text('Transferencia')),
-                    DropdownMenuItem(
-                        value: 'tarjeta', child: Text('Tarjeta')),
+                    DropdownMenuItem(value: 'tarjeta', child: Text('Tarjeta')),
                   ],
                   onChanged: (v) => setState(() => _metodo = v ?? 'efectivo'),
                 ),
@@ -362,8 +361,8 @@ class _FilaLinea extends StatelessWidget {
             _boton(Icons.remove_rounded, onMenos),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Text('${linea.cantidad}',
-                  style: sans(size: 14, weight: 600)),
+              child:
+                  Text('${linea.cantidad}', style: sans(size: 14, weight: 600)),
             ),
             _boton(Icons.add_rounded, onMas),
           ],
@@ -541,8 +540,7 @@ class _SelectorPrendaState extends ConsumerState<_SelectorPrenda> {
                                   horizontal: 12, vertical: 11),
                               decoration: BoxDecoration(
                                 color: MColors.bg2,
-                                borderRadius:
-                                    BorderRadius.circular(MRadius.sm),
+                                borderRadius: BorderRadius.circular(MRadius.sm),
                               ),
                               child: Row(
                                 children: [
@@ -552,10 +550,8 @@ class _SelectorPrendaState extends ConsumerState<_SelectorPrenda> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(o.p.nombre,
-                                            style:
-                                                sans(size: 13, weight: 600),
-                                            overflow:
-                                                TextOverflow.ellipsis),
+                                            style: sans(size: 13, weight: 600),
+                                            overflow: TextOverflow.ellipsis),
                                         const SizedBox(height: 2),
                                         Text(
                                           [

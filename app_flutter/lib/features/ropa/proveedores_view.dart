@@ -58,8 +58,7 @@ class _PanelState extends ConsumerState<_Panel> {
                       ? _editarDeposito(context, ref, null)
                       : _editarProveedor(context, ref, null),
                   child: Text('+ Agregar',
-                      style: sans(
-                          size: 13, weight: 600, color: MColors.brand)),
+                      style: sans(size: 13, weight: 600, color: MColors.brand)),
                 ),
               ],
             ),
@@ -259,8 +258,7 @@ class _FormProveedorState extends ConsumerState<_FormProveedor> {
     final pct = num.tryParse(_pct.text.replaceAll(',', '.')) ?? 0;
 
     return SheetFormulario(
-      titulo:
-          widget.proveedor == null ? 'Nuevo proveedor' : 'Editar proveedor',
+      titulo: widget.proveedor == null ? 'Nuevo proveedor' : 'Editar proveedor',
       guardando: _guardando,
       error: _error,
       onGuardar: _guardar,
@@ -293,8 +291,7 @@ class _FormProveedorState extends ConsumerState<_FormProveedor> {
             value: _absorbe,
             onChanged: (v) => setState(() => _absorbe = v),
             contentPadding: EdgeInsets.zero,
-            title: Text('Los descuentos los absorbo yo',
-                style: sans(size: 13)),
+            title: Text('Los descuentos los absorbo yo', style: sans(size: 13)),
             subtitle: Text(
               _absorbe
                   ? 'El proveedor cobra sobre el precio de lista'
@@ -374,8 +371,7 @@ class _FormDepositoState extends ConsumerState<_FormDeposito> {
 
   @override
   Widget build(BuildContext context) => SheetFormulario(
-        titulo:
-            widget.deposito == null ? 'Nuevo depósito' : 'Editar depósito',
+        titulo: widget.deposito == null ? 'Nuevo depósito' : 'Editar depósito',
         guardando: _guardando,
         error: _error,
         onGuardar: _guardar,

@@ -47,8 +47,8 @@ class EstadoVacio extends StatelessWidget {
               child: Text(
                 detalle,
                 textAlign: TextAlign.center,
-                style: sans(size: 13, color: MColors.tMuted)
-                    .copyWith(height: 1.6),
+                style:
+                    sans(size: 13, color: MColors.tMuted).copyWith(height: 1.6),
               ),
             ),
           ],
@@ -216,106 +216,102 @@ class SheetFormulario extends StatelessWidget {
   Widget build(BuildContext context) {
     final enDialogo = EnDialogo.de(context);
     return Padding(
-        // El teclado tapa los campos de abajo si no se le cede el espacio.
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom,
+      // El teclado tapa los campos de abajo si no se le cede el espacio.
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: MColors.surface,
+          borderRadius: enDialogo
+              ? BorderRadius.circular(MRadius.xl)
+              : const BorderRadius.vertical(top: Radius.circular(MRadius.xl)),
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: MColors.surface,
-            borderRadius: enDialogo
-                ? BorderRadius.circular(MRadius.xl)
-                : const BorderRadius.vertical(top: Radius.circular(MRadius.xl)),
-          ),
-          padding: enDialogo
-              ? const EdgeInsets.fromLTRB(28, 26, 28, 26)
-              : const EdgeInsets.fromLTRB(22, 12, 22, 24),
-          child: SafeArea(
-            top: false,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (!enDialogo) ...[
-                    const ManijaSheet(),
-                    const SizedBox(height: 18),
-                  ],
-                  Text(titulo, style: serif(size: 22, weight: 600)),
-                  const SizedBox(height: 16),
-                  ...campos,
-                  if (error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      error!,
+        padding: enDialogo
+            ? const EdgeInsets.fromLTRB(28, 26, 28, 26)
+            : const EdgeInsets.fromLTRB(22, 12, 22, 24),
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (!enDialogo) ...[
+                  const ManijaSheet(),
+                  const SizedBox(height: 18),
+                ],
+                Text(titulo, style: serif(size: 22, weight: 600)),
+                const SizedBox(height: 16),
+                ...campos,
+                if (error != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    error!,
+                    style:
+                        sans(size: 13, weight: 500, color: MColors.dangerText),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: MColors.brand,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(MRadius.full),
+                    ),
+                  ),
+                  onPressed: guardando ? null : onGuardar,
+                  child: guardando
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: MColors.tWhite,
+                              ),
+                            ),
+                            if (etiquetaGuardando != null) ...[
+                              const SizedBox(width: 10),
+                              Text(
+                                etiquetaGuardando!,
+                                style: sans(
+                                    size: 15,
+                                    weight: 600,
+                                    color: MColors.tWhite),
+                              ),
+                            ],
+                          ],
+                        )
+                      : Text(
+                          'Guardar',
+                          style: sans(
+                              size: 15, weight: 600, color: MColors.tWhite),
+                        ),
+                ),
+                if (onBorrar != null) ...[
+                  const SizedBox(height: 6),
+                  TextButton(
+                    onPressed: guardando
+                        ? null
+                        : () => _confirmarBorrado(context, onBorrar!),
+                    child: Text(
+                      'Eliminar',
                       style: sans(
                           size: 13, weight: 500, color: MColors.dangerText),
                     ),
-                  ],
-                  const SizedBox(height: 20),
-                  FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: MColors.brand,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(MRadius.full),
-                      ),
-                    ),
-                    onPressed: guardando ? null : onGuardar,
-                    child: guardando
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: MColors.tWhite,
-                                ),
-                              ),
-                              if (etiquetaGuardando != null) ...[
-                                const SizedBox(width: 10),
-                                Text(
-                                  etiquetaGuardando!,
-                                  style: sans(
-                                      size: 15,
-                                      weight: 600,
-                                      color: MColors.tWhite),
-                                ),
-                              ],
-                            ],
-                          )
-                        : Text(
-                            'Guardar',
-                            style: sans(
-                                size: 15,
-                                weight: 600,
-                                color: MColors.tWhite),
-                          ),
                   ),
-                  if (onBorrar != null) ...[
-                    const SizedBox(height: 6),
-                    TextButton(
-                      onPressed: guardando
-                          ? null
-                          : () => _confirmarBorrado(context, onBorrar!),
-                      child: Text(
-                        'Eliminar',
-                        style: sans(
-                            size: 13,
-                            weight: 500,
-                            color: MColors.dangerText),
-                      ),
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 
   /// Borrar siempre pregunta. Es la única acción de estas pantallas que la
@@ -342,8 +338,7 @@ class SheetFormulario extends StatelessWidget {
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
               'Eliminar',
-              style:
-                  sans(size: 13, weight: 600, color: MColors.dangerText),
+              style: sans(size: 13, weight: 600, color: MColors.dangerText),
             ),
           ),
         ],
@@ -498,10 +493,7 @@ class BarraVista extends StatelessWidget {
             SizedBox(width: 340, child: buscador),
             const SizedBox(width: 14),
           ],
-          if (filtros != null)
-            Expanded(child: filtros!)
-          else
-            const Spacer(),
+          if (filtros != null) Expanded(child: filtros!) else const Spacer(),
           if (accion != null) ...[
             const SizedBox(width: 14),
             accion!,
@@ -567,6 +559,36 @@ class TituloSeccion extends StatelessWidget {
       );
 }
 
+/// Una píldora chica de estado con colores a elección: `.badge` sin el
+/// diccionario de estados de turno. Para "En la tienda", "3 en stock", etc.
+class Pildora extends StatelessWidget {
+  const Pildora({
+    super.key,
+    required this.texto,
+    required this.fondo,
+    required this.color,
+    this.borde,
+  });
+
+  final String texto;
+  final Color fondo;
+  final Color color;
+  final Color? borde;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+        decoration: BoxDecoration(
+          color: fondo,
+          border: Border.all(color: borde ?? MColors.border),
+          borderRadius: BorderRadius.circular(MRadius.full),
+        ),
+        child: Text(
+          texto,
+          style: sans(size: 10, weight: 600, color: color),
+        ),
+      );
+}
 
 /// `.badge` — la píldora de estado de un turno. Cada estado tiene su terna de
 /// fondo, borde y texto en el CSS original.
@@ -578,14 +600,30 @@ class BadgeEstado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (texto, fondo, borde, color) = switch (estado) {
-      'confirmed' || 'confirmado' =>
-        ('Confirmado', MColors.lav50, MColors.lav200, MColors.lav700),
-      'done' || 'hecho' || 'completado' =>
-        ('Hecho', MColors.successBg, MColors.successBorder, MColors.successText),
-      'cancelled' || 'cancelado' =>
-        ('Cancelado', MColors.dangerBg, MColors.dangerBorder, MColors.dangerText),
-      _ => ('Pendiente', MColors.warningBg, MColors.warningBorder,
-          MColors.warningText),
+      'confirmed' || 'confirmado' => (
+          'Confirmado',
+          MColors.lav50,
+          MColors.lav200,
+          MColors.lav700
+        ),
+      'done' || 'hecho' || 'completado' => (
+          'Hecho',
+          MColors.successBg,
+          MColors.successBorder,
+          MColors.successText
+        ),
+      'cancelled' || 'cancelado' => (
+          'Cancelado',
+          MColors.dangerBg,
+          MColors.dangerBorder,
+          MColors.dangerText
+        ),
+      _ => (
+          'Pendiente',
+          MColors.warningBg,
+          MColors.warningBorder,
+          MColors.warningText
+        ),
     };
 
     return Container(
@@ -652,8 +690,7 @@ class FilaFiltros extends StatelessWidget {
                   style: sans(
                     size: 12,
                     weight: esActivo ? 600 : 500,
-                    color:
-                        esActivo ? MColors.brandDark : MColors.tSecondary,
+                    color: esActivo ? MColors.brandDark : MColors.tSecondary,
                   ),
                 ),
               ),

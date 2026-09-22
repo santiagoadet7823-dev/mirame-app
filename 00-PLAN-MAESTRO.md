@@ -63,7 +63,7 @@ Este archivo es la **checklist ejecutable**: se marca a medida que se avanza y s
 - [x] Curvas exactas `Cubic(.4,0,.2,1)` y `Cubic(0,0,.2,1)`
 - [x] Widgets de las animaciones + `StaggeredEntrance` + `PressableScale`
 - [ ] Componentes base: Chip, Pill, Sheet, Toggle, EmptyState, Fab, KpiCard, Card
-- [ ] `AppShell` responsive: BottomNav (móvil) ↔ NavigationRail (>=900px)
+- [x] `AppShell` responsive: BottomNav (móvil) ↔ sidebar/rail (>=900px), + tablas y panel lateral (2026-09-22, ver `02-DESIGN-SYSTEM.md` §7.1)
 - [x] Los 64 iconos SVG (14 del original + 46 del diseñador + 4 ilustraciones)
 - [x] `avc(name)` replicado (hash `h = (h*31 + c) % 6`)
 

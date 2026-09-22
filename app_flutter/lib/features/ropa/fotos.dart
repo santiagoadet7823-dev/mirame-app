@@ -240,7 +240,8 @@ Future<ResultadoSubida> subirImagenMarca({
   final ext = rutaLocal.endsWith('.webp') ? 'webp' : 'jpg';
   return _subir(
     rutaLocal: rutaLocal,
-    ruta: '$tenantId/_marca/$cual-${DateTime.now().microsecondsSinceEpoch}.$ext',
+    ruta:
+        '$tenantId/_marca/$cual-${DateTime.now().microsecondsSinceEpoch}.$ext',
   );
 }
 

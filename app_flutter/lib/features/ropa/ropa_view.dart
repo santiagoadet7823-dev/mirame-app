@@ -19,6 +19,7 @@ import '../../data/local/database.dart' as db;
 import '../../data/repositories/ropa_repository.dart';
 import '../../domain/rules/access.dart';
 import '../../domain/rules/formatting.dart';
+import '../../shared/widgets/panel_lateral.dart';
 import '../auth/session_controller.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
@@ -94,6 +95,10 @@ class _RopaViewState extends ConsumerState<RopaView> {
   String _filtro = 'todos';
   String _rubro = 'todo';
 
+  /// Producto abierto en el panel lateral (solo escritorio). Por id: si se
+  /// edita, el panel muestra la fila nueva.
+  String? _abiertoId;
+
   @override
   void dispose() {
     _busqueda.dispose();
@@ -131,6 +136,12 @@ class _RopaViewState extends ConsumerState<RopaView> {
     }).toList();
 
     final escritorio = esEscritorio(context);
+    db.Producto? abierto;
+    if (_abiertoId != null) {
+      for (final p in productos) {
+        if (p.id == _abiertoId) abierto = p;
+      }
+    }
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -141,156 +152,351 @@ class _RopaViewState extends ConsumerState<RopaView> {
         onTap: () => _queHago(context, ref),
       ),
       body: ContenidoEscritorio.tabla(
-        child: ListView(
-          padding: padVista(context),
-          children: [
-            FadeSlideIn(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Productos', style: serif(size: 24, weight: 500)),
-                  Row(
-                    children: [
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => mostrarMiTienda(context),
-                        child: Text('Mi tienda',
-                            style: sans(
-                                size: 13, weight: 600, color: MColors.brand)),
-                      ),
-                      const SizedBox(width: 16),
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => mostrarLiquidaciones(context),
-                        child: Text('Liquidar',
-                            style: sans(
-                                size: 13, weight: 600, color: MColors.tMuted)),
-                      ),
-                      const SizedBox(width: 16),
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => mostrarProveedores(context),
-                        child: Text('Proveedores',
-                            style: sans(
-                                size: 13, weight: 600, color: MColors.tMuted)),
-                      ),
-                      if (escritorio && puedeEscribir) ...[
-                        const SizedBox(width: 22),
-                        BotonPrimario(
-                          texto: 'Vender / cargar',
-                          onTap: () => _queHago(context, ref),
-                        ),
-                      ],
-                    ],
+        child: MaestroDetalle(
+          panel: abierto == null
+              ? null
+              : Padding(
+                  padding: padVista(context).copyWith(left: 0),
+                  child: PanelLateral(
+                    titulo: 'Producto',
+                    onCerrar: () => setState(() => _abiertoId = null),
+                    child: _PanelProducto(
+                      key: ValueKey(abierto.id),
+                      producto: abierto,
+                      portada: portadas[abierto.id],
+                      variantes: variantes[abierto.id] ?? const [],
+                      stockPorVariante: stock,
+                      puedeEscribir: puedeEscribir,
+                    ),
                   ),
-                ],
+                ),
+          lista: ListView(
+            padding: padVista(context),
+            children: [
+              FadeSlideIn(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Productos', style: serif(size: 24, weight: 500)),
+                    Row(
+                      children: [
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => mostrarMiTienda(context),
+                          child: Text('Mi tienda',
+                              style: sans(
+                                  size: 13, weight: 600, color: MColors.brand)),
+                        ),
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => mostrarLiquidaciones(context),
+                          child: Text('Liquidar',
+                              style: sans(
+                                  size: 13,
+                                  weight: 600,
+                                  color: MColors.tMuted)),
+                        ),
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => mostrarProveedores(context),
+                          child: Text('Proveedores',
+                              style: sans(
+                                  size: 13,
+                                  weight: 600,
+                                  color: MColors.tMuted)),
+                        ),
+                        if (escritorio && puedeEscribir) ...[
+                          const SizedBox(width: 22),
+                          BotonPrimario(
+                            texto: 'Vender / cargar',
+                            onTap: () => _queHago(context, ref),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            FadeSlideIn(
-              delay: const Duration(milliseconds: 40),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: ConstrainedBox(
-                  // Un buscador de 1300 px es el sello de la app de celular
-                  // estirada; con 340 se lee como un campo de escritorio.
-                  constraints: BoxConstraints(
-                      maxWidth: escritorio ? 340 : double.infinity),
-                  child: CampoTexto(
-                    controlador: _busqueda,
-                    etiqueta: 'Buscar por nombre o código',
-                    onCambio: (_) => setState(() {}),
+              const SizedBox(height: 14),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 40),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ConstrainedBox(
+                    // Un buscador de 1300 px es el sello de la app de celular
+                    // estirada; con 340 se lee como un campo de escritorio.
+                    constraints: BoxConstraints(
+                        maxWidth: escritorio ? 340 : double.infinity),
+                    child: CampoTexto(
+                      controlador: _busqueda,
+                      etiqueta: 'Buscar por nombre o código',
+                      onCambio: (_) => setState(() {}),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 6),
-            // El rubro primero y el estado despues: se piensa "quiero ver la
-            // ropa" antes que "quiero ver lo que no publique".
-            FadeSlideIn(
-              delay: const Duration(milliseconds: 60),
-              child: FilaFiltros(
-                opciones: const [
-                  ('todo', 'Todo'),
-                  ('ropa', '👗 Ropa'),
-                  ('arbell', '💄 Arbell'),
-                  ('insumos', '🧴 Insumos'),
-                ],
-                activo: _rubro,
-                onElegir: (v) => setState(() => _rubro = v),
+              const SizedBox(height: 6),
+              // El rubro primero y el estado despues: se piensa "quiero ver la
+              // ropa" antes que "quiero ver lo que no publique".
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 60),
+                child: FilaFiltros(
+                  opciones: const [
+                    ('todo', 'Todo'),
+                    ('ropa', '👗 Ropa'),
+                    ('arbell', '💄 Arbell'),
+                    ('insumos', '🧴 Insumos'),
+                  ],
+                  activo: _rubro,
+                  onElegir: (v) => setState(() => _rubro = v),
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            FadeSlideIn(
-              delay: const Duration(milliseconds: 70),
-              child: FilaFiltros(
-                opciones: const [
-                  ('todos', 'Todos'),
-                  ('publicados', 'En la tienda'),
-                  ('sin_publicar', 'Sin publicar'),
-                  ('sin_stock', 'Sin stock'),
-                ],
-                activo: _filtro,
-                onElegir: (f) => setState(() => _filtro = f),
+              const SizedBox(height: 6),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 70),
+                child: FilaFiltros(
+                  opciones: const [
+                    ('todos', 'Todos'),
+                    ('publicados', 'En la tienda'),
+                    ('sin_publicar', 'Sin publicar'),
+                    ('sin_stock', 'Sin stock'),
+                  ],
+                  activo: _filtro,
+                  onElegir: (f) => setState(() => _filtro = f),
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            if (visibles.isEmpty)
-              EstadoVacio(
-                emoji: '👗',
-                titulo: productos.isEmpty
-                    ? 'Todavía no cargaste ropa'
-                    : 'Nada con ese filtro',
-                detalle: productos.isEmpty
-                    ? 'Tocá + para cargar la primera prenda'
-                    : 'Probá con otra búsqueda',
-              )
-            else
-              // `GridView` adentro de un `ListView`: shrinkWrap y sin scroll
-              // propio, para que la página entera se desplace como una sola.
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.zero,
-                gridDelegate: escritorio
-                    // Por ancho máximo de tarjeta, no por cantidad: así entran
-                    // 4 en una notebook y 6 en un monitor grande sin un caso
-                    // especial para cada pantalla.
-                    ? const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 230,
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14,
-                        childAspectRatio: 0.62,
-                      )
-                    : const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        // Más alto que ancho: la foto es vertical y abajo
-                        // entran nombre, precio y stock.
-                        childAspectRatio: 0.62,
+              const SizedBox(height: 14),
+              if (visibles.isEmpty)
+                EstadoVacio(
+                  emoji: '👗',
+                  titulo: productos.isEmpty
+                      ? 'Todavía no cargaste ropa'
+                      : 'Nada con ese filtro',
+                  detalle: productos.isEmpty
+                      ? 'Tocá + para cargar la primera prenda'
+                      : 'Probá con otra búsqueda',
+                )
+              else
+                // `GridView` adentro de un `ListView`: shrinkWrap y sin scroll
+                // propio, para que la página entera se desplace como una sola.
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  gridDelegate: escritorio
+                      // Por ancho máximo de tarjeta, no por cantidad: así entran
+                      // 4 en una notebook y 6 en un monitor grande sin un caso
+                      // especial para cada pantalla.
+                      ? const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 230,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 0.62,
+                        )
+                      : const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          // Más alto que ancho: la foto es vertical y abajo
+                          // entran nombre, precio y stock.
+                          childAspectRatio: 0.62,
+                        ),
+                  itemCount: visibles.length,
+                  itemBuilder: (_, i) {
+                    final p = visibles[i];
+                    return FadeSlideIn(
+                      delay: Duration(milliseconds: 100 + (i < 8 ? i : 8) * 30),
+                      child: _TarjetaPrenda(
+                        producto: p,
+                        portada: portadas[p.id],
+                        stock: stockDe(p.id),
+                        variantes: (variantes[p.id] ?? const []).length,
+                        // En escritorio, tocar abre el panel de al lado; en
+                        // el teléfono va directo al formulario, como siempre.
+                        onTap: escritorio
+                            ? () => setState(() =>
+                                _abiertoId = _abiertoId == p.id ? null : p.id)
+                            : () => abrirFormularioProducto(context, ref,
+                                producto: p),
                       ),
-                itemCount: visibles.length,
-                itemBuilder: (_, i) {
-                  final p = visibles[i];
-                  return FadeSlideIn(
-                    delay: Duration(milliseconds: 100 + (i < 8 ? i : 8) * 30),
-                    child: _TarjetaPrenda(
-                      producto: p,
-                      portada: portadas[p.id],
-                      stock: stockDe(p.id),
-                      variantes: (variantes[p.id] ?? const []).length,
-                      onTap: () =>
-                          abrirFormularioProducto(context, ref, producto: p),
-                    ),
-                  );
-                },
-              ),
-          ],
+                    );
+                  },
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// Detalle de un producto en el panel lateral de escritorio: la foto grande,
+/// los datos, las variantes con su stock, y las dos cosas que se hacen con
+/// una prenda: venderla o editarla.
+class _PanelProducto extends ConsumerWidget {
+  const _PanelProducto({
+    super.key,
+    required this.producto,
+    required this.portada,
+    required this.variantes,
+    required this.stockPorVariante,
+    required this.puedeEscribir,
+  });
+
+  final db.Producto producto;
+  final db.ProductoFoto? portada;
+  final List<db.ProductoVariante> variantes;
+  final Map<String, int> stockPorVariante;
+  final bool puedeEscribir;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final total =
+        variantes.fold<int>(0, (a, v) => a + (stockPorVariante[v.id] ?? 0));
+    final sinStock = total <= 0;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(MRadius.md),
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: _Portada(foto: portada, sinStock: sinStock),
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (producto.codigo case final c?)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              c,
+              style: sans(
+                size: 10,
+                weight: 600,
+                color: MColors.tLight,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        Text(producto.nombre, style: serif(size: 22, weight: 600)),
+        const SizedBox(height: 6),
+        Text(formatMoney(producto.precio), style: serif(size: 26, weight: 600)),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            Pildora(
+              texto: producto.publicado ? 'En la tienda' : 'Sin publicar',
+              fondo: producto.publicado ? MColors.successBg : MColors.bg3,
+              color:
+                  producto.publicado ? MColors.successText : MColors.tSecondary,
+            ),
+            Pildora(
+              texto: sinStock ? 'Sin stock' : '$total en stock',
+              fondo: sinStock ? MColors.dangerBg : MColors.bg2,
+              color: sinStock ? MColors.dangerText : MColors.tSecondary,
+            ),
+            if (producto.categoria case final cat?)
+              if (cat.isNotEmpty)
+                Pildora(
+                  texto: cat,
+                  fondo: MColors.lav50,
+                  color: MColors.brandDark,
+                ),
+          ],
+        ),
+        if (producto.descripcion case final d?)
+          if (d.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text(
+              d,
+              style: sans(size: 13, color: MColors.tSecondary)
+                  .copyWith(height: 1.55),
+            ),
+          ],
+        const SizedBox(height: 18),
+        const EtiquetaSeccion('VARIANTES'),
+        if (variantes.isEmpty)
+          Text('Sin variantes', style: sans(size: 13, color: MColors.tMuted))
+        else
+          for (final v in variantes)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      [
+                        if (v.talle case final t?)
+                          if (t.isNotEmpty) t,
+                        if (v.color case final c?)
+                          if (c.isNotEmpty) c,
+                      ].join(' · ').ifEmpty('Única'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: sans(size: 13, weight: 500),
+                    ),
+                  ),
+                  Text(
+                    '${stockPorVariante[v.id] ?? 0}',
+                    style: sans(
+                      size: 14,
+                      weight: 700,
+                      tabular: true,
+                      color: (stockPorVariante[v.id] ?? 0) <= 0
+                          ? MColors.dangerText
+                          : MColors.tPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        const SizedBox(height: 18),
+        if (puedeEscribir) ...[
+          BotonPrimario(
+            texto: 'Vender',
+            icono: Icons.point_of_sale_rounded,
+            onTap: sinStock
+                ? null
+                : () => abrirVenta(context, variante: _primeraConStock()),
+          ),
+          const SizedBox(height: 8),
+          PressableScale(
+            onTap: () =>
+                abrirFormularioProducto(context, ref, producto: producto),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: MColors.bg2,
+                border: Border.all(color: MColors.borderMd),
+                borderRadius: BorderRadius.circular(MRadius.full),
+              ),
+              child: Text(
+                'Editar producto',
+                textAlign: TextAlign.center,
+                style: sans(size: 14, weight: 600, color: MColors.tSecondary),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  db.ProductoVariante? _primeraConStock() {
+    for (final v in variantes) {
+      if ((stockPorVariante[v.id] ?? 0) > 0) return v;
+    }
+    return null;
+  }
+}
+
+extension on String {
+  String ifEmpty(String otro) => isEmpty ? otro : this;
 }
 
 /// El + ofrece las dos cosas que se hacen acá. Vender va primero porque pasa
