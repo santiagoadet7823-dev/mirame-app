@@ -1004,3 +1004,12 @@ arranque siguiente). Se verificó a 1600×900 maximizada (sidebar completo) y a 
 - Las secciones no tienen URL propia (`/app` es una sola ruta con `IndexedStack`); en escritorio
   se extraña el botón "atrás" del navegador entre secciones.
 - Sigue pendiente la prueba del **APK 1.17.3** en un teléfono de los que fallaban.
+
+### 2026-09-22 — Google entraba solo con la cuenta del Edge
+
+En la compu, tocar "Google" entraba directo con la única sesión de Google abierta en el navegador
+y no dejaba elegir otra. Arreglo (`0789111`): `queryParams: {'prompt': 'select_account'}` en
+`signInConGoogle()` — Google muestra siempre "Elegir una cuenta" con "Usar otra cuenta".
+Verificado con Playwright que el `authorize` de Supabase sale con `prompt=select_account`.
+Para probarlo hay que **cerrar sesión primero** (si ya está logueado no pasa por Google), y la
+cuenta nueva tiene que estar dada de alta en el salón (Ajustes → Equipo) o cae en "pendiente".
