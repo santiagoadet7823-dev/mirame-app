@@ -223,75 +223,77 @@ hay que decidirlas antes de construir:
 ## 7. Lo que faltó definir: comportamiento
 
 Los mockups son fotos. Esto es lo que se mueve, y es donde una app se siente cara o barata. Nada
-de esto está en la entrega.
+de esto está en la entrega. **Lo marcado ✅ ya está construido** (commits `321f1c9`, `97cef21`,
+`11db88f`); lo demás espera a que existan los componentes de la Tanda C.
 
 ### 7.1 Zonas que quedan fijas al scrollear
 
-- **Celular, todas las vistas**: la barra de arriba (logo + campana + engranaje) queda fija; hoy
-  se va con el scroll.
-- **Agenda**: la tira semanal y la tarjeta de resumen del día quedan fijas; scrollea solo la lista
-  de turnos. Sin esto, para ver un turno de las 18:00 perdés de vista qué día estás mirando.
-- **Ficha de clienta**: la **barra de tabs queda pegada** arriba al scrollear el historial, y la
-  banda se **colapsa** a una barra de 56 px con el avatar chico y el nombre (patrón conocido:
-  `SliverAppBar`). Hoy la ficha es un sheet y todo se va para arriba junto.
-- **Tablas de escritorio**: la cabecera de columnas queda pegada. Con 184 clientas, hoy scrolleás
-  y no sabés qué columna es cuál.
-- **CTA fijo**: ya está definido, pero falta decir que **se esconde al scrollear hacia abajo y
-  vuelve al scrollear hacia arriba**, para que la última fila de la lista no quede tapada para
-  siempre.
+- ✅ **La barra de arriba ya era fija**, pero se confundía con la lista: ahora **gana una sombra
+  solo cuando hay contenido scrolleado por encima**. La sombra es lo único que avisa que hay algo
+  arriba.
+- ✅ **Cabecera de tabla** pegada con la misma sombra. Con 184 clientas, scrolleabas y no sabías
+  qué columna era cuál.
+- **Ficha de clienta**: la barra de tabs pegada y la banda colapsando a 56 px con el avatar chico
+  (`SliverAppBar`). Espera a que la ficha deje de ser un sheet (Tanda C).
+- **CTA fijo que se esconde al scrollear hacia abajo y vuelve al subir**, para que no tape la
+  última fila. Espera al CTA fijo (Tanda C).
+- **Agenda**: cuando exista la tira semanal, la tira y el resumen del día quedan fijos. Hoy el
+  calendario ya está fuera del scroll.
 
 ### 7.2 Zonas que cambian al scrollear
 
-- **Sombra de contexto**: la barra de arriba y la cabecera de tabla ganan una sombra de 1 px
-  **solo cuando hay contenido arriba**. Es el único aviso de "hay más".
-- **FAB que se encoge**: al scrollear hacia abajo el FAB pasa de 56 px con ＋ a un círculo de 44;
-  al frenar vuelve.
-- **Degradé de corte**: la fila de chips de filtros y el carrusel de retoques llevan un degradé de
-  16 px a la derecha cuando hay más contenido; sin eso nadie desliza.
-- **Hora actual en Agenda**: una línea fina lavanda marca la hora de ahora en la línea de tiempo y
-  se mueve sola.
+- ✅ **Sombra de contexto** en header y cabecera de tabla, solo con contenido arriba.
+- ✅ **FAB que se encoge** de 54 a 44 px al bajar por la lista, y vuelve al subir.
+- ✅ **Degradé de corte** en las filas de filtros: avisa que la fila sigue a la derecha (y a la
+  izquierda cuando ya se deslizó).
+- ✅ **Franja horaria en curso** marcada en brand en la Agenda: la línea vertical se engrosa y la
+  hora va en lavanda.
+- El degradé del carrusel de retoques espera al carrusel (Tanda C).
 
-### 7.3 Scroll que falta decidir
+### 7.3 Scroll
 
-- **Tablet, Agenda**: mes y lista del día son **dos scrolls independientes** (el mes no se mueve).
-  Ya lo hacemos así en escritorio; hay que mantenerlo.
-- **La fila de 5 chips-ícono no scrollea** (entran los 5 en 390). La de filtros sí.
-- **Al abrir Agenda, la lista arranca en el próximo turno**, no a las 00:00. Y si te vas a otro
-  día, aparece un botón flotante **"Hoy"** para volver.
-- **Sheet de filtros**: se abre a media pantalla y se puede estirar; el CTA "Ver 12 artículos"
-  queda fijo al pie del sheet, no scrollea con los chips.
+- ✅ **La Agenda arranca en el próximo turno**, no a las 00:00. Abrirla a las 17:00 y ver las
+  09:00 era empezar mirando lo que ya pasó.
+- ✅ **Botón "Hoy"** flotante cuando el día elegido no es hoy (y la tecla `T` en escritorio).
+- ✅ **Cierre de lista**: "No hay más turnos este día".
+- ✅ En escritorio, mes y lista del día ya son dos scrolls independientes.
+- La fila de 5 chips-ícono no scrollea (entran los 5 en 390): queda así por diseño.
 
-### 7.4 Estados que la entrega no cubre
+### 7.4 Estados
 
-- **Cargando**: esqueletos grises con la forma de las tarjetas, no un spinner centrado. El
-  diseñador lo hizo solo para el widget; hace falta para Inicio, Agenda, Clientas y Tienda.
-- **Vacío por filtro ≠ vacío de verdad**: "No hay turnos pendientes" (con botón "Ver todos") es
-  distinto de "Todavía no cargaste turnos" (con botón "Agendar el primero"). Hoy decimos casi lo
-  mismo en los dos casos.
-- **Fin de lista**: "No hay más turnos este día" al final del scroll, para que no parezca cortado.
-- **Sin conexión**: ya tenemos la franja "Sin conexión · trabajando local"; falta que el diseñador
-  la dibuje con el estilo nuevo.
-- **Guardando**: el CTA muestra el spinner y el texto de lo que está pasando ("Subiendo 2 de 5") —
-  ya lo hace `SheetFormulario`, pero no está en los mockups.
+- ✅ **Esqueletos de carga** en Inicio, Agenda, Clientas, Caja, Insumos y Tienda. Mientras la base
+  abría, las vistas decían "Sin clientas" / "Sin turnos": era mentira y asustaba.
+- ✅ **Vacío por filtro ≠ vacío de verdad**: textos distintos y un botón de salida ("Ver todos",
+  "Limpiar búsqueda"). Antes los dos casos decían casi lo mismo y ninguno ofrecía salida.
+- ✅ **Fin de lista**.
+- **Sin conexión**: la franja ya existe en el shell; falta que el diseñador la dibuje con el
+  estilo nuevo.
+- **Guardando**: `SheetFormulario` ya muestra el progreso ("Subiendo 2 de 5"); no está en los
+  mockups.
 
 ### 7.5 Gestos
 
-- **Deslizar una tarjeta de turno**: a la izquierda "Marcar hecho", a la derecha "Cancelar". Hoy
-  hay que abrir el formulario para las dos cosas más frecuentes del día.
-- **Tirar para refrescar** en Inicio, Agenda y Clientas (fuerza una sincronización).
-- **Mantener apretado** sobre una clienta: menú corto con WhatsApp / Nuevo turno.
-- **Tablet, además**: `Esc` cierra el panel lateral, flechas ← → cambian de día en Agenda, y al
-  girar con el panel abierto **se mantiene** la clienta elegida y la posición del scroll.
+- ✅ **Deslizar una tarjeta de turno**: derecha = Hecho, izquierda = Cancelar, y otra vez deshace.
+  Eran las dos cosas más frecuentes del día y pedían abrir el formulario, elegir en un desplegable
+  y guardar.
+- ✅ **Tirar para refrescar** en Agenda: fuerza el sync en vez de esperar los 3 minutos del ciclo.
+- ✅ **Toque largo sobre una clienta**: WhatsApp, agendar o editar, sin abrir la ficha.
+- ✅ **Teclado**: `Esc` cierra la ficha de clienta, `←` `→` corren el día en Agenda, `T` vuelve a
+  hoy.
+- **Al girar con el panel abierto** se mantiene la clienta elegida y el scroll: queda para la
+  Tanda A, porque hoy la app no gira.
 
 ### 7.6 Accesibilidad y tamaños
 
-- **Texto grande**: hasta 1,3× de escala del sistema la app no se rompe. Para eso las tarjetas de
-  68 px tienen que ser **alto mínimo**, no alto fijo.
-- **Toques**: 48 px en celular, 44 en tablet (el riel de 74×48 que propuso cumple).
-- **Contraste**: el `nude700` que agregó corrige un problema real; conviene revisar también el
-  gris `#9c9088` sobre crema en textos de 11 px.
+- ✅ **Filas de tabla con alto mínimo en vez de fijo**: con el texto del sistema al 130 % una fila
+  de 52 px recortaba el nombre en vez de crecer.
+- ✅ Los esqueletos no laten con "reducir movimiento" activado.
+- Toques de 48 en celular y 44 en tablet: la parte de tablet va con la Tanda A.
+- Contraste: el `nude700` del diseñador corrige un problema real; falta revisar el gris `#9c9088`
+  sobre crema en textos de 11 px.
 
----
+Todo lo nuevo vive en `app_flutter/lib/shared/widgets/comportamiento.dart` y está cubierto por
+`test/core/comportamiento_test.dart`.
 
 ## 8. Plan sugerido
 

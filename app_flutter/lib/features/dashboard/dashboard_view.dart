@@ -37,6 +37,7 @@ import '../../domain/rules/reminders.dart';
 import '../../domain/rules/stock.dart';
 import '../ropa/mi_tienda.dart';
 import '../shell/app_shell.dart';
+import '../../shared/widgets/comportamiento.dart';
 import '../shell/vistas_comunes.dart';
 import '../stock/stock_view.dart';
 
@@ -105,7 +106,9 @@ class DashboardView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final turnos = ref.watch(turnosDeHoyProvider).value ?? const [];
+    final turnosDeHoy = ref.watch(turnosDeHoyProvider);
+    final cargando = turnosDeHoy.isLoading && !turnosDeHoy.hasValue;
+    final turnos = turnosDeHoy.value ?? const [];
     final mes = ref.watch(movimientosDelMesProvider).value ?? const [];
     final semana = ref.watch(movimientosDeLaSemanaProvider).value ?? const [];
     final clientes = ref.watch(clientesProvider).value ?? const <db.Client>[];
@@ -244,7 +247,14 @@ class DashboardView extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 10),
-          if (turnos.isEmpty)
+          if (cargando)
+            const EsqueletoDeLista(
+              filas: 2,
+              alto: 62,
+              padding: EdgeInsets.zero,
+              desplazable: false,
+            )
+          else if (turnos.isEmpty)
             FadeSlideIn(
               delay: const Duration(milliseconds: 150),
               child: const EstadoVacio(

@@ -1059,3 +1059,34 @@ clienta: es proyecto aparte con migración y storage).
 
 **Plan por tandas** (A giro + táctil · B componentes · C pantallas · D comportamiento · E widget y
 fotos) en el §8 del análisis. Sigue pendiente la prueba del APK 1.17.3.
+
+### 2026-09-22 — La capa de comportamiento (§7 del análisis)
+
+Implementado lo que los mockups no cubren, en tres commits (`321f1c9`, `97cef21`, `11db88f`).
+Todo lo nuevo vive en `app_flutter/lib/shared/widgets/comportamiento.dart`, con tests en
+`test/core/comportamiento_test.dart` (340 en total, verdes).
+
+- **Señales de scroll**: `ListaConEncabezado` (encabezado pegado que gana sombra solo cuando hay
+  contenido arriba), `DegradeDeCorte` (la fila de filtros avisa que sigue), `FinDeLista`.
+- **`ObservadorDeScroll`** en el shell: el header y el FAB cuelgan del `Scaffold`, fuera del
+  cuerpo que scrollea, así que no se enteraban solos. Ahora el shell escucha una vez y publica
+  `EstadoScroll` (hayArriba / bajando) por `InheritedWidget`. Con eso el header gana sombra y el
+  FAB se achica de 54 a 44 al bajar.
+- **Esqueletos** (`EsqueletoDeLista`) en Inicio, Agenda, Clientas, Caja, Insumos y Tienda:
+  mientras la base abría, las vistas decían "Sin clientas" / "Sin turnos". `desplazable: false`
+  cuando va adentro de otra lista — un `ListView` anidado revienta con "unbounded height", y lo
+  agarró el test de humo de las vistas, no el teléfono.
+- **Vacío por filtro ≠ vacío de verdad**: `EstadoVacio` acepta una `accion` opcional
+  ("Ver todos", "Limpiar búsqueda").
+- **Agenda**: arranca en el próximo turno (no a las 00:00), marca la franja horaria en curso en
+  brand, y ofrece "Hoy" cuando el día elegido no es hoy.
+- **Gestos**: deslizar un turno (derecha Hecho, izquierda Cancelar, otra vez deshace), tirar para
+  refrescar, toque largo sobre una clienta (WhatsApp / agendar / editar).
+- **Teclado**: `Esc` cierra la ficha, `←` `→` corren el día, `T` vuelve a hoy.
+- **Texto grande**: las filas de tabla pasaron a alto **mínimo**; con el sistema al 130 % una fila
+  de 52 px recortaba el nombre.
+
+**Lo que quedó esperando a la Tanda C** (necesita componentes que todavía no existen): banda
+colapsable y tabs pegadas en la ficha, CTA fijo que se esconde, sheet de filtros de Tienda,
+degradé del carrusel de retoques. Y la rotación con el panel abierto espera a la Tanda A, porque
+`main.dart` todavía fuerza vertical.
