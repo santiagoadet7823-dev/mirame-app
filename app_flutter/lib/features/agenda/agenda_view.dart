@@ -5,6 +5,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/notificaciones/pedir_permiso.dart';
@@ -68,6 +69,11 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
   /// El día elegido no es hoy. Mientras sea cierto aparece el botón "Hoy":
   /// tres toques de mes adelante y volver se hacía deslizando a ciegas.
   bool get _lejosDeHoy => claveFecha(_dia) != claveFecha(DateTime.now());
+
+  void _correrDia(int dias) => setState(() {
+        _dia = _dia.add(Duration(days: dias));
+        _mes = DateTime(_dia.year, _dia.month, 1);
+      });
 
   void _volverAHoy() {
     final hoy = DateTime.now();
@@ -194,66 +200,83 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
       // Dos paneles: el mes a la izquierda con ancho fijo —así las celdas
       // quedan de ~48 px y no de 185 como cuando el calendario tomaba todo
       // el monitor— y el día elegido a la derecha, con el espacio que sobre.
-      return ContenidoEscritorio.tabla(
-        child: Column(
-          children: [
-            BarraVista(
-              filtros: filtros,
-              accion: puedeEscribir
-                  ? BotonPrimario(texto: 'Nuevo turno', onTap: nuevoTurno)
-                  : null,
-            ),
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 380,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(32, 0, 0, 40),
-                      child: calendario,
-                    ),
-                  ),
-                  const SizedBox(width: 28),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 4, 32, 14),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  _tituloDia(_dia),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: serif(size: 22, weight: 600),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                turnos.isEmpty
-                                    ? 'sin turnos'
-                                    : '${turnos.length} '
-                                        '${turnos.length == 1 ? "turno" : "turnos"}',
-                                style: sans(size: 13, color: MColors.tMuted),
-                              ),
-                              const Spacer(),
-                              if (_lejosDeHoy) botonHoy,
-                            ],
-                          ),
+      //
+      // Con teclado, las flechas corren el día: en el mostrador se revisa
+      // "¿y mañana?" muchas veces por hora y tocar el número exacto del mes
+      // es más lento que una flecha.
+      return CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
+              _correrDia(-1),
+          const SingleActivator(LogicalKeyboardKey.arrowRight): () =>
+              _correrDia(1),
+          const SingleActivator(LogicalKeyboardKey.keyT): _volverAHoy,
+        },
+        child: Focus(
+          autofocus: true,
+          child: ContenidoEscritorio.tabla(
+            child: Column(
+              children: [
+                BarraVista(
+                  filtros: filtros,
+                  accion: puedeEscribir
+                      ? BotonPrimario(texto: 'Nuevo turno', onTap: nuevoTurno)
+                      : null,
+                ),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 380,
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(32, 0, 0, 40),
+                          child: calendario,
                         ),
-                        Expanded(child: lista),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 28),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(0, 4, 32, 14),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      _tituloDia(_dia),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: serif(size: 22, weight: 600),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    turnos.isEmpty
+                                        ? 'sin turnos'
+                                        : '${turnos.length} '
+                                            '${turnos.length == 1 ? "turno" : "turnos"}',
+                                    style:
+                                        sans(size: 13, color: MColors.tMuted),
+                                  ),
+                                  const Spacer(),
+                                  if (_lejosDeHoy) botonHoy,
+                                ],
+                              ),
+                            ),
+                            Expanded(child: lista),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       );
     }
@@ -282,7 +305,7 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
               ],
             ),
           ),
-          Expanded(child: lista),
+          Expanded(child: TirarParaRefrescar(child: lista)),
         ],
       ),
     );
@@ -470,10 +493,30 @@ class _EventoTimeline extends ConsumerWidget {
   final Appointment turno;
   final String? nombreCliente;
 
+  /// Cambia el estado sin abrir el formulario.
+  ///
+  /// `guardarTurno` pide el turno entero porque hace un upsert: se reenvían
+  /// los mismos valores y `serviceIds: null` deja los servicios como están
+  /// (mandar una lista vacía los borraría).
+  Future<void> _cambiarEstado(WidgetRef ref, TurnoEstado nuevo) =>
+      ref.read(businessRepoProvider)!.guardarTurno(
+            id: turno.id,
+            clientId: turno.clientId,
+            professionalId: turno.professionalId,
+            fecha: turno.fecha,
+            hora: (turno.hora ?? const TimeOfDayValue(9, 0)).toString(),
+            precio: turno.precio.toDouble(),
+            estado: nuevo.name,
+            notas: turno.notas,
+          );
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cancelado = turno.estado == TurnoEstado.cancelled;
-    return Padding(
+    final hecho = turno.estado == TurnoEstado.done;
+    final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirAgenda));
+
+    final tarjeta = Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: PressableScale(
         onTap: () => _mostrarFormulario(context, ref, turno: turno),
@@ -530,7 +573,82 @@ class _EventoTimeline extends ConsumerWidget {
         ),
       ),
     );
+
+    // Las dos cosas que más se hacen en el día —marcar hecho y cancelar—
+    // pedían abrir el formulario, elegir en un desplegable y guardar. Con el
+    // deslizamiento son un gesto, y el resto del turno queda igual.
+    if (!puedeEscribir) return tarjeta;
+
+    return Dismissible(
+      key: ValueKey('turno-${turno.id}'),
+      // `confirmDismiss` devolviendo false: la tarjeta vuelve a su lugar. No
+      // se saca de la lista porque el turno sigue existiendo, solo cambia de
+      // estado — y si el filtro activo ya no lo incluye, desaparece solo.
+      confirmDismiss: (dir) async {
+        final nuevo = dir == DismissDirection.startToEnd
+            ? (hecho ? TurnoEstado.confirmed : TurnoEstado.done)
+            : (cancelado ? TurnoEstado.confirmed : TurnoEstado.cancelled);
+        await _cambiarEstado(ref, nuevo);
+        return false;
+      },
+      background: _FondoDeslizar(
+        alineacion: Alignment.centerLeft,
+        color: hecho ? MColors.bg3 : MColors.successBg,
+        icono: hecho ? Icons.undo_rounded : Icons.check_rounded,
+        texto: hecho ? 'Deshacer' : 'Hecho',
+        colorTexto: hecho ? MColors.tSecondary : MColors.successText,
+      ),
+      secondaryBackground: _FondoDeslizar(
+        alineacion: Alignment.centerRight,
+        color: cancelado ? MColors.bg3 : MColors.dangerBg,
+        icono: cancelado ? Icons.undo_rounded : Icons.close_rounded,
+        texto: cancelado ? 'Deshacer' : 'Cancelar',
+        colorTexto: cancelado ? MColors.tSecondary : MColors.dangerText,
+      ),
+      child: tarjeta,
+    );
   }
+}
+
+/// Lo que se ve detrás de la tarjeta mientras se desliza.
+class _FondoDeslizar extends StatelessWidget {
+  const _FondoDeslizar({
+    required this.alineacion,
+    required this.color,
+    required this.icono,
+    required this.texto,
+    required this.colorTexto,
+  });
+
+  final Alignment alineacion;
+  final Color color;
+  final IconData icono;
+  final String texto;
+  final Color colorTexto;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Container(
+          alignment: alineacion,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(MRadius.md),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icono, size: 17, color: colorTexto),
+              const SizedBox(width: 7),
+              Text(
+                texto,
+                style: sans(size: 12, weight: 600, color: colorTexto),
+              ),
+            ],
+          ),
+        ),
+      );
 }
 
 Future<void> _mostrarFormulario(

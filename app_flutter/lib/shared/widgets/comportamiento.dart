@@ -11,7 +11,9 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/sync/sync_engine.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
 
@@ -129,12 +131,8 @@ class _DegradeDeCorteState extends State<DegradeDeCorte> {
             width: widget.ancho,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: izquierda
-                    ? Alignment.centerLeft
-                    : Alignment.centerRight,
-                end: izquierda
-                    ? Alignment.centerRight
-                    : Alignment.centerLeft,
+                begin: izquierda ? Alignment.centerLeft : Alignment.centerRight,
+                end: izquierda ? Alignment.centerRight : Alignment.centerLeft,
                 colors: [widget.color, widget.color.withValues(alpha: 0)],
               ),
             ),
@@ -254,50 +252,88 @@ class EsqueletoDeLista extends StatelessWidget {
     this.filas = 5,
     this.alto = 72,
     this.padding = const EdgeInsets.fromLTRB(16, 0, 16, 0),
+    this.desplazable = true,
   });
 
   final int filas;
   final double alto;
   final EdgeInsets padding;
 
+  /// `false` cuando ya vive adentro de otra lista (Caja, Insumos): ahí se
+  /// dibuja como columna. Un `ListView` dentro de otro revienta con
+  /// "vertical viewport was given unbounded height" — lo agarró el test de
+  /// humo antes de llegar al teléfono.
+  final bool desplazable;
+
   @override
-  Widget build(BuildContext context) => ListView.builder(
+  Widget build(BuildContext context) {
+    final items = [for (var i = 0; i < filas; i++) _fila(i)];
+    if (!desplazable) {
+      return Padding(
         padding: padding,
-        itemCount: filas,
-        // No hay nada que tocar mientras carga.
-        physics: const NeverScrollableScrollPhysics(),
-        itemBuilder: (_, i) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Container(
-            height: alto,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: MColors.surface,
-              border: Border.all(color: MColors.border),
-              borderRadius: BorderRadius.circular(MRadius.lg),
-            ),
-            child: Row(
-              children: [
-                const Esqueleto(ancho: 42, alto: 42, radio: MRadius.full),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Anchos distintos por fila: todos iguales se ven como
-                      // una grilla rota, no como texto.
-                      Esqueleto(ancho: 120 + (i % 3) * 28, alto: 13),
-                      const SizedBox(height: 7),
-                      Esqueleto(ancho: 80 + (i % 2) * 34, alto: 11),
-                    ],
-                  ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: items),
+      );
+    }
+    return ListView(
+      padding: padding,
+      // No hay nada que tocar mientras carga.
+      physics: const NeverScrollableScrollPhysics(),
+      children: items,
+    );
+  }
+
+  Widget _fila(int i) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Container(
+          height: alto,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: MColors.surface,
+            border: Border.all(color: MColors.border),
+            borderRadius: BorderRadius.circular(MRadius.lg),
+          ),
+          child: Row(
+            children: [
+              const Esqueleto(ancho: 42, alto: 42, radio: MRadius.full),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Anchos distintos por fila: todos iguales se ven como
+                    // una grilla rota, no como texto.
+                    Esqueleto(ancho: 120 + (i % 3) * 28, alto: 13),
+                    const SizedBox(height: 7),
+                    Esqueleto(ancho: 80 + (i % 2) * 34, alto: 11),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                const Esqueleto(ancho: 54, alto: 13),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              const Esqueleto(ancho: 54, alto: 13),
+            ],
           ),
         ),
+      );
+}
+
+/// Tirar para refrescar: fuerza una sincronización y espera a que termine.
+///
+/// La app es local-first y el sync corre solo cada 3 minutos, así que esto no
+/// trae datos "nuevos" que no fueran a llegar igual: sirve para la persona que
+/// acaba de cargar algo en otro dispositivo y quiere verlo **ahora**, y para
+/// tener algo que hacer cuando se duda de si está actualizado.
+class TirarParaRefrescar extends ConsumerWidget {
+  const TirarParaRefrescar({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => RefreshIndicator(
+        color: MColors.brand,
+        backgroundColor: MColors.surface,
+        edgeOffset: 0,
+        onRefresh: () => ref.read(syncProvider.notifier).sincronizar(),
+        child: child,
       );
 }

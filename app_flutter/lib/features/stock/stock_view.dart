@@ -141,6 +141,7 @@ class _StockViewState extends ConsumerState<StockView> {
                       filas: 5,
                       alto: 68,
                       padding: EdgeInsets.zero,
+                      desplazable: false,
                     )
                   else if (escritorio)
                     FadeSlideIn(

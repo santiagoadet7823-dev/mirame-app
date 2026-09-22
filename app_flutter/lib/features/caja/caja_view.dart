@@ -283,6 +283,7 @@ class _CajaViewState extends ConsumerState<CajaView> {
                       filas: 5,
                       alto: 64,
                       padding: EdgeInsets.zero,
+                      desplazable: false,
                     )
                   else if (escritorio)
                     FadeSlideIn(

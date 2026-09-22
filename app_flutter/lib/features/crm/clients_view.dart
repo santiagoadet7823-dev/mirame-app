@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -130,101 +131,114 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
       }
     }
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: fabVista(
-        context,
-        visible: puedeEscribir,
-        onTap: () => mostrarFormularioCliente(context, ref),
-      ),
-      body: ContenidoEscritorio.tabla(
-        child: Column(
-          children: [
-            BarraVista(
-              accion: puedeEscribir
-                  ? BotonPrimario(
-                      texto: 'Nueva clienta',
-                      onTap: () => mostrarFormularioCliente(context, ref),
-                    )
-                  : null,
-              buscador: TextField(
-                onChanged: (v) => setState(() => _busqueda = v),
-                style: sans(size: 14, weight: 500),
-                decoration: InputDecoration(
-                  hintText: 'Buscar por nombre o teléfono',
-                  hintStyle: MText.menor,
-                  prefixIcon: const Icon(Icons.search_rounded,
-                      size: 19, color: MColors.tLight),
-                  filled: true,
-                  fillColor: MColors.surface,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(MRadius.full),
-                    borderSide: const BorderSide(color: MColors.border),
+    return CallbackShortcuts(
+      // Esc cierra la ficha. Es lo que hace cualquier panel de escritorio y
+      // lo primero que se prueba; sin esto hay que apuntarle a la ×.
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): () {
+          if (_abiertaId != null) setState(() => _abiertaId = null);
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButton: fabVista(
+            context,
+            visible: puedeEscribir,
+            onTap: () => mostrarFormularioCliente(context, ref),
+          ),
+          body: ContenidoEscritorio.tabla(
+            child: Column(
+              children: [
+                BarraVista(
+                  accion: puedeEscribir
+                      ? BotonPrimario(
+                          texto: 'Nueva clienta',
+                          onTap: () => mostrarFormularioCliente(context, ref),
+                        )
+                      : null,
+                  buscador: TextField(
+                    onChanged: (v) => setState(() => _busqueda = v),
+                    style: sans(size: 14, weight: 500),
+                    decoration: InputDecoration(
+                      hintText: 'Buscar por nombre o teléfono',
+                      hintStyle: MText.menor,
+                      prefixIcon: const Icon(Icons.search_rounded,
+                          size: 19, color: MColors.tLight),
+                      filled: true,
+                      fillColor: MColors.surface,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(MRadius.full),
+                        borderSide: const BorderSide(color: MColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(MRadius.full),
+                        borderSide: const BorderSide(color: MColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(MRadius.full),
+                        borderSide: const BorderSide(color: MColors.brand),
+                      ),
+                    ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(MRadius.full),
-                    borderSide: const BorderSide(color: MColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(MRadius.full),
-                    borderSide: const BorderSide(color: MColors.brand),
+                  filtros: FilaFiltros(
+                    opciones: const [
+                      ('all', 'Todas'),
+                      ('vip', 'VIP'),
+                      ('recent', 'Recientes'),
+                    ],
+                    activo: _filtro,
+                    onElegir: (f) => setState(() => _filtro = f),
                   ),
                 ),
-              ),
-              filtros: FilaFiltros(
-                opciones: const [
-                  ('all', 'Todas'),
-                  ('vip', 'VIP'),
-                  ('recent', 'Recientes'),
-                ],
-                activo: _filtro,
-                onElegir: (f) => setState(() => _filtro = f),
-              ),
-            ),
-            Expanded(
-              child: cargando
-                  ? EsqueletoDeLista(
-                      filas: 6,
-                      padding: padVista(context, sinArriba: true),
-                    )
-                  : escritorio
-                      ? Padding(
+                Expanded(
+                  child: cargando
+                      ? EsqueletoDeLista(
+                          filas: 6,
                           padding: padVista(context, sinArriba: true),
-                          child: MaestroDetalle(
-                            lista: _tabla(lista, resumen, vacio),
-                            panel: abierta == null
-                                ? null
-                                : PanelLateral(
-                                    titulo: 'Ficha',
-                                    onCerrar: () =>
-                                        setState(() => _abiertaId = null),
-                                    child: FichaCliente(
-                                      key: ValueKey(abierta.id),
-                                      cliente: abierta,
-                                      enPanel: true,
+                        )
+                      : escritorio
+                          ? Padding(
+                              padding: padVista(context, sinArriba: true),
+                              child: MaestroDetalle(
+                                lista: _tabla(lista, resumen, vacio),
+                                panel: abierta == null
+                                    ? null
+                                    : PanelLateral(
+                                        titulo: 'Ficha',
+                                        onCerrar: () =>
+                                            setState(() => _abiertaId = null),
+                                        child: FichaCliente(
+                                          key: ValueKey(abierta.id),
+                                          cliente: abierta,
+                                          enPanel: true,
+                                        ),
+                                      ),
+                              ),
+                            )
+                          : lista.isEmpty
+                              ? vacio
+                              : ListView.builder(
+                                  padding: padVista(context, sinArriba: true),
+                                  itemCount: lista.length,
+                                  itemBuilder: (_, i) => FadeSlideIn(
+                                    delay: Duration(
+                                        milliseconds: (i < 8 ? i : 8) * 35),
+                                    child: _FilaCliente(
+                                      cliente: lista[i],
+                                      turnos: resumen[lista[i].id]?.turnos ?? 0,
+                                      gastado:
+                                          resumen[lista[i].id]?.gastado ?? 0,
                                     ),
                                   ),
-                          ),
-                        )
-                      : lista.isEmpty
-                          ? vacio
-                          : ListView.builder(
-                              padding: padVista(context, sinArriba: true),
-                              itemCount: lista.length,
-                              itemBuilder: (_, i) => FadeSlideIn(
-                                delay: Duration(
-                                    milliseconds: (i < 8 ? i : 8) * 35),
-                                child: _FilaCliente(
-                                  cliente: lista[i],
-                                  turnos: resumen[lista[i].id]?.turnos ?? 0,
-                                  gastado: resumen[lista[i].id]?.gastado ?? 0,
                                 ),
-                              ),
-                            ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
