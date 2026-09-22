@@ -12,10 +12,8 @@ import '../../data/repositories/ropa_repository.dart';
 import '../shell/vistas_comunes.dart';
 import 'ropa_view.dart';
 
-Future<void> mostrarProveedores(BuildContext context) => showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+Future<void> mostrarProveedores(BuildContext context) => showAppSheet(
+      context,
       builder: (_) => const _Panel(),
     );
 
@@ -183,10 +181,8 @@ class _Fila extends StatelessWidget {
 
 Future<void> _editarProveedor(
         BuildContext context, WidgetRef ref, db.Proveedore? p) =>
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+    showAppSheet<void>(
+      context,
       builder: (_) => _FormProveedor(proveedor: p),
     );
 
@@ -315,10 +311,8 @@ class _FormProveedorState extends ConsumerState<_FormProveedor> {
 
 Future<void> _editarDeposito(
         BuildContext context, WidgetRef ref, db.Deposito? d) =>
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+    showAppSheet<void>(
+      context,
       builder: (_) => _FormDeposito(deposito: d),
     );
 

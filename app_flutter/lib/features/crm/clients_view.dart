@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/layout/layout.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -73,80 +74,82 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: puedeEscribir
-          ? Padding(
-              // `bottom: 80px + safe` y `right: 18px` del CSS. El
-              // Scaffold ya separa 16 del borde, así que acá van 2.
-              padding: const EdgeInsets.only(right: 2, bottom: 8),
-              child: FabMirame(onTap: () => mostrarFormularioCliente(context, ref)),
-            )
-          : null,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-            child: TextField(
-              onChanged: (v) => setState(() => _busqueda = v),
-              style: sans(size: 14, weight: 500),
-              decoration: InputDecoration(
-                hintText: 'Buscar por nombre o teléfono',
-                hintStyle: MText.menor,
-                prefixIcon: const Icon(Icons.search_rounded,
-                    size: 19, color: MColors.tLight),
-                filled: true,
-                fillColor: MColors.surface,
-                contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(MRadius.full),
-                  borderSide: const BorderSide(color: MColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(MRadius.full),
-                  borderSide: const BorderSide(color: MColors.border),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(MRadius.full),
-                  borderSide: const BorderSide(color: MColors.brand),
+      floatingActionButton: fabVista(
+        context,
+        visible: puedeEscribir,
+        onTap: () => mostrarFormularioCliente(context, ref),
+      ),
+      body: ContenidoEscritorio.tabla(
+        child: Column(
+          children: [
+            BarraVista(
+              accion: puedeEscribir
+                  ? BotonPrimario(
+                      texto: 'Nueva clienta',
+                      onTap: () => mostrarFormularioCliente(context, ref),
+                    )
+                  : null,
+              buscador: TextField(
+                onChanged: (v) => setState(() => _busqueda = v),
+                style: sans(size: 14, weight: 500),
+                decoration: InputDecoration(
+                  hintText: 'Buscar por nombre o teléfono',
+                  hintStyle: MText.menor,
+                  prefixIcon: const Icon(Icons.search_rounded,
+                      size: 19, color: MColors.tLight),
+                  filled: true,
+                  fillColor: MColors.surface,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(MRadius.full),
+                    borderSide: const BorderSide(color: MColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(MRadius.full),
+                    borderSide: const BorderSide(color: MColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(MRadius.full),
+                    borderSide: const BorderSide(color: MColors.brand),
+                  ),
                 ),
               ),
+              filtros: FilaFiltros(
+                opciones: const [
+                  ('all', 'Todas'),
+                  ('vip', 'VIP'),
+                  ('recent', 'Recientes'),
+                ],
+                activo: _filtro,
+                onElegir: (f) => setState(() => _filtro = f),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: FilaFiltros(
-              opciones: const [
-                ('all', 'Todas'),
-                ('vip', 'VIP'),
-                ('recent', 'Recientes'),
-              ],
-              activo: _filtro,
-              onElegir: (f) => setState(() => _filtro = f),
-            ),
-          ),
-          Expanded(
-            child: lista.isEmpty
-                ? EstadoVacio(
-                    // Textos literales de `renderClients`.
-                    emoji: busqueda.isEmpty ? '🌸' : '🔍',
-                    titulo: busqueda.isEmpty ? 'Sin clientas' : 'Sin resultados',
-                    detalle: busqueda.isEmpty
-                        ? 'Registrá tu primera clienta'
-                        : 'Probá con otro nombre o teléfono',
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-                    itemCount: lista.length,
-                    itemBuilder: (_, i) => FadeSlideIn(
-                      delay: Duration(milliseconds: (i < 8 ? i : 8) * 35),
-                      child: _FilaCliente(
-                        cliente: lista[i],
-                        turnos: resumen[lista[i].id]?.turnos ?? 0,
-                        gastado: resumen[lista[i].id]?.gastado ?? 0,
+            Expanded(
+              child: lista.isEmpty
+                  ? EstadoVacio(
+                      // Textos literales de `renderClients`.
+                      emoji: busqueda.isEmpty ? '🌸' : '🔍',
+                      titulo:
+                          busqueda.isEmpty ? 'Sin clientas' : 'Sin resultados',
+                      detalle: busqueda.isEmpty
+                          ? 'Registrá tu primera clienta'
+                          : 'Probá con otro nombre o teléfono',
+                    )
+                  : ListView.builder(
+                      padding: padVista(context, sinArriba: true),
+                      itemCount: lista.length,
+                      itemBuilder: (_, i) => FadeSlideIn(
+                        delay: Duration(milliseconds: (i < 8 ? i : 8) * 35),
+                        child: _FilaCliente(
+                          cliente: lista[i],
+                          turnos: resumen[lista[i].id]?.turnos ?? 0,
+                          gastado: resumen[lista[i].id]?.gastado ?? 0,
+                        ),
                       ),
                     ),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -323,10 +326,8 @@ Future<void> mostrarFormularioCliente(
   WidgetRef ref, {
   Client? cliente,
 }) =>
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+    showAppSheet<void>(
+      context,
       builder: (_) => _FormularioCliente(cliente: cliente),
     );
 

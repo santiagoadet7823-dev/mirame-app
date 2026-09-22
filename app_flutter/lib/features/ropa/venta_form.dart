@@ -20,10 +20,8 @@ import '../shell/vistas_comunes.dart';
 import 'ropa_view.dart';
 
 Future<void> abrirVenta(BuildContext context, {db.ProductoVariante? variante}) =>
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+    showAppSheet<void>(
+      context,
       builder: (_) => _FormVenta(inicial: variante),
     );
 
@@ -298,11 +296,9 @@ class _FormVentaState extends ConsumerState<_FormVenta> {
       );
 
   Future<void> _elegirPrenda() async {
-    final elegida = await showModalBottomSheet<
+    final elegida = await showAppSheet<
         ({db.ProductoVariante variante, db.Producto producto})>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+      context,
       builder: (_) => const _SelectorPrenda(),
     );
     if (elegida == null || !mounted) return;

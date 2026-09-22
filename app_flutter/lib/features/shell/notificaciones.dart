@@ -17,6 +17,7 @@ import '../../data/local/mappers.dart';
 import '../../domain/rules/stock.dart';
 import '../dashboard/dashboard_view.dart';
 import '../stock/stock_view.dart';
+import 'vistas_comunes.dart';
 
 class Aviso {
   const Aviso({
@@ -67,9 +68,8 @@ final avisosProvider = Provider<List<Aviso>>((ref) {
 });
 
 Future<void> mostrarNotificaciones(BuildContext context) =>
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
+    showAppSheet<void>(
+      context,
       builder: (_) => const _PanelNotificaciones(),
     );
 

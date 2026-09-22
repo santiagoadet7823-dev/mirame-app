@@ -25,10 +25,8 @@ import '../shell/vistas_comunes.dart';
 import 'fotos.dart';
 import 'ropa_view.dart';
 
-Future<void> mostrarMiTienda(BuildContext context) => showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+Future<void> mostrarMiTienda(BuildContext context) => showAppSheet(
+      context,
       builder: (_) => const _MiTienda(),
     );
 

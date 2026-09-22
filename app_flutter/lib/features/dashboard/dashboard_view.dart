@@ -23,6 +23,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/layout/layout.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -95,7 +96,8 @@ final movimientosDeLaSemanaProvider =
   final hoy = DateTime.now();
   // Semana domingo→sábado, igual que el original (`weekRange`).
   final domingo = hoy.subtract(Duration(days: hoy.weekday % 7));
-  return repo.verMovimientosEntre(domingo, domingo.add(const Duration(days: 6)));
+  return repo.verMovimientosEntre(
+      domingo, domingo.add(const Duration(days: 6)));
 });
 
 class DashboardView extends ConsumerWidget {
@@ -115,8 +117,8 @@ class DashboardView extends ConsumerWidget {
     // Los recordatorios de retoque necesitan el historial y el catálogo:
     // `pendingReminders` cruza el último turno hecho de cada clienta con los
     // días de retoque de su servicio.
-    final serviciosPorTurno =
-        ref.watch(serviciosDeTurnosProvider).value ?? const <String, List<String>>{};
+    final serviciosPorTurno = ref.watch(serviciosDeTurnosProvider).value ??
+        const <String, List<String>>{};
     final recordatorios = pendingReminders(
       clients: clientes.map(aClient),
       // Los `serviceIds` viven en la tabla puente, así que hay que unirlos
@@ -124,8 +126,8 @@ class DashboardView extends ConsumerWidget {
       // devuelve siempre vacío.
       appointments: (ref.watch(turnosRecientesProvider).value ??
               const <db.Appointment>[])
-          .map((f) => aAppointment(f,
-              serviceIds: serviciosPorTurno[f.id] ?? const [])),
+          .map((f) =>
+              aAppointment(f, serviceIds: serviciosPorTurno[f.id] ?? const [])),
       services: (ref.watch(serviciosProvider).value ?? const <db.Service>[])
           .map(aService),
       hoy: DateTime.now(),
@@ -139,181 +141,197 @@ class DashboardView extends ConsumerWidget {
     final delMes = ingresosDe(mes);
     final deLaSemana = ingresosDe(semana);
     final deHoy = turnos.fold<num>(0, (a, t) => a + t.precio);
-    final pendientes =
-        turnos.where((t) => t.estado != 'done' && t.estado != 'cancelled').length;
+    final pendientes = turnos
+        .where((t) => t.estado != 'done' && t.estado != 'cancelled')
+        .length;
 
-    return ListView(
-      padding: padVistaMovil,
-      children: [
-        // 1 · Saludo
-        FadeSlideIn(
-          child: Text(
-            greeting(DateTime.now()),
-            // `font-size:24px; font-weight:500` — no 28/600 como estaba antes.
-            style: serif(size: 24, weight: 500),
-          ),
-        ),
-        const SizedBox(height: 3),
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 30),
-          child: Text(
-            formatDateShort(DateTime.now()),
-            style: sans(size: 13, color: MColors.tMuted),
-          ),
-        ),
-        const SizedBox(height: 18),
+    final escritorio = esEscritorio(context);
 
-        // 2 · KPI hero
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 70),
-          child: _KpiHero(
-            turnosHoy: turnos.length,
-            ingresoHoy: deHoy,
-            ingresoSemana: deLaSemana,
-            clientas: clientes.length,
-            ingresoMes: delMes,
-            pendientes: pendientes,
-          ),
-        ),
-        const SizedBox(height: 14),
+    final acciones = [
+      _AccionRapida(
+        emoji: '📅',
+        titulo: 'Nuevo Turno',
+        detalle: 'Agendar cita',
+        fondo: MColors.lav50,
+        borde: MColors.borderLav,
+        onTap: () => NavegadorShell.ir(context, Vistas.agenda),
+      ),
+      _AccionRapida(
+        emoji: '🌸',
+        titulo: 'Nueva Clienta',
+        detalle: 'Registrar',
+        fondo: MColors.nude100,
+        borde: MColors.nude300,
+        onTap: () => NavegadorShell.ir(context, Vistas.clientas),
+      ),
+      _AccionRapida(
+        emoji: '💰',
+        titulo: 'Registrar Pago',
+        detalle: 'Caja',
+        fondo: MColors.successBg,
+        borde: MColors.successBorder,
+        onTap: () => NavegadorShell.ir(context, Vistas.caja),
+      ),
+      _AccionRapida(
+        emoji: '📊',
+        titulo: 'Estadísticas',
+        detalle: 'Ver análisis',
+        fondo: MColors.skyBg,
+        borde: MColors.skyBorder,
+        onTap: () => NavegadorShell.ir(context, Vistas.stats),
+      ),
+      _AccionRapida(
+        emoji: '🛍️',
+        titulo: 'Tienda',
+        detalle: 'Catálogo y ventas',
+        fondo: MColors.nude100,
+        borde: MColors.nude300,
+        onTap: () => NavegadorShell.ir(context, Vistas.ropa),
+      ),
+      _AccionRapida(
+        emoji: '🔗',
+        titulo: 'Compartir',
+        detalle: 'El link de la tienda',
+        fondo: MColors.lav50,
+        borde: MColors.borderLav,
+        onTap: () => mostrarMiTienda(context),
+      ),
+    ];
 
-        // 3 · Turnos del día
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 110),
-          child: FilaSeccion(
-            titulo: 'AGENDA DE HOY',
-            accion: 'Ver todo',
-            onAccion: () => NavegadorShell.ir(context, Vistas.agenda),
-          ),
-        ),
-        const SizedBox(height: 10),
-        if (turnos.isEmpty)
+    return ContenidoEscritorio.lectura(
+      child: ListView(
+        padding: padVista(context),
+        children: [
+          // 1 · Saludo
           FadeSlideIn(
-            delay: const Duration(milliseconds: 150),
-            child: const EstadoVacio(
-              emoji: '🌿',
-              titulo: 'Sin turnos hoy',
-              detalle: 'Cuando cargues uno para hoy, va a aparecer acá.',
+            child: Text(
+              greeting(DateTime.now()),
+              // `font-size:24px; font-weight:500` — no 28/600 como estaba antes.
+              style: serif(size: 24, weight: 500),
             ),
-          )
-        else
-          for (var i = 0; i < turnos.length; i++)
-            FadeSlideIn(
-              delay: Duration(milliseconds: 150 + (i < 8 ? i : 8) * 35),
-              child: _FilaTurno(turno: turnos[i]),
-            ),
-
-        // 4 · Acciones rápidas — `.qa-grid`
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 190),
-          child: const EtiquetaSeccion('ACCIONES RÁPIDAS'),
-        ),
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 220),
-          child: Row(
-            children: [
-              _AccionRapida(
-                emoji: '📅',
-                titulo: 'Nuevo Turno',
-                detalle: 'Agendar cita',
-                fondo: MColors.lav50,
-                borde: MColors.borderLav,
-                onTap: () => NavegadorShell.ir(context, Vistas.agenda),
-              ),
-              const SizedBox(width: 10),
-              _AccionRapida(
-                emoji: '🌸',
-                titulo: 'Nueva Clienta',
-                detalle: 'Registrar',
-                fondo: MColors.nude100,
-                borde: MColors.nude300,
-                onTap: () => NavegadorShell.ir(context, Vistas.clientas),
-              ),
-            ],
           ),
-        ),
-        const SizedBox(height: 10),
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 250),
-          child: Row(
-            children: [
-              _AccionRapida(
-                emoji: '💰',
-                titulo: 'Registrar Pago',
-                detalle: 'Caja',
-                fondo: MColors.successBg,
-                borde: MColors.successBorder,
-                onTap: () => NavegadorShell.ir(context, Vistas.caja),
-              ),
-              const SizedBox(width: 10),
-              _AccionRapida(
-                emoji: '📊',
-                titulo: 'Estadísticas',
-                detalle: 'Ver análisis',
-                fondo: MColors.skyBg,
-                borde: MColors.skyBorder,
-                onTap: () => NavegadorShell.ir(context, Vistas.stats),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 265),
-          child: Row(
-            children: [
-              _AccionRapida(
-                emoji: '🛍️',
-                titulo: 'Tienda',
-                detalle: 'Catálogo y ventas',
-                fondo: MColors.nude100,
-                borde: MColors.nude300,
-                onTap: () => NavegadorShell.ir(context, Vistas.ropa),
-              ),
-              const SizedBox(width: 10),
-              _AccionRapida(
-                emoji: '🔗',
-                titulo: 'Compartir',
-                detalle: 'El link de la tienda',
-                fondo: MColors.lav50,
-                borde: MColors.borderLav,
-                onTap: () => mostrarMiTienda(context),
-              ),
-            ],
-          ),
-        ),
-
-        // 5 · Alertas de stock
-        if (alertas.isNotEmpty) ...[
+          const SizedBox(height: 3),
           FadeSlideIn(
-            delay: const Duration(milliseconds: 280),
+            delay: const Duration(milliseconds: 30),
+            child: Text(
+              formatDateShort(DateTime.now()),
+              style: sans(size: 13, color: MColors.tMuted),
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // 2 · KPI hero
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 70),
+            child: _KpiHero(
+              turnosHoy: turnos.length,
+              ingresoHoy: deHoy,
+              ingresoSemana: deLaSemana,
+              clientas: clientes.length,
+              ingresoMes: delMes,
+              pendientes: pendientes,
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 3 · Turnos del día
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 110),
             child: FilaSeccion(
-              titulo: 'ALERTAS DE STOCK',
-              accion: 'Ver stock',
-              onAccion: () => NavegadorShell.ir(context, Vistas.stock),
+              titulo: 'AGENDA DE HOY',
+              accion: 'Ver todo',
+              onAccion: () => NavegadorShell.ir(context, Vistas.agenda),
             ),
           ),
-          for (final s in alertas.take(3))
+          const SizedBox(height: 10),
+          if (turnos.isEmpty)
             FadeSlideIn(
-              delay: const Duration(milliseconds: 300),
-              child: _FilaAlertaStock(item: s),
-            ),
-        ],
+              delay: const Duration(milliseconds: 150),
+              child: const EstadoVacio(
+                emoji: '🌿',
+                titulo: 'Sin turnos hoy',
+                detalle: 'Cuando cargues uno para hoy, va a aparecer acá.',
+              ),
+            )
+          else
+            for (var i = 0; i < turnos.length; i++)
+              FadeSlideIn(
+                delay: Duration(milliseconds: 150 + (i < 8 ? i : 8) * 35),
+                child: _FilaTurno(turno: turnos[i]),
+              ),
 
-        // 6 · Recordatorios de retoque — `#rem-wrap`, que en el original
-        // está oculto salvo que haya algo que recordar.
-        if (recordatorios.isNotEmpty) ...[
+          // 4 · Acciones rápidas — `.qa-grid`
           FadeSlideIn(
-            delay: const Duration(milliseconds: 320),
-            child: const EtiquetaSeccion('RECORDATORIOS RETOQUE ✂️'),
+            delay: const Duration(milliseconds: 190),
+            child: const EtiquetaSeccion('ACCIONES RÁPIDAS'),
           ),
-          for (final r in recordatorios)
+          if (escritorio)
+            // `.qa-grid` a 4 columnas en escritorio, pero por ancho de tarjeta
+            // y no por cantidad fija: a 1040 entran cuatro, en una ventana
+            // angosta tres, y nunca dos tarjetas de medio metro.
             FadeSlideIn(
-              delay: const Duration(milliseconds: 340),
-              child: _FilaRecordatorio(recordatorio: r),
+              delay: const Duration(milliseconds: 220),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 260,
+                  mainAxisExtent: _AccionRapida.alto,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemCount: acciones.length,
+                itemBuilder: (_, i) => acciones[i],
+              ),
+            )
+          else
+            for (var i = 0; i < acciones.length; i += 2) ...[
+              if (i > 0) const SizedBox(height: 10),
+              FadeSlideIn(
+                delay: Duration(milliseconds: 220 + i * 15),
+                child: Row(
+                  children: [
+                    Expanded(child: acciones[i]),
+                    const SizedBox(width: 10),
+                    Expanded(child: acciones[i + 1]),
+                  ],
+                ),
+              ),
+            ],
+
+          // 5 · Alertas de stock
+          if (alertas.isNotEmpty) ...[
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 280),
+              child: FilaSeccion(
+                titulo: 'ALERTAS DE STOCK',
+                accion: 'Ver stock',
+                onAccion: () => NavegadorShell.ir(context, Vistas.stock),
+              ),
             ),
+            for (final s in alertas.take(3))
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 300),
+                child: _FilaAlertaStock(item: s),
+              ),
+          ],
+
+          // 6 · Recordatorios de retoque — `#rem-wrap`, que en el original
+          // está oculto salvo que haya algo que recordar.
+          if (recordatorios.isNotEmpty) ...[
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 320),
+              child: const EtiquetaSeccion('RECORDATORIOS RETOQUE ✂️'),
+            ),
+            for (final r in recordatorios)
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 340),
+                child: _FilaRecordatorio(recordatorio: r),
+              ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
@@ -464,8 +482,7 @@ class _FilaTurno extends StatelessWidget {
         hijo: Row(
           children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: MColors.brandBg,
                 borderRadius: BorderRadius.circular(MRadius.sm),
@@ -511,47 +528,49 @@ class _AccionRapida extends StatelessWidget {
   final Color borde;
   final VoidCallback onTap;
 
+  /// Alto de la tarjeta: 18 + 40 + 18 de padding e ícono, más el borde. La
+  /// grilla de escritorio lo necesita fijo para no adivinar con un aspecto.
+  static const alto = 78.0;
+
   @override
-  Widget build(BuildContext context) => Expanded(
-        child: TarjetaMirame(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-          onTap: onTap,
-          hijo: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: fondo,
-                  border: Border.all(color: borde),
-                  borderRadius: BorderRadius.circular(MRadius.sm),
-                ),
-                child: Text(emoji, style: const TextStyle(fontSize: 19)),
+  Widget build(BuildContext context) => TarjetaMirame(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        onTap: onTap,
+        hijo: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: fondo,
+                border: Border.all(color: borde),
+                borderRadius: BorderRadius.circular(MRadius.sm),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      titulo,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: sans(size: 13, weight: 600),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      detalle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: sans(size: 11, color: MColors.tMuted),
-                    ),
-                  ],
-                ),
+              child: Text(emoji, style: const TextStyle(fontSize: 19)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    titulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: sans(size: 13, weight: 600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    detalle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: sans(size: 11, color: MColors.tMuted),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
 }
@@ -616,7 +635,8 @@ class _FilaRecordatorio extends StatelessWidget {
             height: 38,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              gradient: MGradient.avatar(avatarIndex(recordatorio.client.nombre)),
+              gradient:
+                  MGradient.avatar(avatarIndex(recordatorio.client.nombre)),
               shape: BoxShape.circle,
             ),
             child: Text(
@@ -659,9 +679,7 @@ class _FilaRecordatorio extends StatelessWidget {
                     style: sans(
                       size: 10,
                       weight: 600,
-                      color: vencido
-                          ? MColors.dangerText
-                          : MColors.warningText,
+                      color: vencido ? MColors.dangerText : MColors.warningText,
                     ),
                   ),
                 ),

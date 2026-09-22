@@ -20,7 +20,9 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/layout/layout.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -76,9 +78,8 @@ abstract final class Vistas {
   static const ropa = 7;
 }
 
-/// `.view { padding: 16px 16px 96px }` — los 96 de abajo dejan pasar el FAB y
-/// la barra de navegación sin que tapen la última fila.
-const padVistaMovil = EdgeInsets.fromLTRB(16, 16, 16, 96);
+/// Clave de la preferencia "sidebar plegado". Null = decide el ancho.
+const _kSidebarPlegado = 'mirame.sidebar_plegado';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.vistas});
@@ -114,6 +115,11 @@ class NavegadorShell extends InheritedWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   int _indice = 0;
 
+  /// Si la persona plegó o desplegó el sidebar a mano. Mientras es null, lo
+  /// decide el ancho: completo desde 1200, rail por debajo. Se guarda porque
+  /// quien lo pliega en una notebook no quiere volver a plegarlo cada vez.
+  bool? _sidebarPlegado;
+
   /// Secciones a las que puede llevar una notificación. El payload es texto y
   /// no un índice: un número guardado por Android sobreviviría a un cambio de
   /// orden del nav y abriría la vista equivocada.
@@ -129,6 +135,16 @@ class _AppShellState extends ConsumerState<AppShell> {
   void initState() {
     super.initState();
     payloadTocadoNotifier.addListener(_abrirDesdeNotificacion);
+    SharedPreferences.getInstance().then((p) {
+      final v = p.getBool(_kSidebarPlegado);
+      if (v != null && mounted) setState(() => _sidebarPlegado = v);
+    });
+  }
+
+  Future<void> _plegarSidebar(bool plegado) async {
+    setState(() => _sidebarPlegado = plegado);
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(_kSidebarPlegado, plegado);
   }
 
   @override
@@ -167,6 +183,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
 
     if (conSidebar) {
+      final plegado = _sidebarPlegado ?? ancho < MBreak.sidebarCompleto;
       return Scaffold(
         backgroundColor: MColors.bg,
         body: SafeArea(
@@ -174,7 +191,9 @@ class _AppShellState extends ConsumerState<AppShell> {
             children: [
               _Sidebar(
                 indice: _indice,
+                plegado: plegado,
                 onElegir: (i) => setState(() => _indice = i),
+                onPlegar: () => _plegarSidebar(!plegado),
               ),
               Expanded(
                 child: Column(
@@ -570,15 +589,29 @@ class _ItemBottom extends StatelessWidget {
 
 /// Sidebar de escritorio: 248 px, degradado surface→bg2, ítems en fila con
 /// radio 12 y sin la barrita superior.
+///
+/// Plegado es un rail de 72 px: solo el ícono, con el nombre en tooltip. Es
+/// lo que se usa por debajo de 1200 px, donde los 248 px completos le sacan
+/// un cuarto de pantalla al contenido, y lo que elige quien prefiere ver más
+/// tabla. La transición es animada para que plegar no sea un salto.
 class _Sidebar extends StatelessWidget {
-  const _Sidebar({required this.indice, required this.onElegir});
+  const _Sidebar({
+    required this.indice,
+    required this.plegado,
+    required this.onElegir,
+    required this.onPlegar,
+  });
 
   final int indice;
+  final bool plegado;
   final ValueChanged<int> onElegir;
+  final VoidCallback onPlegar;
 
   @override
-  Widget build(BuildContext context) => Container(
-        width: 248,
+  Widget build(BuildContext context) => AnimatedContainer(
+        duration: MMotion.t2,
+        curve: MMotion.ease,
+        width: plegado ? MBreak.railWidth : MBreak.sidebarWidth,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -587,34 +620,49 @@ class _Sidebar extends StatelessWidget {
           ),
           border: Border(right: BorderSide(color: MColors.border)),
         ),
-        padding: const EdgeInsets.fromLTRB(14, 22, 14, 18),
+        padding:
+            EdgeInsets.fromLTRB(plegado ? 10 : 14, 22, plegado ? 10 : 14, 14),
+        // Sin esto, al animar el ancho el texto se envuelve un instante y
+        // salta de renglón.
+        clipBehavior: Clip.hardEdge,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const _LogoRedondo(),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Mírame',
-                        style: serif(size: 18, weight: 600)
-                            .copyWith(letterSpacing: 0.2),
-                      ),
-                      Text(
-                        'LASH STUDIO',
-                        style: sans(
-                          size: 10,
-                          weight: 500,
-                          color: MColors.tMuted,
-                        ).copyWith(letterSpacing: 1.5),
-                      ),
-                    ],
-                  ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6),
+                  child: _LogoRedondo(),
                 ),
+                if (!plegado) ...[
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Mírame',
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.clip,
+                          style: serif(size: 18, weight: 600)
+                              .copyWith(letterSpacing: 0.2),
+                        ),
+                        Text(
+                          'LASH STUDIO',
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.clip,
+                          style: sans(
+                            size: 10,
+                            weight: 500,
+                            color: MColors.tMuted,
+                          ).copyWith(letterSpacing: 1.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 22),
@@ -623,50 +671,136 @@ class _Sidebar extends StatelessWidget {
             for (var i = 0; i < itemsSidebar.length; i++)
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: PressableScale(
+                child: _ItemSidebar(
+                  item: itemsSidebar[i],
+                  activo: i == indice,
+                  plegado: plegado,
                   onTap: () => onElegir(i),
-                  child: AnimatedContainer(
-                    duration: MMotion.t1,
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 13, vertical: 11),
+                ),
+              ),
+            const Spacer(),
+            Align(
+              alignment: plegado ? Alignment.center : Alignment.centerRight,
+              child: Tooltip(
+                message: plegado ? 'Desplegar menú' : 'Plegar menú',
+                child: PressableScale(
+                  onTap: onPlegar,
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: i == indice
-                          ? MColors.brandBg
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
+                      color: MColors.surface,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: MColors.border),
                     ),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 34,
-                          height: 34,
-                          child: Icon(
-                            itemsSidebar[i].icono,
-                            size: 18,
-                            color:
-                                i == indice ? MColors.brand : MColors.tMuted,
-                          ),
-                        ),
-                        const SizedBox(width: 13),
-                        Text(
-                          itemsSidebar[i].etiqueta,
-                          style: sans(
-                            size: 14,
-                            weight: i == indice ? 600 : 500,
-                            color: i == indice
-                                ? MColors.brand
-                                : MColors.tSecondary,
-                          ),
-                        ),
-                      ],
+                    child: Icon(
+                      plegado
+                          ? Icons.chevron_right_rounded
+                          : Icons.chevron_left_rounded,
+                      size: 18,
+                      color: MColors.tSecondary,
                     ),
                   ),
                 ),
               ),
+            ),
           ],
         ),
       );
+}
+
+class _ItemSidebar extends StatelessWidget {
+  const _ItemSidebar({
+    required this.item,
+    required this.activo,
+    required this.plegado,
+    required this.onTap,
+  });
+
+  final ItemNav item;
+  final bool activo;
+  final bool plegado;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final fila = ConHover(
+      builder: (_, encima) => PressableScale(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: MMotion.t1,
+          width: double.infinity,
+          padding:
+              EdgeInsets.symmetric(horizontal: plegado ? 9 : 13, vertical: 11),
+          decoration: BoxDecoration(
+            color: activo
+                ? MColors.brandBg
+                : encima
+                    ? MColors.bg3
+                    : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment:
+                plegado ? MainAxisAlignment.center : MainAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 34,
+                height: 34,
+                child: Icon(
+                  item.icono,
+                  size: 18,
+                  color: activo ? MColors.brand : MColors.tMuted,
+                ),
+              ),
+              if (!plegado) ...[
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Text(
+                    item.etiqueta,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.clip,
+                    style: sans(
+                      size: 14,
+                      weight: activo ? 600 : 500,
+                      color: activo ? MColors.brand : MColors.tSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!plegado) return fila;
+    return Tooltip(
+      message: item.etiqueta,
+      waitDuration: const Duration(milliseconds: 300),
+      child: fila,
+    );
+  }
+}
+
+/// El FAB de una vista, ya posicionado, o nada.
+///
+/// Nada en dos casos: cuando la persona no puede escribir, y en escritorio,
+/// donde la acción primaria vive en la [BarraVista] y un botón flotando en la
+/// esquina de un monitor no se asocia con nada.
+Widget? fabVista(
+  BuildContext context, {
+  required bool visible,
+  required VoidCallback onTap,
+}) {
+  if (!visible || esEscritorio(context)) return null;
+  return Padding(
+    // `bottom: 80px + safe` y `right: 18px` del CSS. El Scaffold ya separa
+    // 16 del borde, así que acá van 2.
+    padding: const EdgeInsets.only(right: 2, bottom: 8),
+    child: FabMirame(onTap: onTap),
+  );
 }
 
 /// `.fab` — 54×54, `bottom: 80px + safe`, `right: 18px`, sombra brand + md.

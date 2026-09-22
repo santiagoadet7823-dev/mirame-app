@@ -7,6 +7,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/layout/layout.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -72,15 +73,12 @@ class _SelectorMes extends StatelessWidget {
             onPressed: onSiguiente,
             icon: Icon(
               Icons.chevron_right_rounded,
-              color: onSiguiente == null
-                  ? MColors.tLight
-                  : MColors.tSecondary,
+              color: onSiguiente == null ? MColors.tLight : MColors.tSecondary,
             ),
           ),
         ],
       );
 }
-
 
 class CajaView extends ConsumerStatefulWidget {
   const CajaView({super.key});
@@ -116,130 +114,170 @@ class _CajaViewState extends ConsumerState<CajaView> {
       _ => todos,
     };
 
+    final escritorio = esEscritorio(context);
+
+    final selector = _SelectorMes(
+      mes: _mes,
+      onAnterior: () => setState(() => _offsetMes--),
+      // No se puede ir al futuro: no hay movimientos que ver ahí y el
+      // botón habilitado invita a un callejón sin salida.
+      onSiguiente: _offsetMes < 0 ? () => setState(() => _offsetMes++) : null,
+    );
+    final filtros = FilaFiltros(
+      opciones: const [
+        ('all', 'Todos'),
+        ('income', 'Ingresos'),
+        ('expense', 'Gastos'),
+      ],
+      activo: _filtro,
+      onElegir: (f) => setState(() => _filtro = f),
+    );
+    final ingresos = _Total(
+      etiqueta: 'Ingresos',
+      valor: resumen.ingresos,
+      color: MColors.successText,
+      fondo: MColors.successBg,
+    );
+    final gastos = _Total(
+      etiqueta: 'Gastos',
+      valor: resumen.egresos,
+      color: MColors.dangerText,
+      fondo: MColors.dangerBg,
+    );
+    final neto = Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: MColors.surface,
+        borderRadius: BorderRadius.circular(MRadius.md),
+        border: Border.all(color: MColors.border),
+        boxShadow: MShadow.xs,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Neto del mes', style: MText.menor),
+          const SizedBox(height: 2),
+          Text(
+            formatMoney(resumen.neta),
+            style: serif(
+              size: 28,
+              weight: 600,
+              // El rojo se reserva para el neto negativo: es el único
+              // número de esta pantalla que exige una decisión.
+              color: resumen.neta < 0 ? MColors.dangerText : MColors.tPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: puedeEscribir
-          ? Padding(
-              // `bottom: 80px + safe` y `right: 18px` del CSS. El
-              // Scaffold ya separa 16 del borde, así que acá van 2.
-              padding: const EdgeInsets.only(right: 2, bottom: 8),
-              child: FabMirame(onTap: () => _mostrarFormulario(context, ref)),
-            )
-          : null,
-      body: ListView(
-        padding: padVistaMovil,
-        children: [
-          FadeSlideIn(child: _SelectorMes(
-            mes: _mes,
-            onAnterior: () => setState(() => _offsetMes--),
-            // No se puede ir al futuro: no hay movimientos que ver ahí y el
-            // botón habilitado invita a un callejón sin salida.
-            onSiguiente:
-                _offsetMes < 0 ? () => setState(() => _offsetMes++) : null,
-          )),
-          const SizedBox(height: 12),
-          FadeSlideIn(
-            child: Row(
-              children: [
-                Expanded(
-                  child: _Total(
-                    etiqueta: 'Ingresos',
-                    valor: resumen.ingresos,
-                    color: MColors.successText,
-                    fondo: MColors.successBg,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _Total(
-                    etiqueta: 'Gastos',
-                    valor: resumen.egresos,
-                    color: MColors.dangerText,
-                    fondo: MColors.dangerBg,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          FadeSlideIn(
-            delay: const Duration(milliseconds: 50),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: MColors.surface,
-                borderRadius: BorderRadius.circular(MRadius.md),
-                border: Border.all(color: MColors.border),
-                boxShadow: MShadow.xs,
+      floatingActionButton: fabVista(
+        context,
+        visible: puedeEscribir,
+        onTap: () => _mostrarFormulario(context, ref),
+      ),
+      body: ContenidoEscritorio.tabla(
+        child: Column(
+          children: [
+            if (escritorio)
+              BarraVista(
+                buscador: selector,
+                filtros: filtros,
+                accion: puedeEscribir
+                    ? BotonPrimario(
+                        texto: 'Nuevo movimiento',
+                        onTap: () => _mostrarFormulario(context, ref),
+                      )
+                    : null,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              child: ListView(
+                padding: padVista(context, sinArriba: escritorio),
                 children: [
-                  Text('Neto del mes', style: MText.menor),
-                  const SizedBox(height: 2),
-                  Text(
-                    formatMoney(resumen.neta),
-                    style: serif(
-                      size: 28,
-                      weight: 600,
-                      // El rojo se reserva para el neto negativo: es el único
-                      // número de esta pantalla que exige una decisión.
-                      color: resumen.neta < 0
-                          ? MColors.dangerText
-                          : MColors.tPrimary,
+                  if (!escritorio) ...[
+                    FadeSlideIn(child: selector),
+                    const SizedBox(height: 12),
+                  ],
+                  if (escritorio)
+                    // Los tres números del mes en una sola fila: en un monitor, dos
+                    // tarjetas de 600 px y el neto abajo solo se leen como un
+                    // formulario de celular.
+                    FadeSlideIn(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(child: ingresos),
+                          const SizedBox(width: 12),
+                          Expanded(child: gastos),
+                          const SizedBox(width: 12),
+                          Expanded(child: neto),
+                        ],
+                      ),
+                    )
+                  else ...[
+                    FadeSlideIn(
+                      child: Row(
+                        children: [
+                          Expanded(child: ingresos),
+                          const SizedBox(width: 12),
+                          Expanded(child: gastos),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    FadeSlideIn(
+                      delay: const Duration(milliseconds: 50),
+                      child: neto,
+                    ),
+                  ],
+                  const SizedBox(height: 22),
+                  if (!escritorio) ...[
+                    FadeSlideIn(
+                      delay: const Duration(milliseconds: 90),
+                      child: filtros,
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+                  // `.sec-row` del original: el título de la lista con el cierre a la
+                  // derecha, no un botón suelto.
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 110),
+                    child: FilaSeccion(
+                      titulo: 'MOVIMIENTOS',
+                      accion: 'Cierre 📋',
+                      onAccion: () => mostrarCierre(
+                        context,
+                        movimientos: todos,
+                        rango: monthRange(_mes),
+                        titulo: nombreMes(_mes),
+                      ),
                     ),
                   ),
+                  if (movimientos.isEmpty)
+                    EstadoVacio(
+                      emoji: '💸',
+                      titulo: 'Sin movimientos',
+                      detalle: _filtro == 'all'
+                          ? 'No hay movimientos en ${nombreMes(_mes)}'
+                          : 'No hay ${_filtro == "income" ? "ingresos" : "gastos"} '
+                              'en ${nombreMes(_mes)}',
+                    )
+                  else
+                    for (var i = 0; i < movimientos.length; i++)
+                      FadeSlideIn(
+                        delay:
+                            Duration(milliseconds: 130 + (i < 8 ? i : 8) * 35),
+                        child: _FilaMovimiento(mov: movimientos[i]),
+                      ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 22),
-          FadeSlideIn(
-            delay: const Duration(milliseconds: 90),
-            child: FilaFiltros(
-              opciones: const [
-                ('all', 'Todos'),
-                ('income', 'Ingresos'),
-                ('expense', 'Gastos'),
-              ],
-              activo: _filtro,
-              onElegir: (f) => setState(() => _filtro = f),
-            ),
-          ),
-          const SizedBox(height: 14),
-          // `.sec-row` del original: el título de la lista con el cierre a la
-          // derecha, no un botón suelto.
-          FadeSlideIn(
-            delay: const Duration(milliseconds: 110),
-            child: FilaSeccion(
-              titulo: 'MOVIMIENTOS',
-              accion: 'Cierre 📋',
-              onAccion: () => mostrarCierre(
-                context,
-                movimientos: todos,
-                rango: monthRange(_mes),
-                titulo: nombreMes(_mes),
-              ),
-            ),
-          ),
-          if (movimientos.isEmpty)
-            EstadoVacio(
-              emoji: '💸',
-              titulo: 'Sin movimientos',
-              detalle: _filtro == 'all'
-                  ? 'No hay movimientos en ${nombreMes(_mes)}'
-                  : 'No hay ${_filtro == "income" ? "ingresos" : "gastos"} '
-                      'en ${nombreMes(_mes)}',
-            )
-          else
-            for (var i = 0; i < movimientos.length; i++)
-              FadeSlideIn(
-                delay: Duration(milliseconds: 130 + (i < 8 ? i : 8) * 35),
-                child: _FilaMovimiento(mov: movimientos[i]),
-              ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -305,9 +343,7 @@ class _FilaMovimiento extends ConsumerWidget {
             decoration: BoxDecoration(
               color: esIngreso ? MColors.successBg : MColors.dangerBg,
               border: Border.all(
-                color: esIngreso
-                    ? MColors.successBorder
-                    : MColors.dangerBorder,
+                color: esIngreso ? MColors.successBorder : MColors.dangerBorder,
               ),
               borderRadius: BorderRadius.circular(MRadius.sm),
             ),
@@ -372,10 +408,8 @@ Future<void> _mostrarFormulario(
   WidgetRef ref, {
   Transaction? mov,
 }) =>
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+    showAppSheet<void>(
+      context,
       builder: (_) => _FormularioMovimiento(mov: mov),
     );
 
@@ -475,8 +509,7 @@ class _FormMovState extends ConsumerState<_FormularioMovimiento> {
                 ButtonSegment(value: false, label: Text('Gasto')),
               ],
               selected: {_esIngreso},
-              onSelectionChanged: (s) =>
-                  setState(() => _esIngreso = s.first),
+              onSelectionChanged: (s) => setState(() => _esIngreso = s.first),
               style: SegmentedButton.styleFrom(
                 selectedBackgroundColor: MColors.brandBg,
                 selectedForegroundColor: MColors.brandDark,

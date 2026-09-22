@@ -167,18 +167,49 @@ class _PressableScaleState extends State<PressableScale> {
   @override
   Widget build(BuildContext context) {
     final habilitado = widget.onTap != null;
-    return GestureDetector(
-      onTap: widget.onTap,
-      onTapDown: habilitado ? (_) => setState(() => _presionado = true) : null,
-      onTapUp: habilitado ? (_) => setState(() => _presionado = false) : null,
-      onTapCancel:
-          habilitado ? () => setState(() => _presionado = false) : null,
-      child: AnimatedScale(
-        scale: _presionado ? widget.escala : 1,
-        duration: MMotion.t1,
-        curve: MMotion.ease,
-        child: widget.child,
+    return MouseRegion(
+      // En escritorio, lo que se puede tocar muestra la manito. Sin esto la
+      // PWA se siente como una foto de la app: nada avisa que responde.
+      cursor: habilitado ? SystemMouseCursors.click : MouseCursor.defer,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onTapDown:
+            habilitado ? (_) => setState(() => _presionado = true) : null,
+        onTapUp: habilitado ? (_) => setState(() => _presionado = false) : null,
+        onTapCancel:
+            habilitado ? () => setState(() => _presionado = false) : null,
+        child: AnimatedScale(
+          scale: _presionado ? widget.escala : 1,
+          duration: MMotion.t1,
+          curve: MMotion.ease,
+          child: widget.child,
+        ),
       ),
     );
   }
+}
+
+/// Expone si el puntero está encima, para pintar un hover. En un teléfono
+/// nunca es `true` y el widget se ve igual que siempre.
+///
+/// Es un builder y no un `Container` con color porque cada fila decide qué
+/// cambia al pasar el mouse: el fondo, el borde o un botón que aparece.
+class ConHover extends StatefulWidget {
+  const ConHover({super.key, required this.builder});
+
+  final Widget Function(BuildContext context, bool encima) builder;
+
+  @override
+  State<ConHover> createState() => _ConHoverState();
+}
+
+class _ConHoverState extends State<ConHover> {
+  bool _encima = false;
+
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+        onEnter: (_) => setState(() => _encima = true),
+        onExit: (_) => setState(() => _encima = false),
+        child: widget.builder(context, _encima),
+      );
 }

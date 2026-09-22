@@ -26,10 +26,8 @@ final profesionalesProvider =
 // Servicios
 // ─────────────────────────────────────────────────────────────────────────────
 
-Future<void> mostrarServicios(BuildContext context) => showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+Future<void> mostrarServicios(BuildContext context) => showAppSheet(
+      context,
       builder: (_) => const _ListaServicios(),
     );
 
@@ -77,10 +75,8 @@ Future<void> _editarServicio(
   WidgetRef ref,
   db.Service? servicio,
 ) =>
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+    showAppSheet<void>(
+      context,
       builder: (_) => _FormServicio(servicio: servicio),
     );
 
@@ -190,10 +186,8 @@ class _FormServicioState extends ConsumerState<_FormServicio> {
 // Profesionales
 // ─────────────────────────────────────────────────────────────────────────────
 
-Future<void> mostrarProfesionales(BuildContext context) => showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+Future<void> mostrarProfesionales(BuildContext context) => showAppSheet(
+      context,
       builder: (_) => const _ListaProfesionales(),
     );
 
@@ -234,10 +228,8 @@ Future<void> _editarProfesional(
   WidgetRef ref,
   db.Professional? pro,
 ) =>
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+    showAppSheet<void>(
+      context,
       builder: (_) => _FormProfesional(pro: pro),
     );
 

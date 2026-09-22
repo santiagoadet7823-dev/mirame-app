@@ -23,10 +23,8 @@ import 'liquidacion_pdf.dart';
 import 'ropa_view.dart';
 
 Future<void> mostrarLiquidaciones(BuildContext context) =>
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+    showAppSheet(
+      context,
       builder: (_) => const _Panel(),
     );
 

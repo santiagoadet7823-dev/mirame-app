@@ -39,10 +39,8 @@ final historialClienteProvider =
 });
 
 Future<void> mostrarFichaCliente(BuildContext context, db.Client cliente) =>
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+    showAppSheet<void>(
+      context,
       builder: (_) => DraggableScrollableSheet(
         // El historial puede ser largo; que arranque alto y se pueda estirar
         // evita que la persona tenga que hacer scroll dentro de un sheet chico.
@@ -81,16 +79,7 @@ class _FichaCliente extends ConsumerWidget {
         controller: scroll,
         padding: const EdgeInsets.fromLTRB(18, 12, 18, 28),
         children: [
-          Center(
-            child: Container(
-              width: 38,
-              height: 4,
-              decoration: BoxDecoration(
-                color: MColors.borderMd,
-                borderRadius: BorderRadius.circular(MRadius.full),
-              ),
-            ),
-          ),
+          const ManijaSheet(),
 
           // 1 · Cabecera
           Padding(

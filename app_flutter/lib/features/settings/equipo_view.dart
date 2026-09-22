@@ -95,10 +95,8 @@ const _comoSeLlama = {
   MiembroRol.lectura: 'Solo lectura',
 };
 
-Future<void> mostrarEquipo(BuildContext context) => showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+Future<void> mostrarEquipo(BuildContext context) => showAppSheet(
+      context,
       builder: (_) => const _Equipo(),
     );
 
@@ -305,9 +303,8 @@ class _Fila extends ConsumerWidget {
   }
 
   Future<void> _elegirRol(BuildContext context, WidgetRef ref) async {
-    final rol = await showModalBottomSheet<MiembroRol>(
-      context: context,
-      backgroundColor: Colors.transparent,
+    final rol = await showAppSheet<MiembroRol>(
+      context,
       builder: (ctx) => Container(
         decoration: const BoxDecoration(
           color: MColors.surface,

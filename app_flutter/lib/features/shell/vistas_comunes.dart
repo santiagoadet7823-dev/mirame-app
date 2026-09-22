@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../core/layout/layout.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -92,6 +93,97 @@ class VistaEnConstruccion extends StatelessWidget {
       );
 }
 
+/// Abre un panel modal como corresponde al tamaño de pantalla.
+///
+/// En el teléfono es el sheet de siempre, desde abajo. En escritorio es un
+/// **diálogo centrado** de hasta 560 px: un sheet a todo el ancho de un
+/// monitor de 1600 px es una franja de formulario de un metro, y es lo que
+/// hacía que la PWA pareciera un celular estirado. Lo decide el ancho, no la
+/// plataforma: una ventana angosta en la compu se comporta como un teléfono.
+///
+/// Todos los sheets de la app pasan por acá; ninguna vista llama a
+/// `showModalBottomSheet` directo.
+Future<T?> showAppSheet<T>(
+  BuildContext context, {
+  required WidgetBuilder builder,
+  bool descartable = true,
+}) {
+  if (!esEscritorio(context)) {
+    return showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: descartable,
+      enableDrag: descartable,
+      builder: builder,
+    );
+  }
+  return showDialog<T>(
+    context: context,
+    barrierColor: MColors.scrim,
+    barrierDismissible: descartable,
+    builder: (ctx) {
+      final alto = MediaQuery.sizeOf(ctx).height;
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(MRadius.xl),
+        ),
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: MBreak.sheetMaxWidth,
+            // `max-height: 88vh` del `.modal-sh` de escritorio.
+            maxHeight: alto * 0.88,
+          ),
+          decoration: BoxDecoration(
+            color: MColors.surface,
+            borderRadius: BorderRadius.circular(MRadius.xl),
+            boxShadow: MShadow.sheetDesktop,
+          ),
+          child: EnDialogo(child: Builder(builder: builder)),
+        ),
+      );
+    },
+  );
+}
+
+/// Marca que el contenido está adentro de un diálogo de escritorio y no de un
+/// sheet: el `SheetFormulario` y los paneles lo usan para no dibujar la
+/// manija de arrastre ni el radio solo-arriba.
+class EnDialogo extends InheritedWidget {
+  const EnDialogo({super.key, required super.child});
+
+  static bool de(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<EnDialogo>() != null;
+
+  @override
+  bool updateShouldNotify(EnDialogo viejo) => false;
+}
+
+/// La manija de arrastre de los sheets (`.sheet-handle`, 38×4). En un diálogo
+/// de escritorio no se dibuja: no hay nada que arrastrar.
+class ManijaSheet extends StatelessWidget {
+  const ManijaSheet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    if (EnDialogo.de(context)) return const SizedBox.shrink();
+    return Center(
+      child: Container(
+        width: 38,
+        height: 4,
+        decoration: BoxDecoration(
+          color: MColors.borderMd,
+          borderRadius: BorderRadius.circular(MRadius.full),
+        ),
+      ),
+    );
+  }
+}
+
 /// Sheet de formulario. Lo comparten todas las altas y ediciones para que
 /// crear una clienta y crear un movimiento se sientan igual.
 class SheetFormulario extends StatelessWidget {
@@ -121,18 +213,23 @@ class SheetFormulario extends StatelessWidget {
   final String? etiquetaGuardando;
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context) {
+    final enDialogo = EnDialogo.de(context);
+    return Padding(
         // El teclado tapa los campos de abajo si no se le cede el espacio.
         padding: EdgeInsets.only(
           bottom: MediaQuery.viewInsetsOf(context).bottom,
         ),
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: MColors.surface,
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(MRadius.xl)),
+            borderRadius: enDialogo
+                ? BorderRadius.circular(MRadius.xl)
+                : const BorderRadius.vertical(top: Radius.circular(MRadius.xl)),
           ),
-          padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
+          padding: enDialogo
+              ? const EdgeInsets.fromLTRB(28, 26, 28, 26)
+              : const EdgeInsets.fromLTRB(22, 12, 22, 24),
           child: SafeArea(
             top: false,
             child: SingleChildScrollView(
@@ -140,17 +237,10 @@ class SheetFormulario extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 38,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: MColors.borderMd,
-                        borderRadius: BorderRadius.circular(MRadius.full),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
+                  if (!enDialogo) ...[
+                    const ManijaSheet(),
+                    const SizedBox(height: 18),
+                  ],
                   Text(titulo, style: serif(size: 22, weight: 600)),
                   const SizedBox(height: 16),
                   ...campos,
@@ -226,6 +316,7 @@ class SheetFormulario extends StatelessWidget {
           ),
         ),
       );
+  }
 
   /// Borrar siempre pregunta. Es la única acción de estas pantallas que la
   /// persona no puede deshacer sola.
@@ -357,6 +448,102 @@ class TarjetaMirame extends StatelessWidget {
           : PressableScale(onTap: onTap, child: tarjeta),
     );
   }
+}
+
+/// Barra de herramientas de una vista con lista: buscador, filtros y la
+/// acción primaria.
+///
+/// En móvil es lo de siempre, apilado, y la acción primaria no va acá (es el
+/// FAB). En escritorio va todo en una fila: el buscador con ancho fijo —un
+/// campo de búsqueda de 1300 px es un error clásico de "app de celular
+/// estirada"—, los filtros al lado y el botón de crear a la derecha, donde
+/// cualquier sistema de gestión lo pone.
+class BarraVista extends StatelessWidget {
+  const BarraVista({
+    super.key,
+    this.buscador,
+    this.filtros,
+    this.accion,
+  });
+
+  final Widget? buscador;
+  final Widget? filtros;
+
+  /// Normalmente un [BotonPrimario]. Solo se muestra en escritorio.
+  final Widget? accion;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!esEscritorio(context)) {
+      return Column(
+        children: [
+          if (buscador != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+              child: buscador,
+            ),
+          if (filtros != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: filtros,
+            ),
+        ],
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 18),
+      child: Row(
+        children: [
+          if (buscador != null) ...[
+            SizedBox(width: 340, child: buscador),
+            const SizedBox(width: 14),
+          ],
+          if (filtros != null)
+            Expanded(child: filtros!)
+          else
+            const Spacer(),
+          if (accion != null) ...[
+            const SizedBox(width: 14),
+            accion!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// El botón de crear en escritorio: píldora brand, ícono + texto. Reemplaza al
+/// FAB, que en un monitor queda flotando a medio metro de lo que crea.
+class BotonPrimario extends StatelessWidget {
+  const BotonPrimario({
+    super.key,
+    required this.texto,
+    required this.onTap,
+    this.icono = Icons.add_rounded,
+  });
+
+  final String texto;
+  final VoidCallback? onTap;
+  final IconData icono;
+
+  @override
+  Widget build(BuildContext context) => FilledButton.icon(
+        style: FilledButton.styleFrom(
+          backgroundColor: MColors.brand,
+          disabledBackgroundColor: MColors.bg3,
+          padding: const EdgeInsets.fromLTRB(16, 0, 20, 0),
+          minimumSize: const Size(0, 42),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(MRadius.full),
+          ),
+        ),
+        onPressed: onTap,
+        icon: Icon(icono, size: 18, color: MColors.tWhite),
+        label: Text(
+          texto,
+          style: sans(size: 13, weight: 600, color: MColors.tWhite),
+        ),
+      );
 }
 
 /// `.sec-t` — el encabezado de sección.

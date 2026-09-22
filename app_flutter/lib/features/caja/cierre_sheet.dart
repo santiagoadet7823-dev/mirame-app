@@ -12,6 +12,7 @@ import '../../domain/entities/entities.dart';
 import '../../domain/rules/finance.dart';
 import '../../domain/rules/formatting.dart';
 import '../../domain/rules/period.dart';
+import '../shell/vistas_comunes.dart';
 
 Future<void> mostrarCierre(
   BuildContext context, {
@@ -19,10 +20,8 @@ Future<void> mostrarCierre(
   required DateRange rango,
   required String titulo,
 }) =>
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+    showAppSheet<void>(
+      context,
       builder: (_) => _SheetCierre(
         cierre: closeCash(movimientos, rango),
         titulo: titulo,

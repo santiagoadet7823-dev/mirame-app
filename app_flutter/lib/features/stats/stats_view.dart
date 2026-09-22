@@ -25,6 +25,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/layout/layout.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
@@ -38,7 +39,6 @@ import '../../domain/rules/period.dart';
 import '../crm/clients_view.dart';
 import 'exportar_csv.dart';
 import '../dashboard/dashboard_view.dart';
-import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
 
 /// Movimientos de los últimos 3 meses: alcanza para las 8 semanas del gráfico
@@ -110,225 +110,249 @@ class StatsView extends ConsumerWidget {
     final topCinco = top.take(5).toList();
     final maxTop = topCinco.isEmpty ? 1.0 : topCinco.first.monto;
 
-    return ListView(
-      padding: padVistaMovil,
-      children: [
-        // ── Los 4 KPI ───────────────────────────────────────────────────
-        FadeSlideIn(
-          child: Row(
-            children: [
-              _Kpi(
-                emoji: '💜',
-                valor: formatMoney(resumen.ingresos),
-                etiqueta: 'INGRESOS',
-              ),
-              const SizedBox(width: 10),
-              _Kpi(
-                emoji: '✨',
-                valor: '${clientes.length}',
-                etiqueta: 'CLIENTAS',
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 40),
-          child: Row(
-            children: [
-              _Kpi(emoji: '📅', valor: '${turnos.length}', etiqueta: 'TURNOS'),
-              const SizedBox(width: 10),
-              _Kpi(
-                emoji: '🌸',
-                valor: formatMoney(ticket),
-                etiqueta: 'TICKET PROM.',
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
+    final kpis = [
+      _Kpi(
+        emoji: '💜',
+        valor: formatMoney(resumen.ingresos),
+        etiqueta: 'INGRESOS',
+      ),
+      _Kpi(
+        emoji: '✨',
+        valor: '${clientes.length}',
+        etiqueta: 'CLIENTAS',
+      ),
+      _Kpi(emoji: '📅', valor: '${turnos.length}', etiqueta: 'TURNOS'),
+      _Kpi(
+        emoji: '🌸',
+        valor: formatMoney(ticket),
+        etiqueta: 'TICKET PROM.',
+      ),
+    ];
 
-        // ── Resultado financiero ────────────────────────────────────────
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 80),
-          child: _TarjetaGrafico(
-            titulo: 'Resultado financiero del mes',
-            subtitulo: monthName(hoy.month),
-            hijo: Column(
-              children: [
-                Row(
+    return ContenidoEscritorio.lectura(
+      child: ListView(
+        padding: padVista(context),
+        children: [
+          // ── Los 4 KPI ───────────────────────────────────────────────────
+          // `.stat-grid` a 4 columnas en escritorio (el CSS lo dice), 2×2 en
+          // el teléfono.
+          if (esEscritorio(context))
+            FadeSlideIn(
+              child: Row(
+                children: [
+                  for (var i = 0; i < kpis.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 10),
+                    Expanded(child: kpis[i]),
+                  ],
+                ],
+              ),
+            )
+          else ...[
+            FadeSlideIn(
+              child: Row(
+                children: [
+                  Expanded(child: kpis[0]),
+                  const SizedBox(width: 10),
+                  Expanded(child: kpis[1]),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 40),
+              child: Row(
+                children: [
+                  Expanded(child: kpis[2]),
+                  const SizedBox(width: 10),
+                  Expanded(child: kpis[3]),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+
+          // ── Resultado financiero ────────────────────────────────────────
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 80),
+            child: _TarjetaGrafico(
+              titulo: 'Resultado financiero del mes',
+              subtitulo: monthName(hoy.month),
+              hijo: Column(
+                children: [
+                  Row(
+                    children: [
+                      _CajaDato(
+                        etiqueta: 'GASTOS TOTALES',
+                        valor: formatMoney(resumen.egresos),
+                        color: MColors.dangerText,
+                      ),
+                      const SizedBox(width: 10),
+                      _CajaDato(
+                        etiqueta: 'GANANCIA NETA',
+                        valor: formatMoney(resumen.neta),
+                        // El original deja el neto en color normal salvo que sea
+                        // negativo: el rojo se reserva para lo que exige acción.
+                        color: resumen.neta < 0
+                            ? MColors.dangerText
+                            : MColors.tPrimary,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  _BarraMargen(resumen: resumen),
+                  const SizedBox(height: 14),
+                  _CajaProyeccion(proyeccion: proyeccion),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Gastos por categoría ────────────────────────────────────────
+          if (gastos.isNotEmpty)
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 120),
+              child: _TarjetaGrafico(
+                titulo: 'Gastos por categoría',
+                subtitulo: 'Este mes',
+                hijo: Column(
                   children: [
-                    _CajaDato(
-                      etiqueta: 'GASTOS TOTALES',
-                      valor: formatMoney(resumen.egresos),
-                      color: MColors.dangerText,
+                    for (var i = 0; i < gastos.length && i < 7; i++)
+                      _FilaCategoria(
+                        categoria: gastos[i].categoria,
+                        monto: gastos[i].monto,
+                        pct: gastos[i].pct,
+                        color: MSeries.expenses[i % MSeries.expenses.length],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+          // ── Ingresos semanales ──────────────────────────────────────────
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 160),
+            child: _TarjetaGrafico(
+              titulo: 'Ingresos semanales',
+              subtitulo: 'Últimas 8 semanas',
+              hijo: SizedBox(
+                // `.bars-wrap { height:90px }`
+                height: 90,
+                child: CustomPaint(
+                  painter: _BarrasPainter(
+                    valores: [for (final s in semanas) s.pctAlto],
+                  ),
+                  child: const SizedBox.expand(),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Gastos en donut ─────────────────────────────────────────────
+          if (gastos.isNotEmpty)
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 200),
+              child: _TarjetaGrafico(
+                titulo: 'Reparto de gastos',
+                subtitulo: 'Este mes, por categoría',
+                hijo: Row(
+                  children: [
+                    SizedBox(
+                      width: 108,
+                      height: 108,
+                      child: CustomPaint(
+                        painter: _DonutPainter(
+                          porciones: [for (final g in gastos) g.pct],
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 10),
-                    _CajaDato(
-                      etiqueta: 'GANANCIA NETA',
-                      valor: formatMoney(resumen.neta),
-                      // El original deja el neto en color normal salvo que sea
-                      // negativo: el rojo se reserva para lo que exige acción.
-                      color: resumen.neta < 0
-                          ? MColors.dangerText
-                          : MColors.tPrimary,
+                    const SizedBox(width: 18),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var i = 0; i < gastos.length && i < 6; i++)
+                            _Leyenda(
+                              texto: gastos[i].categoria,
+                              pct: gastos[i].pct,
+                              color:
+                                  MSeries.expenses[i % MSeries.expenses.length],
+                            ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
-                _BarraMargen(resumen: resumen),
-                const SizedBox(height: 14),
-                _CajaProyeccion(proyeccion: proyeccion),
-              ],
-            ),
-          ),
-        ),
-
-        // ── Gastos por categoría ────────────────────────────────────────
-        if (gastos.isNotEmpty)
-          FadeSlideIn(
-            delay: const Duration(milliseconds: 120),
-            child: _TarjetaGrafico(
-              titulo: 'Gastos por categoría',
-              subtitulo: 'Este mes',
-              hijo: Column(
-                children: [
-                  for (var i = 0; i < gastos.length && i < 7; i++)
-                    _FilaCategoria(
-                      categoria: gastos[i].categoria,
-                      monto: gastos[i].monto,
-                      pct: gastos[i].pct,
-                      color: MSeries.expenses[i % MSeries.expenses.length],
-                    ),
-                ],
               ),
             ),
-          ),
 
-        // ── Ingresos semanales ──────────────────────────────────────────
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 160),
-          child: _TarjetaGrafico(
-            titulo: 'Ingresos semanales',
-            subtitulo: 'Últimas 8 semanas',
-            hijo: SizedBox(
-              // `.bars-wrap { height:90px }`
-              height: 90,
-              child: CustomPaint(
-                painter: _BarrasPainter(
-                  valores: [for (final s in semanas) s.pctAlto],
-                ),
-                child: const SizedBox.expand(),
-              ),
-            ),
-          ),
-        ),
-
-        // ── Gastos en donut ─────────────────────────────────────────────
-        if (gastos.isNotEmpty)
-          FadeSlideIn(
-            delay: const Duration(milliseconds: 200),
-            child: _TarjetaGrafico(
-              titulo: 'Reparto de gastos',
-              subtitulo: 'Este mes, por categoría',
-              hijo: Row(
-                children: [
-                  SizedBox(
-                    width: 108,
-                    height: 108,
-                    child: CustomPaint(
-                      painter: _DonutPainter(
-                        porciones: [for (final g in gastos) g.pct],
+          // ── Top clientas ────────────────────────────────────────────────
+          if (topCinco.isNotEmpty)
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 240),
+              child: _TarjetaGrafico(
+                titulo: 'Top Clientas 🌸',
+                subtitulo: 'Por monto gastado',
+                hijo: Column(
+                  children: [
+                    for (var i = 0; i < topCinco.length; i++)
+                      _FilaRanking(
+                        puesto: i + 1,
+                        nombre: topCinco[i].nombre,
+                        monto: topCinco[i].monto,
+                        pct: (topCinco[i].monto / maxTop * 100).round(),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 18),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        for (var i = 0; i < gastos.length && i < 6; i++)
-                          _Leyenda(
-                            texto: gastos[i].categoria,
-                            pct: gastos[i].pct,
-                            color:
-                                MSeries.expenses[i % MSeries.expenses.length],
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-        // ── Top clientas ────────────────────────────────────────────────
-        if (topCinco.isNotEmpty)
+          // ── Comparativa mensual ─────────────────────────────────────────
           FadeSlideIn(
-            delay: const Duration(milliseconds: 240),
+            delay: const Duration(milliseconds: 280),
             child: _TarjetaGrafico(
-              titulo: 'Top Clientas 🌸',
-              subtitulo: 'Por monto gastado',
+              titulo: 'Comparativa mensual',
+              subtitulo: 'Este mes vs anterior',
               hijo: Column(
                 children: [
-                  for (var i = 0; i < topCinco.length; i++)
-                    _FilaRanking(
-                      puesto: i + 1,
-                      nombre: topCinco[i].nombre,
-                      monto: topCinco[i].monto,
-                      pct: (topCinco[i].monto / maxTop * 100).round(),
-                    ),
+                  _BarraComparativa(
+                    etiqueta: 'Este mes',
+                    monto: comparativa.actual,
+                    pct: comparativa.pctActual,
+                    color: MColors.brand,
+                  ),
+                  const SizedBox(height: 10),
+                  _BarraComparativa(
+                    etiqueta: 'Mes anterior',
+                    monto: comparativa.anterior,
+                    pct: comparativa.pctAnterior,
+                    color: MColors.nude300,
+                  ),
                 ],
               ),
             ),
           ),
 
-        // ── Comparativa mensual ─────────────────────────────────────────
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 280),
-          child: _TarjetaGrafico(
-            titulo: 'Comparativa mensual',
-            subtitulo: 'Este mes vs anterior',
-            hijo: Column(
-              children: [
-                _BarraComparativa(
-                  etiqueta: 'Este mes',
-                  monto: comparativa.actual,
-                  pct: comparativa.pctActual,
-                  color: MColors.brand,
+          // Pie del original: las dos tarjetas de export.
+          const SizedBox(height: 14),
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 260),
+            child: Builder(
+              builder: (ctx) => FilaExports(
+                onCaja: () => compartirCsv(
+                  ctx,
+                  contenido: csvDeCaja(movimientos),
+                  nombre: nombreCsvCaja(DateTime.now()),
                 ),
-                const SizedBox(height: 10),
-                _BarraComparativa(
-                  etiqueta: 'Mes anterior',
-                  monto: comparativa.anterior,
-                  pct: comparativa.pctAnterior,
-                  color: MColors.nude300,
+                onClientas: () => compartirCsv(
+                  ctx,
+                  contenido: csvDeClientas(clientes.map(aClient)),
+                  nombre: nombreCsvClientas(DateTime.now()),
                 ),
-              ],
-            ),
-          ),
-        ),
-
-        // Pie del original: las dos tarjetas de export.
-        const SizedBox(height: 14),
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 260),
-          child: Builder(
-            builder: (ctx) => FilaExports(
-              onCaja: () => compartirCsv(
-                ctx,
-                contenido: csvDeCaja(movimientos),
-                nombre: nombreCsvCaja(DateTime.now()),
-              ),
-              onClientas: () => compartirCsv(
-                ctx,
-                contenido: csvDeClientas(clientes.map(aClient)),
-                nombre: nombreCsvClientas(DateTime.now()),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -346,30 +370,28 @@ class _Kpi extends StatelessWidget {
   final String etiqueta;
 
   @override
-  Widget build(BuildContext context) => Expanded(
-        child: TarjetaMirame(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-          hijo: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 20)),
-              const SizedBox(height: 8),
-              Text(
-                valor,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: serif(size: 28, weight: 600).copyWith(height: 1),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                etiqueta,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: sans(size: 10, weight: 500, color: MColors.tMuted)
-                    .copyWith(letterSpacing: 0.8),
-              ),
-            ],
-          ),
+  Widget build(BuildContext context) => TarjetaMirame(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        hijo: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 20)),
+            const SizedBox(height: 8),
+            Text(
+              valor,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: serif(size: 28, weight: 600).copyWith(height: 1),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              etiqueta,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: sans(size: 10, weight: 500, color: MColors.tMuted)
+                  .copyWith(letterSpacing: 0.8),
+            ),
+          ],
         ),
       );
 }

@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/notificaciones/push.dart';
 import '../../core/notificaciones/servicio_avisos.dart';
+import '../../core/layout/layout.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -17,7 +18,6 @@ import '../../core/theme/typography.dart';
 import '../../data/sync/sync_engine.dart';
 import '../../shared/widgets/version_label.dart';
 import '../auth/session_controller.dart';
-import '../shell/app_shell.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -38,227 +38,226 @@ class SettingsView extends ConsumerWidget {
     final tenant = ref.watch(tenantActivoProvider);
     final sync = ref.watch(syncProvider);
 
-    return ListView(
-      padding: padVistaMovil,
-      children: [
-        FadeSlideIn(
-          child: Text('Ajustes', style: serif(size: 24, weight: 500)),
-        ),
-        const SizedBox(height: 20),
-
-        if (tenant != null)
+    return ContenidoEscritorio.lectura(
+      child: ListView(
+        padding: padVista(context),
+        children: [
           FadeSlideIn(
-            delay: const Duration(milliseconds: 40),
-            child: _Tarjeta(
-              titulo: 'Salón',
-              filas: [
-                ('Nombre', tenant.nombre),
-                ('Identificador', tenant.slug),
-              ],
-            ),
+            child: Text('Ajustes', style: serif(size: 24, weight: 500)),
           ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 20),
 
-        // El link de la tienda va ACÁ y no solo dentro de Ropa: es lo que se
-        // manda por WhatsApp varias veces por día, y buscarlo dos pantallas
-        // adentro cada vez es exactamente el tipo de fricción que hace que se
-        // deje de usar.
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 60),
-          child: _LinkTienda(slug: tenant?.slug),
-        ),
-        const SizedBox(height: 12),
+          if (tenant != null)
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 40),
+              child: _Tarjeta(
+                titulo: 'Salón',
+                filas: [
+                  ('Nombre', tenant.nombre),
+                  ('Identificador', tenant.slug),
+                ],
+              ),
+            ),
+          const SizedBox(height: 12),
 
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 80),
-          child: _Tarjeta(
-            titulo: 'Sincronización',
-            filas: [
-              (
-                'Estado',
-                switch (sync.estado) {
-                  EstadoSync.sincronizando => 'Sincronizando…',
-                  EstadoSync.sinRed => 'Sin conexión',
-                  EstadoSync.error => 'Con problemas, reintentando',
-                  EstadoSync.inactivo => 'Al día',
-                }
-              ),
-              (
-                'Sin subir',
-                sync.pendientes == 0
-                    ? 'Nada pendiente'
-                    : '${sync.pendientes} '
-                        '${sync.pendientes == 1 ? "cambio" : "cambios"}'
-              ),
-              // Cinco esperando señal se resuelven solas; cinco rechazadas por
-              // el servidor no se resuelven nunca. Con un solo número se veían
-              // igual, y un alta trabada pasó un día entero sin que se notara.
-              if (sync.trabados > 0)
+          // El link de la tienda va ACÁ y no solo dentro de Ropa: es lo que se
+          // manda por WhatsApp varias veces por día, y buscarlo dos pantallas
+          // adentro cada vez es exactamente el tipo de fricción que hace que se
+          // deje de usar.
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 60),
+            child: _LinkTienda(slug: tenant?.slug),
+          ),
+          const SizedBox(height: 12),
+
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 80),
+            child: _Tarjeta(
+              titulo: 'Sincronización',
+              filas: [
                 (
-                  'Trabados',
-                  '${sync.trabados} '
-                      '${sync.trabados == 1 ? "cambio" : "cambios"} '
-                      'que el servidor rechazó'
+                  'Estado',
+                  switch (sync.estado) {
+                    EstadoSync.sincronizando => 'Sincronizando…',
+                    EstadoSync.sinRed => 'Sin conexión',
+                    EstadoSync.error => 'Con problemas, reintentando',
+                    EstadoSync.inactivo => 'Al día',
+                  }
                 ),
-              (
-                'Última vez',
-                sync.ultimoOk == null
-                    ? 'Todavía no'
-                    : _hora(sync.ultimoOk!),
-              ),
-              // El texto del error, no solo "con problemas". Sin esto, dar
-              // soporte a distancia es adivinar.
-              if (sync.error case final e?) ('Detalle', e),
-            ],
-            accion: Row(
-              children: [
-                TextButton.icon(
-                  onPressed: () =>
-                      ref.read(syncProvider.notifier).sincronizar(),
-                  icon: const Icon(Icons.sync_rounded,
-                      size: 16, color: MColors.brand),
-                  label: Text(
-                    'Sincronizar',
-                    style: sans(size: 13, weight: 600, color: MColors.brand),
-                  ),
+                (
+                  'Sin subir',
+                  sync.pendientes == 0
+                      ? 'Nada pendiente'
+                      : '${sync.pendientes} '
+                          '${sync.pendientes == 1 ? "cambio" : "cambios"}'
                 ),
-                // Un sync normal solo pide lo NUEVO. Si un dispositivo quedó
-                // con datos a medias, hay que pedir todo otra vez, y sin esto
-                // la única salida era desinstalar.
-                TextButton.icon(
-                  onPressed: () =>
-                      ref.read(syncProvider.notifier).resincronizarTodo(),
-                  icon: const Icon(Icons.cloud_download_outlined,
-                      size: 16, color: MColors.tMuted),
-                  label: Text(
-                    'Bajar todo',
-                    style: sans(size: 13, weight: 600, color: MColors.tMuted),
-                  ),
-                ),
-                // Una fila que agotó sus intentos queda fuera del push para
-                // siempre. Sin este botón, arreglar la causa del rechazo no
-                // alcanzaba: la única salida era borrar los datos de la app.
+                // Cinco esperando señal se resuelven solas; cinco rechazadas por
+                // el servidor no se resuelven nunca. Con un solo número se veían
+                // igual, y un alta trabada pasó un día entero sin que se notara.
                 if (sync.trabados > 0)
+                  (
+                    'Trabados',
+                    '${sync.trabados} '
+                        '${sync.trabados == 1 ? "cambio" : "cambios"} '
+                        'que el servidor rechazó'
+                  ),
+                (
+                  'Última vez',
+                  sync.ultimoOk == null ? 'Todavía no' : _hora(sync.ultimoOk!),
+                ),
+                // El texto del error, no solo "con problemas". Sin esto, dar
+                // soporte a distancia es adivinar.
+                if (sync.error case final e?) ('Detalle', e),
+              ],
+              accion: Row(
+                children: [
                   TextButton.icon(
                     onPressed: () =>
-                        ref.read(syncProvider.notifier).reintentarTrabados(),
-                    icon: const Icon(Icons.refresh_rounded,
-                        size: 16, color: MColors.dangerText),
+                        ref.read(syncProvider.notifier).sincronizar(),
+                    icon: const Icon(Icons.sync_rounded,
+                        size: 16, color: MColors.brand),
                     label: Text(
-                      'Reintentar',
-                      style: sans(
-                          size: 13, weight: 600, color: MColors.dangerText),
+                      'Sincronizar',
+                      style: sans(size: 13, weight: 600, color: MColors.brand),
                     ),
                   ),
-              ],
+                  // Un sync normal solo pide lo NUEVO. Si un dispositivo quedó
+                  // con datos a medias, hay que pedir todo otra vez, y sin esto
+                  // la única salida era desinstalar.
+                  TextButton.icon(
+                    onPressed: () =>
+                        ref.read(syncProvider.notifier).resincronizarTodo(),
+                    icon: const Icon(Icons.cloud_download_outlined,
+                        size: 16, color: MColors.tMuted),
+                    label: Text(
+                      'Bajar todo',
+                      style: sans(size: 13, weight: 600, color: MColors.tMuted),
+                    ),
+                  ),
+                  // Una fila que agotó sus intentos queda fuera del push para
+                  // siempre. Sin este botón, arreglar la causa del rechazo no
+                  // alcanzaba: la única salida era borrar los datos de la app.
+                  if (sync.trabados > 0)
+                    TextButton.icon(
+                      onPressed: () =>
+                          ref.read(syncProvider.notifier).reintentarTrabados(),
+                      icon: const Icon(Icons.refresh_rounded,
+                          size: 16, color: MColors.dangerText),
+                      label: Text(
+                        'Reintentar',
+                        style: sans(
+                            size: 13, weight: 600, color: MColors.dangerText),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 12),
 
-        // Catálogo: es lo que se toca al abrir el salón y después casi nunca,
-        // así que va como dos accesos y no como dos listas desplegadas.
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 100),
-          child: Builder(
-            // DOS por fila, no cuatro. Con cuatro cada tarjeta queda en
-            // ~80 px y "Profesionales" o "Guardar backup" no entran: el texto
-            // se corta y las tarjetas parecen de tamaños distintos.
-            builder: (ctx) => Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _Acceso(
-                        emoji: '💅',
-                        titulo: 'Servicios',
-                        onTap: () => mostrarServicios(ctx),
+          // Catálogo: es lo que se toca al abrir el salón y después casi nunca,
+          // así que va como dos accesos y no como dos listas desplegadas.
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 100),
+            child: Builder(
+              // DOS por fila, no cuatro. Con cuatro cada tarjeta queda en
+              // ~80 px y "Profesionales" o "Guardar backup" no entran: el texto
+              // se corta y las tarjetas parecen de tamaños distintos.
+              builder: (ctx) => Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _Acceso(
+                          emoji: '💅',
+                          titulo: 'Servicios',
+                          onTap: () => mostrarServicios(ctx),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _Acceso(
-                        emoji: '👩',
-                        titulo: 'Profesionales',
-                        onTap: () => mostrarProfesionales(ctx),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _Acceso(
+                          emoji: '👩',
+                          titulo: 'Profesionales',
+                          onTap: () => mostrarProfesionales(ctx),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _Acceso(
-                        emoji: '💾',
-                        titulo: 'Guardar backup',
-                        onTap: () => exportarBackup(ctx, ref),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _Acceso(
-                        emoji: '📥',
-                        titulo: 'Restaurar',
-                        onTap: () => restaurarBackup(ctx, ref),
-                      ),
-                    ),
-                  ],
-                ),
-                if (ref.watch(puedeProvider(Permiso.gestionarUsuarios))) ...[
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
                         child: _Acceso(
-                          emoji: '👥',
-                          titulo: 'Equipo',
-                          onTap: () => mostrarEquipo(ctx),
+                          emoji: '💾',
+                          titulo: 'Guardar backup',
+                          onTap: () => exportarBackup(ctx, ref),
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(child: SizedBox()),
+                      Expanded(
+                        child: _Acceso(
+                          emoji: '📥',
+                          titulo: 'Restaurar',
+                          onTap: () => restaurarBackup(ctx, ref),
+                        ),
+                      ),
                     ],
                   ),
+                  if (ref.watch(puedeProvider(Permiso.gestionarUsuarios))) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _Acceso(
+                            emoji: '👥',
+                            titulo: 'Equipo',
+                            onTap: () => mostrarEquipo(ctx),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(child: SizedBox()),
+                      ],
+                    ),
+                  ],
                 ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 130),
+            child: const _TarjetaAvisos(),
+          ),
+          const SizedBox(height: 26),
+
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 140),
+            child: Column(
+              children: [
+                const BotonBuscarActualizacion(),
+                const SizedBox(height: 2),
+                const VersionLabel(),
+                const SizedBox(height: 14),
+                TextButton(
+                  onPressed: () =>
+                      ref.read(sessionProvider.notifier).cerrarSesion(),
+                  child: Text(
+                    'Cerrar sesión',
+                    style:
+                        sans(size: 13, weight: 500, color: MColors.dangerText),
+                  ),
+                ),
               ],
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 130),
-          child: const _TarjetaAvisos(),
-        ),
-        const SizedBox(height: 26),
-
-        FadeSlideIn(
-          delay: const Duration(milliseconds: 140),
-          child: Column(
-            children: [
-              const BotonBuscarActualizacion(),
-              const SizedBox(height: 2),
-              const VersionLabel(),
-              const SizedBox(height: 14),
-              TextButton(
-                onPressed: () =>
-                    ref.read(sessionProvider.notifier).cerrarSesion(),
-                child: Text(
-                  'Cerrar sesión',
-                  style: sans(
-                      size: 13, weight: 500, color: MColors.dangerText),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  static String _hora(DateTime d) =>
-      '${d.hour.toString().padLeft(2, '0')}:'
+  static String _hora(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:'
       '${d.minute.toString().padLeft(2, '0')}';
 }
 
@@ -301,9 +300,7 @@ class _Tarjeta extends StatelessWidget {
                       child: Text(
                         valor,
                         style: sans(
-                            size: 13,
-                            weight: 500,
-                            color: MColors.tSecondary),
+                            size: 13, weight: 500, color: MColors.tSecondary),
                       ),
                     ),
                   ],
@@ -379,8 +376,7 @@ class _TarjetaAvisosState extends State<_TarjetaAvisos> {
                         size: 16, color: MColors.brand),
                     label: Text(
                       'Activar',
-                      style:
-                          sans(size: 13, weight: 600, color: MColors.brand),
+                      style: sans(size: 13, weight: 600, color: MColors.brand),
                     ),
                   ),
                 TextButton.icon(
@@ -473,8 +469,7 @@ class _LinkTienda extends StatelessWidget {
                 behavior: HitTestBehavior.opaque,
                 onTap: () => mostrarMiTienda(context),
                 child: Text('Ver QR',
-                    style:
-                        sans(size: 12, weight: 600, color: MColors.brand)),
+                    style: sans(size: 12, weight: 600, color: MColors.brand)),
               ),
             ],
           ),
@@ -504,8 +499,8 @@ class _LinkTienda extends StatelessWidget {
                   icono: Icons.share_outlined,
                   texto: 'Compartir',
                   principal: true,
-                  onTap: () => SharePlus.instance.share(
-                      ShareParams(text: 'Mirá lo que tengo 👗\n$url')),
+                  onTap: () => SharePlus.instance
+                      .share(ShareParams(text: 'Mirá lo que tengo 👗\n$url')),
                 ),
               ),
               const SizedBox(width: 8),
@@ -552,8 +547,8 @@ class _MiniBoton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 11),
           decoration: BoxDecoration(
             color: principal ? MColors.brand : MColors.surface,
-            border: Border.all(
-                color: principal ? MColors.brand : MColors.borderMd),
+            border:
+                Border.all(color: principal ? MColors.brand : MColors.borderMd),
             borderRadius: BorderRadius.circular(MRadius.full),
           ),
           child: Row(

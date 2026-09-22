@@ -26,10 +26,8 @@ Future<void> abrirFormularioProducto(
   WidgetRef ref, {
   db.Producto? producto,
 }) =>
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+    showAppSheet<void>(
+      context,
       builder: (_) => _FormProducto(producto: producto),
     );
 

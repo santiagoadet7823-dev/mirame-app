@@ -227,4 +227,17 @@ abstract final class MBreak {
 
   /// Ancho máximo de los modales.
   static const sheetMaxWidth = 560.0;
+
+  /// Tope para las vistas de tabla / maestro-detalle en escritorio. No está en
+  /// el CSS original (que no tenía tablas): una fila de clientas a 1040 deja
+  /// medio monitor vacío, pero sin tope a 2500 px no se lee de punta a punta.
+  static const tablaMaxWidth = 1360.0;
+
+  /// Desde acá el sidebar va completo (ícono + texto). Entre `desktop` y esto
+  /// se achica a un rail de íconos: en una notebook de 1024 los 248 px del
+  /// sidebar le sacan un cuarto de pantalla al contenido.
+  static const sidebarCompleto = 1200.0;
+
+  /// Ancho del rail de íconos.
+  static const railWidth = 72.0;
 }

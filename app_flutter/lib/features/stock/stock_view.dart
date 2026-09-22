@@ -7,6 +7,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/layout/layout.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
@@ -49,79 +50,98 @@ class _StockViewState extends ConsumerState<StockView> {
       _ => todos,
     };
     final puedeEscribir = ref.watch(puedeProvider(Permiso.operarNegocio));
+    final escritorio = esEscritorio(context);
+
+    final filtros = FilaFiltros(
+      opciones: const [
+        ('all', 'Todos'),
+        ('low', 'Bajo stock'),
+        ('out', 'Sin stock'),
+      ],
+      activo: _filtro,
+      onElegir: (f) => setState(() => _filtro = f),
+    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: puedeEscribir
-          ? Padding(
-              // `bottom: 80px + safe` y `right: 18px` del CSS. El
-              // Scaffold ya separa 16 del borde, así que acá van 2.
-              padding: const EdgeInsets.only(right: 2, bottom: 8),
-              child: FabMirame(onTap: () => _mostrarFormulario(context, ref)),
-            )
-          : null,
-      body: ListView(
-        padding: padVistaMovil,
-        children: [
-          if (alertas.isNotEmpty) ...[
-            FadeSlideIn(
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: MColors.warningBg,
-                  borderRadius: BorderRadius.circular(MRadius.md),
-                ),
-                child: Row(
-                  children: [
-                    const Text('⚠️', style: TextStyle(fontSize: 16)),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        '${alertas.length} '
-                        '${alertas.length == 1 ? "producto está" : "productos están"}'
-                        ' por debajo del mínimo',
-                        style: sans(
-                            size: 13,
-                            weight: 600,
-                            color: MColors.warningText),
+      floatingActionButton: fabVista(
+        context,
+        visible: puedeEscribir,
+        onTap: () => _mostrarFormulario(context, ref),
+      ),
+      body: ContenidoEscritorio.tabla(
+        child: Column(
+          children: [
+            if (escritorio)
+              BarraVista(
+                filtros: todos.isNotEmpty ? filtros : null,
+                accion: puedeEscribir
+                    ? BotonPrimario(
+                        texto: 'Nuevo producto',
+                        onTap: () => _mostrarFormulario(context, ref),
+                      )
+                    : null,
+              ),
+            Expanded(
+              child: ListView(
+                padding: padVista(context, sinArriba: escritorio),
+                children: [
+                  if (alertas.isNotEmpty) ...[
+                    FadeSlideIn(
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: MColors.warningBg,
+                          borderRadius: BorderRadius.circular(MRadius.md),
+                        ),
+                        child: Row(
+                          children: [
+                            const Text('⚠️', style: TextStyle(fontSize: 16)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                '${alertas.length} '
+                                '${alertas.length == 1 ? "producto está" : "productos están"}'
+                                ' por debajo del mínimo',
+                                style: sans(
+                                    size: 13,
+                                    weight: 600,
+                                    color: MColors.warningText),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
+                    const SizedBox(height: 14),
                   ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-          ],
-          if (todos.isNotEmpty) ...[
-            FadeSlideIn(
-              child: FilaFiltros(
-                opciones: const [
-                  ('all', 'Todos'),
-                  ('low', 'Bajo stock'),
-                  ('out', 'Sin stock'),
+                  // En escritorio los filtros ya están en la barra de arriba.
+                  if (todos.isNotEmpty && !escritorio) ...[
+                    FadeSlideIn(child: filtros),
+                    const SizedBox(height: 12),
+                  ],
+                  if (items.isEmpty)
+                    EstadoVacio(
+                      emoji: '📦',
+                      titulo:
+                          _filtro == 'all' ? 'Sin productos' : 'Nada por acá',
+                      detalle: _filtro == 'all'
+                          ? 'Agregá productos al inventario'
+                          : 'Ningún producto en este estado',
+                    )
+                  else
+                    for (var i = 0; i < items.length; i++)
+                      FadeSlideIn(
+                        delay: Duration(milliseconds: (i < 8 ? i : 8) * 35),
+                        child: _FilaStock(
+                            item: items[i], puedeEscribir: puedeEscribir),
+                      ),
                 ],
-                activo: _filtro,
-                onElegir: (f) => setState(() => _filtro = f),
               ),
             ),
-            const SizedBox(height: 12),
           ],
-          if (items.isEmpty)
-            EstadoVacio(
-              emoji: '📦',
-              titulo: _filtro == 'all' ? 'Sin productos' : 'Nada por acá',
-              detalle: _filtro == 'all'
-                  ? 'Agregá productos al inventario'
-                  : 'Ningún producto en este estado',
-            )
-          else
-            for (var i = 0; i < items.length; i++)
-              FadeSlideIn(
-                delay: Duration(milliseconds: (i < 8 ? i : 8) * 35),
-                child: _FilaStock(item: items[i], puedeEscribir: puedeEscribir),
-              ),
-        ],
+        ),
       ),
     );
   }
@@ -333,10 +353,8 @@ Future<void> _mostrarFormulario(
   WidgetRef ref, {
   StockItem? item,
 }) =>
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+    showAppSheet<void>(
+      context,
       builder: (_) => _FormularioStock(item: item),
     );
 

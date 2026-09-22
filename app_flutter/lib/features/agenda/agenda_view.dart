@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/notificaciones/pedir_permiso.dart';
+import '../../core/layout/layout.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -41,9 +42,8 @@ final turnosDelDiaProvider =
 /// Turnos del mes visible, solo para marcar con un punto los días que tienen
 /// algo. Va aparte de los del día para que cambiar de día no vuelva a
 /// consultar el mes entero.
-final turnosDelMesVisibleProvider =
-    StreamProvider.autoDispose.family<List<db.Appointment>, String>(
-        (ref, claveMes) {
+final turnosDelMesVisibleProvider = StreamProvider.autoDispose
+    .family<List<db.Appointment>, String>((ref, claveMes) {
   final repo = ref.watch(businessRepoProvider);
   if (repo == null) return const Stream.empty();
   final partes = claveMes.split('-');
@@ -67,10 +67,9 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
   @override
   Widget build(BuildContext context) {
     final clave = claveFecha(_dia);
-    final claveMes =
-        '${_mes.year}-${_mes.month.toString().padLeft(2, '0')}';
-    final filas =
-        ref.watch(turnosDelDiaProvider(clave)).value ?? const <db.Appointment>[];
+    final claveMes = '${_mes.year}-${_mes.month.toString().padLeft(2, '0')}';
+    final filas = ref.watch(turnosDelDiaProvider(clave)).value ??
+        const <db.Appointment>[];
     final todos = filas.map((f) => aAppointment(f)).toList();
     // El filtro se aplica a la lista, NO al calendario: los puntos del mes
     // tienen que seguir mostrando que ahí hay algo aunque el filtro activo lo
@@ -79,76 +78,157 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
         ? todos
         : todos.where((t) => textoDesdeEstado(t.estado) == _filtro).toList();
 
-    final delMes =
-        ref.watch(turnosDelMesVisibleProvider(claveMes)).value ??
-            const <db.Appointment>[];
+    final delMes = ref.watch(turnosDelMesVisibleProvider(claveMes)).value ??
+        const <db.Appointment>[];
     final diasConTurno = {for (final t in delMes) t.fecha};
     final clientes = ref.watch(clientesProvider).value ?? const <db.Client>[];
     final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirAgenda));
 
     final nombrePorId = {for (final c in clientes) c.id: c.nombre};
 
+    final escritorio = esEscritorio(context);
+
+    final calendario = CalendarioMes(
+      mes: _mes,
+      diaElegido: _dia,
+      diasConTurno: diasConTurno,
+      onElegirDia: (d) => setState(() {
+        _dia = d;
+        _mes = DateTime(d.year, d.month, 1);
+      }),
+      onCambiarMes: (delta) => setState(() {
+        _mes = DateTime(_mes.year, _mes.month + delta, 1);
+      }),
+    );
+    final filtros = FilaFiltros(
+      opciones: const [
+        ('all', 'Todos'),
+        ('confirmed', 'Confirmados'),
+        ('pending', 'Pendientes'),
+        ('done', 'Completados'),
+      ],
+      activo: _filtro,
+      onElegir: (f) => setState(() => _filtro = f),
+    );
+    final lista = turnos.isEmpty
+        ? EstadoVacio(
+            // Textos literales de `renderAgenda`.
+            emoji: '📅',
+            titulo: 'Sin turnos',
+            detalle: _filtro == 'all'
+                ? 'No hay turnos para este día'
+                : 'Ningún turno en este estado',
+          )
+        : _Timeline(
+            turnos: turnos,
+            nombrePorId: nombrePorId,
+            padding: escritorio
+                ? const EdgeInsets.fromLTRB(0, 0, 32, 40)
+                : const EdgeInsets.fromLTRB(16, 0, 16, 96),
+          );
+
+    void nuevoTurno() => _mostrarFormulario(context, ref, dia: _dia);
+
+    if (escritorio) {
+      // Dos paneles: el mes a la izquierda con ancho fijo —así las celdas
+      // quedan de ~48 px y no de 185 como cuando el calendario tomaba todo
+      // el monitor— y el día elegido a la derecha, con el espacio que sobre.
+      return ContenidoEscritorio.tabla(
+        child: Column(
+          children: [
+            BarraVista(
+              filtros: filtros,
+              accion: puedeEscribir
+                  ? BotonPrimario(texto: 'Nuevo turno', onTap: nuevoTurno)
+                  : null,
+            ),
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 380,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(32, 0, 0, 40),
+                      child: calendario,
+                    ),
+                  ),
+                  const SizedBox(width: 28),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 4, 32, 14),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                _tituloDia(_dia),
+                                style: serif(size: 22, weight: 600),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                turnos.isEmpty
+                                    ? 'sin turnos'
+                                    : '${turnos.length} '
+                                        '${turnos.length == 1 ? "turno" : "turnos"}',
+                                style: sans(size: 13, color: MColors.tMuted),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(child: lista),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: puedeEscribir
-          ? Padding(
-              // `bottom: 80px + safe` y `right: 18px` del CSS. El
-              // Scaffold ya separa 16 del borde, así que acá van 2.
-              padding: const EdgeInsets.only(right: 2, bottom: 8),
-              child: FabMirame(onTap: () => _mostrarFormulario(context, ref, dia: _dia)),
-            )
-          : null,
+      floatingActionButton: fabVista(
+        context,
+        visible: puedeEscribir,
+        onTap: nuevoTurno,
+      ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Column(
               children: [
-                CalendarioMes(
-                  mes: _mes,
-                  diaElegido: _dia,
-                  diasConTurno: diasConTurno,
-                  onElegirDia: (d) => setState(() {
-                    _dia = d;
-                    _mes = DateTime(d.year, d.month, 1);
-                  }),
-                  onCambiarMes: (delta) => setState(() {
-                    _mes = DateTime(_mes.year, _mes.month + delta, 1);
-                  }),
-                ),
-                FilaFiltros(
-                  opciones: const [
-                    ('all', 'Todos'),
-                    ('confirmed', 'Confirmados'),
-                    ('pending', 'Pendientes'),
-                    ('done', 'Completados'),
-                  ],
-                  activo: _filtro,
-                  onElegir: (f) => setState(() => _filtro = f),
-                ),
+                calendario,
+                filtros,
                 const SizedBox(height: 14),
               ],
             ),
           ),
-          Expanded(
-            child: turnos.isEmpty
-                ? EstadoVacio(
-                    // Textos literales de `renderAgenda`.
-                    emoji: '📅',
-                    titulo: 'Sin turnos',
-                    detalle: _filtro == 'all'
-                        ? 'No hay turnos para este día'
-                        : 'Ningún turno en este estado',
-                  )
-                : _Timeline(
-                    turnos: turnos,
-                    nombrePorId: nombrePorId,
-                  ),
-          ),
+          Expanded(child: lista),
         ],
       ),
     );
+  }
+
+  /// "Lunes 21 de septiembre" — el título del panel del día en escritorio.
+  static String _tituloDia(DateTime d) {
+    const dias = [
+      'Domingo',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+    ];
+    return '${dias[d.weekday % 7]} ${d.day} de ${monthName(d.month)}';
   }
 }
 
@@ -158,10 +238,15 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
 /// No es decorativo: agrupar por hora es lo que deja ver de un vistazo si dos
 /// turnos caen en la misma franja.
 class _Timeline extends StatelessWidget {
-  const _Timeline({required this.turnos, required this.nombrePorId});
+  const _Timeline({
+    required this.turnos,
+    required this.nombrePorId,
+    required this.padding,
+  });
 
   final List<Appointment> turnos;
   final Map<String, String> nombrePorId;
+  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +258,7 @@ class _Timeline extends StatelessWidget {
     final horas = porHora.keys.toList()..sort();
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+      padding: padding,
       itemCount: horas.length,
       itemBuilder: (_, i) {
         final h = horas[i];
@@ -203,8 +288,8 @@ class _Timeline extends StatelessWidget {
                         ),
                         Text(
                           ampm,
-                          style: sans(
-                              size: 9, weight: 500, color: MColors.tMuted),
+                          style:
+                              sans(size: 9, weight: 500, color: MColors.tMuted),
                         ),
                       ],
                     ),
@@ -312,10 +397,8 @@ Future<void> _mostrarFormulario(
   Appointment? turno,
   DateTime? dia,
 }) =>
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+    showAppSheet<void>(
+      context,
       builder: (_) => _FormularioTurno(turno: turno, dia: dia),
     );
 
@@ -369,8 +452,7 @@ class _FormTurnoState extends ConsumerState<_FormularioTurno> {
     super.dispose();
   }
 
-  String get _horaTexto =>
-      '${_hora.hour.toString().padLeft(2, '0')}:'
+  String get _horaTexto => '${_hora.hour.toString().padLeft(2, '0')}:'
       '${_hora.minute.toString().padLeft(2, '0')}';
 
   Future<void> _guardar() async {
