@@ -367,6 +367,9 @@ class _FilaCliente extends ConsumerWidget {
         // Abre la ficha, no la edición: lo que se hace todo el tiempo es
         // mirar el historial, no cambiarle el nombre.
         onTap: () => mostrarFichaCliente(context, cliente),
+        // El toque largo saltea la ficha para las dos cosas que se hacen con
+        // el teléfono en la mano: escribirle o agendarla.
+        onLongPress: () => _menuRapido(context, ref, cliente),
         hijo: Row(
           children: [
             // `.cli-av { 46x46; 17px; weight 700 }`
@@ -436,6 +439,107 @@ class _FilaCliente extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      );
+}
+
+/// Menú corto del toque largo sobre una clienta.
+Future<void> _menuRapido(
+  BuildContext context,
+  WidgetRef ref,
+  Client cliente,
+) async {
+  final tieneTel = cliente.telefono?.isNotEmpty ?? false;
+  final que = await showAppSheet<String>(
+    context,
+    builder: (ctx) => Container(
+      decoration: const BoxDecoration(
+        color: MColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(MRadius.xl)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const ManijaSheet(),
+            const SizedBox(height: 14),
+            Text(cliente.nombre, style: serif(size: 20, weight: 600)),
+            const SizedBox(height: 14),
+            _OpcionRapida(
+              icono: Icons.chat_bubble_outline_rounded,
+              texto: 'Escribir por WhatsApp',
+              color: MColors.whatsapp,
+              habilitada: tieneTel,
+              onTap: () => Navigator.of(ctx).pop('wa'),
+            ),
+            _OpcionRapida(
+              icono: Icons.calendar_today_outlined,
+              texto: 'Agendar un turno',
+              color: MColors.brand,
+              habilitada: true,
+              onTap: () => Navigator.of(ctx).pop('turno'),
+            ),
+            _OpcionRapida(
+              icono: Icons.edit_outlined,
+              texto: 'Editar datos',
+              color: MColors.tSecondary,
+              habilitada: true,
+              onTap: () => Navigator.of(ctx).pop('editar'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+  if (que == null || !context.mounted) return;
+  switch (que) {
+    case 'wa':
+      final limpio = (cliente.telefono ?? '').replaceAll(RegExp(r'\D'), '');
+      if (limpio.isEmpty) return;
+      await launchUrl(
+        Uri.parse('https://wa.me/$limpio'),
+        mode: LaunchMode.externalApplication,
+      );
+    case 'turno':
+      NavegadorShell.ir(context, Vistas.agenda);
+    case 'editar':
+      await mostrarFormularioCliente(context, ref, cliente: cliente);
+  }
+}
+
+class _OpcionRapida extends StatelessWidget {
+  const _OpcionRapida({
+    required this.icono,
+    required this.texto,
+    required this.color,
+    required this.habilitada,
+    required this.onTap,
+  });
+
+  final IconData icono;
+  final String texto;
+  final Color color;
+  final bool habilitada;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Opacity(
+        opacity: habilitada ? 1 : 0.4,
+        child: PressableScale(
+          onTap: habilitada ? onTap : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 11),
+            child: Row(
+              children: [
+                Icon(icono, size: 19, color: color),
+                const SizedBox(width: 14),
+                Text(texto, style: sans(size: 14, weight: 500)),
+              ],
+            ),
+          ),
         ),
       );
 }

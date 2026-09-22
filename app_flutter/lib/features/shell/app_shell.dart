@@ -23,6 +23,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/layout/layout.dart';
+import '../../shared/widgets/comportamiento.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -168,16 +169,20 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     void irA(int i) => setState(() => _indice = i);
 
-    final cuerpo = NavegadorShell(
-      irA: irA,
-      child: ProgramadorAvisos(
-        child: Column(
-          children: [
-            const _BarraSync(),
-            Expanded(
-              child: IndexedStack(index: _indice, children: widget.vistas),
-            ),
-          ],
+    // El observador va acá y no en cada vista: el header y el FAB cuelgan del
+    // `Scaffold`, fuera del cuerpo que scrollea, y no se enterarían nunca.
+    final cuerpo = ObservadorDeScroll(
+      child: NavegadorShell(
+        irA: irA,
+        child: ProgramadorAvisos(
+          child: Column(
+            children: [
+              const _BarraSync(),
+              Expanded(
+                child: IndexedStack(index: _indice, children: widget.vistas),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -260,14 +265,18 @@ class _Header extends ConsumerWidget {
     final puedeVolver = ref.watch(puedeVolverAlPanelProvider);
     final esEscritorio = titulo != null;
 
-    return Container(
+    return AnimatedContainer(
+      duration: MMotion.t1,
       width: double.infinity,
       padding: esEscritorio
           ? const EdgeInsets.fromLTRB(32, 16, 32, 16)
           : const EdgeInsets.fromLTRB(18, 12, 18, 10),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: MColors.surface,
-        border: Border(bottom: BorderSide(color: MColors.border)),
+        border: const Border(bottom: BorderSide(color: MColors.border)),
+        // La línea de 1 px no alcanza cuando la lista pasa por debajo: la
+        // sombra es lo que separa el header del contenido.
+        boxShadow: sombraEncabezado(estadoScrollDe(context).hayArriba),
       ),
       child: Row(
         children: [
@@ -813,18 +822,30 @@ class FabMirame extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => PressableScale(
-        onTap: onTap,
-        child: Container(
-          width: 54,
-          height: 54,
-          alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            color: MColors.brand,
-            shape: BoxShape.circle,
-            boxShadow: [...MShadow.brand, ...MShadow.md],
-          ),
-          child: const Icon(Icons.add_rounded, size: 26, color: MColors.tWhite),
+  Widget build(BuildContext context) {
+    // Bajando por la lista se achica: sigue estando, pero deja leer la fila
+    // que tapaba. Al volver hacia arriba recupera los 54.
+    final chico = estadoScrollDe(context).bajando;
+    final lado = chico ? 44.0 : 54.0;
+    return PressableScale(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: MMotion.t2,
+        curve: MMotion.ease,
+        width: lado,
+        height: lado,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: MColors.brand,
+          shape: BoxShape.circle,
+          boxShadow: [...MShadow.brand, ...MShadow.md],
         ),
-      );
+        child: Icon(
+          Icons.add_rounded,
+          size: chico ? 21 : 26,
+          color: MColors.tWhite,
+        ),
+      ),
+    );
+  }
 }

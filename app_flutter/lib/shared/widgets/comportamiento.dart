@@ -11,6 +11,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/sync/sync_engine.dart';
@@ -337,3 +338,102 @@ class TirarParaRefrescar extends ConsumerWidget {
         child: child,
       );
 }
+
+/// Lo que el shell sabe del scroll de la vista activa.
+///
+/// El FAB y el header viven FUERA del cuerpo que scrollea (son del
+/// `Scaffold`), así que no se enteran solos: las notificaciones de scroll
+/// suben por el árbol del cuerpo y ahí se quedan. El shell las escucha una
+/// vez y las publica acá, y cada pieza decide qué hacer.
+class EstadoScroll {
+  const EstadoScroll({this.hayArriba = false, this.bajando = false});
+
+  /// Hay contenido scrolleado por encima: el header se despega del fondo.
+  final bool hayArriba;
+
+  /// Se está yendo hacia abajo de la lista: el FAB se achica para no tapar
+  /// la fila que se está leyendo.
+  final bool bajando;
+
+  EstadoScroll copyWith({bool? hayArriba, bool? bajando}) => EstadoScroll(
+        hayArriba: hayArriba ?? this.hayArriba,
+        bajando: bajando ?? this.bajando,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      other is EstadoScroll &&
+      other.hayArriba == hayArriba &&
+      other.bajando == bajando;
+
+  @override
+  int get hashCode => Object.hash(hayArriba, bajando);
+}
+
+/// Escucha el scroll del cuerpo y lo publica a sus descendientes.
+class ObservadorDeScroll extends StatefulWidget {
+  const ObservadorDeScroll({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<ObservadorDeScroll> createState() => _ObservadorDeScrollState();
+}
+
+class _ObservadorDeScrollState extends State<ObservadorDeScroll> {
+  final _estado = ValueNotifier(const EstadoScroll());
+
+  @override
+  void dispose() {
+    _estado.dispose();
+    super.dispose();
+  }
+
+  bool _onScroll(ScrollNotification n) {
+    if (n.metrics.axis != Axis.vertical) return false;
+    var v = _estado.value.copyWith(hayArriba: n.metrics.pixels > _kUmbral);
+    if (n is UserScrollNotification) {
+      // `idle` se ignora: al soltar el dedo el FAB no tiene por qué volver a
+      // crecer de golpe, queda como estaba hasta el próximo movimiento.
+      switch (n.direction) {
+        case ScrollDirection.reverse:
+          v = v.copyWith(bajando: true);
+        case ScrollDirection.forward:
+          v = v.copyWith(bajando: false);
+        case ScrollDirection.idle:
+          break;
+      }
+    }
+    // Arriba de todo el FAB siempre está entero.
+    if (!v.hayArriba) v = v.copyWith(bajando: false);
+    _estado.value = v;
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      NotificationListener<ScrollNotification>(
+        onNotification: _onScroll,
+        child: ValueListenableBuilder(
+          valueListenable: _estado,
+          builder: (_, valor, hijo) =>
+              _ScrollHeredado(estado: valor, child: hijo!),
+          child: widget.child,
+        ),
+      );
+}
+
+class _ScrollHeredado extends InheritedWidget {
+  const _ScrollHeredado({required this.estado, required super.child});
+
+  final EstadoScroll estado;
+
+  @override
+  bool updateShouldNotify(_ScrollHeredado viejo) => viejo.estado != estado;
+}
+
+/// Lee el estado de scroll publicado por el shell. Fuera de él, todo en
+/// reposo: así una vista montada sola en un test no se rompe.
+EstadoScroll estadoScrollDe(BuildContext context) =>
+    context.dependOnInheritedWidgetOfExactType<_ScrollHeredado>()?.estado ??
+    const EstadoScroll();

@@ -440,6 +440,7 @@ class TarjetaMirame extends StatelessWidget {
     this.padding = const EdgeInsets.all(14),
     this.margenInferior = 0,
     this.onTap,
+    this.onLongPress,
     this.borde,
   });
 
@@ -447,6 +448,7 @@ class TarjetaMirame extends StatelessWidget {
   final EdgeInsets padding;
   final double margenInferior;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final Color? borde;
 
   @override
@@ -464,9 +466,13 @@ class TarjetaMirame extends StatelessWidget {
     );
     return Padding(
       padding: EdgeInsets.only(bottom: margenInferior),
-      child: onTap == null
+      child: onTap == null && onLongPress == null
           ? tarjeta
-          : PressableScale(onTap: onTap, child: tarjeta),
+          : PressableScale(
+              onTap: onTap,
+              onLongPress: onLongPress,
+              child: tarjeta,
+            ),
     );
   }
 }

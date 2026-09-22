@@ -235,8 +235,10 @@ class _TablaMirameState<T> extends State<TablaMirame<T>> {
         onTap: widget.onTap == null ? null : () => widget.onTap!(fila),
         child: AnimatedContainer(
           duration: MMotion.t1,
-          height: widget.altoFila,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          // Alto MÍNIMO y no fijo: con el texto del sistema al 130 % una fila
+          // de 52 px recorta el nombre en vez de crecer.
+          constraints: BoxConstraints(minHeight: widget.altoFila),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: elegida
                 ? MColors.brandBg

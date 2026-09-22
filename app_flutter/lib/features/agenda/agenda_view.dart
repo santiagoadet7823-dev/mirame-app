@@ -406,8 +406,13 @@ class _TimelineState extends State<_Timeline> {
     return ListView.builder(
       controller: _scroll,
       padding: widget.padding,
-      itemCount: horas.length,
+      // Una fila más: el cierre. Una lista que termina sin decir nada parece
+      // cortada por un error de carga.
+      itemCount: horas.length + 1,
       itemBuilder: (_, i) {
+        if (i == horas.length) {
+          return const FinDeLista('No hay más turnos este día');
+        }
         final h = horas[i];
         final delHora = porHora[h]!;
         // La franja en curso: la hora de ahora, o la primera que ya pasó si

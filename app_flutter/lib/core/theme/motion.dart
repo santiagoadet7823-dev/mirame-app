@@ -150,11 +150,16 @@ class PressableScale extends StatefulWidget {
     super.key,
     required this.child,
     this.onTap,
+    this.onLongPress,
     this.escala = 0.97,
   });
 
   final Widget child;
   final VoidCallback? onTap;
+
+  /// Atajo del toque largo. Nunca es la única forma de hacer algo: lo que
+  /// esté acá tiene que poder hacerse también abriendo la ficha.
+  final VoidCallback? onLongPress;
   final double escala;
 
   @override
@@ -173,6 +178,7 @@ class _PressableScaleState extends State<PressableScale> {
       cursor: habilitado ? SystemMouseCursors.click : MouseCursor.defer,
       child: GestureDetector(
         onTap: widget.onTap,
+        onLongPress: widget.onLongPress,
         onTapDown:
             habilitado ? (_) => setState(() => _presionado = true) : null,
         onTapUp: habilitado ? (_) => setState(() => _presionado = false) : null,
