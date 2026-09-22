@@ -18,6 +18,7 @@ import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
+import 'comportamiento.dart';
 
 /// Una columna: qué muestra, cuánto mide y cómo se ordena.
 class ColumnaTabla<T> {
@@ -160,7 +161,8 @@ class _TablaMirameState<T> extends State<TablaMirame<T>> {
 
   /// Ancho mínimo para que ninguna columna se aplaste: las fijas completas,
   /// 110 por cada flexible, más los espacios.
-  static double _anchoMinimo(List<ColumnaTabla<dynamic>> cols) => cols.fold<double>(
+  static double _anchoMinimo(List<ColumnaTabla<dynamic>> cols) =>
+      cols.fold<double>(
         32 + _gap * (cols.length - 1),
         (acc, c) => acc + (c.ancho ?? 110.0 * c.flex),
       );
@@ -187,12 +189,17 @@ class _TablaMirameState<T> extends State<TablaMirame<T>> {
         : Expanded(flex: c.flex, child: alineado);
   }
 
-  Widget _cabecera(List<ColumnaTabla<T>> cols) => Container(
+  Widget _cabecera(List<ColumnaTabla<T>> cols, {bool hayArriba = false}) =>
+      AnimatedContainer(
+        duration: MMotion.t1,
         height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: MColors.bg2,
-          border: Border(bottom: BorderSide(color: MColors.border)),
+          border: const Border(bottom: BorderSide(color: MColors.border)),
+          // La cabecera se queda quieta mientras las filas pasan por debajo;
+          // la sombra es lo único que avisa que hay filas más arriba.
+          boxShadow: sombraEncabezado(hayArriba),
         ),
         child: Row(
           children: [
@@ -290,13 +297,18 @@ class _TablaMirameState<T> extends State<TablaMirame<T>> {
             );
           }
 
-          final tabla = Column(
-            mainAxisSize: widget.expandir ? MainAxisSize.max : MainAxisSize.min,
-            children: [
-              _cabecera(cols),
-              if (widget.expandir) Expanded(child: cuerpo) else cuerpo,
-            ],
-          );
+          final tabla = widget.expandir
+              // Cabecera pegada: queda fuera del scroll y se entera de él
+              // para encender la sombra.
+              ? ListaConEncabezado(
+                  encabezado: (_, hayArriba) =>
+                      _cabecera(cols, hayArriba: hayArriba),
+                  lista: cuerpo,
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [_cabecera(cols), cuerpo],
+                );
 
           final minimo = _anchoMinimo(cols);
           if (restricciones.maxWidth >= minimo) return tabla;

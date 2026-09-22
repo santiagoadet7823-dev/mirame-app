@@ -4,6 +4,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../core/layout/layout.dart';
+import '../../shared/widgets/comportamiento.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -17,11 +18,16 @@ class EstadoVacio extends StatelessWidget {
     required this.emoji,
     required this.titulo,
     required this.detalle,
+    this.accion,
   });
 
   final String emoji;
   final String titulo;
   final String detalle;
+
+  /// Salida del callejón: `(etiqueta, qué hace)`. Un vacío por filtro tiene
+  /// arreglo —"Ver todos"— y un vacío de verdad no; por eso es opcional.
+  final (String, VoidCallback)? accion;
 
   /// `.empty-s { padding:52px 20px; gap:8px }`
   /// `.empty-ic { font-size:40px; opacity:.25 }` — el emoji va DESVAÍDO; a
@@ -51,6 +57,26 @@ class EstadoVacio extends StatelessWidget {
                     sans(size: 13, color: MColors.tMuted).copyWith(height: 1.6),
               ),
             ),
+            if (accion case final a?) ...[
+              const SizedBox(height: 16),
+              PressableScale(
+                onTap: a.$2,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: MColors.bg2,
+                    border: Border.all(color: MColors.borderMd),
+                    borderRadius: BorderRadius.circular(MRadius.full),
+                  ),
+                  child: Text(
+                    a.$1,
+                    style:
+                        sans(size: 13, weight: 600, color: MColors.tSecondary),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       );
@@ -663,39 +689,44 @@ class FilaFiltros extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
         height: 34,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.zero,
-          itemCount: opciones.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 7),
-          itemBuilder: (_, i) {
-            final (clave, etiqueta) = opciones[i];
-            final esActivo = clave == activo;
-            return GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => onElegir(clave),
-              child: AnimatedContainer(
-                duration: MMotion.t1,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                decoration: BoxDecoration(
-                  color: esActivo ? MColors.brandBg : MColors.bg2,
-                  border: Border.all(
-                    color: esActivo ? MColors.borderLav : MColors.border,
+        // Los filtros casi nunca entran enteros en 390: el degradé de la
+        // derecha es lo que avisa que la fila sigue.
+        child: DegradeDeCorte(
+          ancho: 20,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.zero,
+            itemCount: opciones.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 7),
+            itemBuilder: (_, i) {
+              final (clave, etiqueta) = opciones[i];
+              final esActivo = clave == activo;
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onElegir(clave),
+                child: AnimatedContainer(
+                  duration: MMotion.t1,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: esActivo ? MColors.brandBg : MColors.bg2,
+                    border: Border.all(
+                      color: esActivo ? MColors.borderLav : MColors.border,
+                    ),
+                    borderRadius: BorderRadius.circular(MRadius.full),
                   ),
-                  borderRadius: BorderRadius.circular(MRadius.full),
-                ),
-                child: Text(
-                  etiqueta,
-                  style: sans(
-                    size: 12,
-                    weight: esActivo ? 600 : 500,
-                    color: esActivo ? MColors.brandDark : MColors.tSecondary,
+                  child: Text(
+                    etiqueta,
+                    style: sans(
+                      size: 12,
+                      weight: esActivo ? 600 : 500,
+                      color: esActivo ? MColors.brandDark : MColors.tSecondary,
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       );
 }

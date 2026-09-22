@@ -20,6 +20,7 @@ import '../../domain/rules/access.dart';
 import '../../domain/rules/finance.dart';
 import '../../domain/rules/formatting.dart';
 import '../../domain/rules/period.dart';
+import '../../shared/widgets/comportamiento.dart';
 import '../../shared/widgets/tabla_mirame.dart';
 import '../auth/session_controller.dart';
 import 'cierre_sheet.dart';
@@ -99,8 +100,9 @@ class _CajaViewState extends ConsumerState<CajaView> {
 
   @override
   Widget build(BuildContext context) {
-    final filas = ref.watch(movimientosDeMesProvider(_offsetMes)).value ??
-        const <db.Transaction>[];
+    final asincronos = ref.watch(movimientosDeMesProvider(_offsetMes));
+    final cargando = asincronos.isLoading && !asincronos.hasValue;
+    final filas = asincronos.value ?? const <db.Transaction>[];
     final todos = filas.map(aTransaction).toList();
     final resumen = summarize(todos, monthRange(_mes));
     final puedeEscribir = ref.watch(puedeProvider(Permiso.operarNegocio));
@@ -118,12 +120,16 @@ class _CajaViewState extends ConsumerState<CajaView> {
     final escritorio = esEscritorio(context);
 
     final vacio = EstadoVacio(
-      emoji: '💸',
-      titulo: 'Sin movimientos',
+      emoji: _filtro == 'all' ? '💸' : '🔍',
+      titulo: _filtro == 'all' ? 'Sin movimientos' : 'Nada en este filtro',
       detalle: _filtro == 'all'
-          ? 'No hay movimientos en ${nombreMes(_mes)}'
-          : 'No hay ${_filtro == "income" ? "ingresos" : "gastos"} '
-              'en ${nombreMes(_mes)}',
+          ? 'No hay movimientos en ${nombreMes(_mes)}. Los cobros de los '
+              'turnos también entran acá.'
+          : 'Hay movimientos en ${nombreMes(_mes)}, pero ningún '
+              '${_filtro == "income" ? "ingreso" : "gasto"}.',
+      accion: _filtro == 'all'
+          ? null
+          : ('Ver todos', () => setState(() => _filtro = 'all')),
     );
 
     final selector = _SelectorMes(
@@ -272,7 +278,13 @@ class _CajaViewState extends ConsumerState<CajaView> {
                       ),
                     ),
                   ),
-                  if (escritorio)
+                  if (cargando)
+                    const EsqueletoDeLista(
+                      filas: 5,
+                      alto: 64,
+                      padding: EdgeInsets.zero,
+                    )
+                  else if (escritorio)
                     FadeSlideIn(
                       delay: const Duration(milliseconds: 130),
                       child: _tablaMovimientos(

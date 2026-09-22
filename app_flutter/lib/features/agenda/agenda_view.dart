@@ -24,6 +24,7 @@ import '../auth/session_controller.dart';
 import '../dashboard/dashboard_view.dart';
 import 'calendario.dart';
 import '../shell/app_shell.dart';
+import '../../shared/widgets/comportamiento.dart';
 import '../shell/vistas_comunes.dart';
 
 /// Turnos del día que se está mirando.
@@ -64,12 +65,27 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
   late DateTime _mes = DateTime(_dia.year, _dia.month, 1);
   String _filtro = 'all';
 
+  /// El día elegido no es hoy. Mientras sea cierto aparece el botón "Hoy":
+  /// tres toques de mes adelante y volver se hacía deslizando a ciegas.
+  bool get _lejosDeHoy => claveFecha(_dia) != claveFecha(DateTime.now());
+
+  void _volverAHoy() {
+    final hoy = DateTime.now();
+    setState(() {
+      _dia = hoy;
+      _mes = DateTime(hoy.year, hoy.month, 1);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final clave = claveFecha(_dia);
     final claveMes = '${_mes.year}-${_mes.month.toString().padLeft(2, '0')}';
-    final filas = ref.watch(turnosDelDiaProvider(clave)).value ??
-        const <db.Appointment>[];
+    final delDia = ref.watch(turnosDelDiaProvider(clave));
+    // Mientras la base abre no hay turnos todavía, y eso NO es un día libre:
+    // mostrar "Sin turnos" ahí hacía creer que se habían borrado.
+    final cargando = delDia.isLoading && !delDia.hasValue;
+    final filas = delDia.value ?? const <db.Appointment>[];
     final todos = filas.map((f) => aAppointment(f)).toList();
     // El filtro se aplica a la lista, NO al calendario: los puntos del mes
     // tienen que seguir mostrando que ahí hay algo aunque el filtro activo lo
@@ -110,24 +126,69 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
       activo: _filtro,
       onElegir: (f) => setState(() => _filtro = f),
     );
-    final lista = turnos.isEmpty
-        ? EstadoVacio(
-            // Textos literales de `renderAgenda`.
-            emoji: '📅',
-            titulo: 'Sin turnos',
-            detalle: _filtro == 'all'
-                ? 'No hay turnos para este día'
-                : 'Ningún turno en este estado',
-          )
-        : _Timeline(
-            turnos: turnos,
-            nombrePorId: nombrePorId,
+    final lista = cargando
+        ? EsqueletoDeLista(
+            filas: 4,
+            alto: 64,
             padding: escritorio
                 ? const EdgeInsets.fromLTRB(0, 0, 32, 40)
                 : const EdgeInsets.fromLTRB(16, 0, 16, 96),
-          );
+          )
+        : turnos.isEmpty
+            ? EstadoVacio(
+                // Vacío por filtro y vacío de verdad no son lo mismo: uno se
+                // arregla tocando "Todos" y el otro cargando un turno.
+                emoji: _filtro == 'all' ? '📅' : '🔍',
+                titulo: _filtro == 'all' ? 'Sin turnos' : 'Nada con ese filtro',
+                detalle: _filtro == 'all'
+                    ? 'No hay turnos para este día. Tocá + para agendar uno.'
+                    : 'Hay turnos este día, pero ninguno en este estado.',
+                accion: _filtro == 'all'
+                    ? null
+                    : ('Ver todos', () => setState(() => _filtro = 'all')),
+              )
+            : _Timeline(
+                turnos: turnos,
+                nombrePorId: nombrePorId,
+                esHoy: !_lejosDeHoy,
+                padding: escritorio
+                    ? const EdgeInsets.fromLTRB(0, 0, 32, 40)
+                    : const EdgeInsets.fromLTRB(16, 0, 16, 96),
+              );
 
     void nuevoTurno() => _mostrarFormulario(context, ref, dia: _dia);
+
+    final botonHoy = _lejosDeHoy
+        ? Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: PressableScale(
+              onTap: _volverAHoy,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                decoration: BoxDecoration(
+                  color: MColors.surface,
+                  borderRadius: BorderRadius.circular(MRadius.full),
+                  border: Border.all(color: MColors.borderMd),
+                  boxShadow: MShadow.md,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.today_outlined,
+                        size: 15, color: MColors.brand),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Hoy',
+                      style:
+                          sans(size: 13, weight: 600, color: MColors.brandDark),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+        : const SizedBox.shrink();
 
     if (escritorio) {
       // Dos paneles: el mes a la izquierda con ancho fijo —así las celdas
@@ -180,6 +241,8 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
                                         '${turnos.length == 1 ? "turno" : "turnos"}',
                                 style: sans(size: 13, color: MColors.tMuted),
                               ),
+                              const Spacer(),
+                              if (_lejosDeHoy) botonHoy,
                             ],
                           ),
                         ),
@@ -198,10 +261,14 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: fabVista(
-        context,
-        visible: puedeEscribir,
-        onTap: nuevoTurno,
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          botonHoy,
+          fabVista(context, visible: puedeEscribir, onTap: nuevoTurno) ??
+              const SizedBox.shrink(),
+        ],
       ),
       body: Column(
         children: [
@@ -241,32 +308,88 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
 ///
 /// No es decorativo: agrupar por hora es lo que deja ver de un vistazo si dos
 /// turnos caen en la misma franja.
-class _Timeline extends StatelessWidget {
+class _Timeline extends StatefulWidget {
   const _Timeline({
     required this.turnos,
     required this.nombrePorId,
     required this.padding,
+    required this.esHoy,
   });
+
+  /// El día que se está mirando es hoy: solo entonces tiene sentido la línea
+  /// de "ahora" y arrancar el scroll en el próximo turno.
+  final bool esHoy;
 
   final List<Appointment> turnos;
   final Map<String, String> nombrePorId;
   final EdgeInsets padding;
 
   @override
+  State<_Timeline> createState() => _TimelineState();
+}
+
+class _TimelineState extends State<_Timeline> {
+  final _scroll = ScrollController();
+
+  /// Alto aproximado de una franja horaria. No hace falta que sea exacto: se
+  /// usa solo para arrancar cerca del próximo turno, y el usuario ve el resto
+  /// con un dedo de scroll.
+  static const _altoFranja = 92.0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Abrir la agenda de hoy a las 09:00 cuando son las 17:00 es empezar
+    // mirando lo que ya pasó. Se salta al próximo turno en el primer frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _irAlProximo());
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _irAlProximo() {
+    if (!mounted || !_scroll.hasClients || !widget.esHoy) return;
+    final ahora = DateTime.now();
+    final horas = _horas();
+    // La primera franja que todavía no terminó.
+    final i = horas.indexWhere((h) => h >= ahora.hour);
+    if (i <= 0) return;
+    final destino =
+        (i * _altoFranja).clamp(0.0, _scroll.position.maxScrollExtent);
+    _scroll.jumpTo(destino);
+  }
+
+  Map<int, List<Appointment>> _porHora() {
+    final m = <int, List<Appointment>>{};
+    for (final t in widget.turnos) {
+      m.putIfAbsent(t.hora?.hour ?? 9, () => []).add(t);
+    }
+    return m;
+  }
+
+  List<int> _horas() => _porHora().keys.toList()..sort();
+
+  @override
   Widget build(BuildContext context) {
     // `byH` en el original: clave = la hora, sin los minutos.
-    final porHora = <int, List<Appointment>>{};
-    for (final t in turnos) {
-      porHora.putIfAbsent(t.hora?.hour ?? 9, () => []).add(t);
-    }
-    final horas = porHora.keys.toList()..sort();
+    final porHora = _porHora();
+    final horas = _horas();
+    final ahora = DateTime.now();
+    final nombrePorId = widget.nombrePorId;
 
     return ListView.builder(
-      padding: padding,
+      controller: _scroll,
+      padding: widget.padding,
       itemCount: horas.length,
       itemBuilder: (_, i) {
         final h = horas[i];
         final delHora = porHora[h]!;
+        // La franja en curso: la hora de ahora, o la primera que ya pasó si
+        // ahora mismo no hay ninguna.
+        final esFranjaDeAhora = widget.esHoy && h == ahora.hour;
         // 12 horas con AM/PM, como `${+h%12||12}` del original.
         final h12 = h % 12 == 0 ? 12 : h % 12;
         final ampm = h >= 12 ? 'PM' : 'AM';
@@ -288,19 +411,34 @@ class _Timeline extends StatelessWidget {
                         Text(
                           '$h12',
                           style: sans(
-                              size: 11, weight: 500, color: MColors.tMuted),
+                            size: 11,
+                            weight: esFranjaDeAhora ? 700 : 500,
+                            color: esFranjaDeAhora
+                                ? MColors.brandDark
+                                : MColors.tMuted,
+                          ),
                         ),
                         Text(
                           ampm,
-                          style:
-                              sans(size: 9, weight: 500, color: MColors.tMuted),
+                          style: sans(
+                            size: 9,
+                            weight: 500,
+                            color: esFranjaDeAhora
+                                ? MColors.brand
+                                : MColors.tMuted,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                // `.tl-row::before` — la línea vertical a 38px del borde.
-                Container(width: 1, color: MColors.bg3),
+                // `.tl-row::before` — la línea vertical a 38px del borde. En
+                // la franja en curso se pinta en brand: es la única marca de
+                // "acá estamos parados" en una lista de horas iguales.
+                Container(
+                  width: esFranjaDeAhora ? 2 : 1,
+                  color: esFranjaDeAhora ? MColors.brand : MColors.bg3,
+                ),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(12, 0, 0, 2),

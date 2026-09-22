@@ -14,6 +14,7 @@ import '../../data/local/database.dart';
 import '../../data/repositories/business_repository.dart';
 import '../../domain/rules/access.dart';
 import '../../domain/rules/formatting.dart';
+import '../../shared/widgets/comportamiento.dart';
 import '../../shared/widgets/panel_lateral.dart';
 import '../../shared/widgets/tabla_mirame.dart';
 import '../auth/session_controller.dart';
@@ -67,7 +68,10 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
 
   @override
   Widget build(BuildContext context) {
-    final todas = ref.watch(clientesProvider).value ?? const <Client>[];
+    final asincronas = ref.watch(clientesProvider);
+    // Mientras la base abre, la lista viene vacía: eso no es "sin clientas".
+    final cargando = asincronas.isLoading && !asincronas.hasValue;
+    final todas = asincronas.value ?? const <Client>[];
     final escritorio = esEscritorio(context);
     final busqueda = _busqueda.trim().toLowerCase();
     final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirAgenda));
@@ -94,13 +98,30 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
       lista = lista.take(20).toList();
     }
 
+    // Tres vacíos distintos, tres salidas distintas: buscando, filtrando, o
+    // de verdad sin clientas. Antes los tres decían casi lo mismo.
+    final filtrando = _filtro != 'all';
     final vacio = EstadoVacio(
-      // Textos literales de `renderClients`.
-      emoji: busqueda.isEmpty ? '🌸' : '🔍',
-      titulo: busqueda.isEmpty ? 'Sin clientas' : 'Sin resultados',
-      detalle: busqueda.isEmpty
-          ? 'Registrá tu primera clienta'
-          : 'Probá con otro nombre o teléfono',
+      emoji: busqueda.isNotEmpty
+          ? '🔍'
+          : filtrando
+              ? '🔍'
+              : '🌸',
+      titulo: busqueda.isNotEmpty
+          ? 'Sin resultados'
+          : filtrando
+              ? 'Ninguna en este filtro'
+              : 'Sin clientas',
+      detalle: busqueda.isNotEmpty
+          ? 'Probá con otro nombre o teléfono.'
+          : filtrando
+              ? 'Hay clientas cargadas, pero ninguna entra en este filtro.'
+              : 'Registrá tu primera clienta y su historial empieza acá.',
+      accion: busqueda.isNotEmpty
+          ? ('Limpiar búsqueda', () => setState(() => _busqueda = ''))
+          : filtrando
+              ? ('Ver todas', () => setState(() => _filtro = 'all'))
+              : null,
     );
     Client? abierta;
     if (_abiertaId != null) {
@@ -163,39 +184,45 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
               ),
             ),
             Expanded(
-              child: escritorio
-                  ? Padding(
+              child: cargando
+                  ? EsqueletoDeLista(
+                      filas: 6,
                       padding: padVista(context, sinArriba: true),
-                      child: MaestroDetalle(
-                        lista: _tabla(lista, resumen, vacio),
-                        panel: abierta == null
-                            ? null
-                            : PanelLateral(
-                                titulo: 'Ficha',
-                                onCerrar: () =>
-                                    setState(() => _abiertaId = null),
-                                child: FichaCliente(
-                                  key: ValueKey(abierta.id),
-                                  cliente: abierta,
-                                  enPanel: true,
+                    )
+                  : escritorio
+                      ? Padding(
+                          padding: padVista(context, sinArriba: true),
+                          child: MaestroDetalle(
+                            lista: _tabla(lista, resumen, vacio),
+                            panel: abierta == null
+                                ? null
+                                : PanelLateral(
+                                    titulo: 'Ficha',
+                                    onCerrar: () =>
+                                        setState(() => _abiertaId = null),
+                                    child: FichaCliente(
+                                      key: ValueKey(abierta.id),
+                                      cliente: abierta,
+                                      enPanel: true,
+                                    ),
+                                  ),
+                          ),
+                        )
+                      : lista.isEmpty
+                          ? vacio
+                          : ListView.builder(
+                              padding: padVista(context, sinArriba: true),
+                              itemCount: lista.length,
+                              itemBuilder: (_, i) => FadeSlideIn(
+                                delay: Duration(
+                                    milliseconds: (i < 8 ? i : 8) * 35),
+                                child: _FilaCliente(
+                                  cliente: lista[i],
+                                  turnos: resumen[lista[i].id]?.turnos ?? 0,
+                                  gastado: resumen[lista[i].id]?.gastado ?? 0,
                                 ),
                               ),
-                      ),
-                    )
-                  : lista.isEmpty
-                      ? vacio
-                      : ListView.builder(
-                          padding: padVista(context, sinArriba: true),
-                          itemCount: lista.length,
-                          itemBuilder: (_, i) => FadeSlideIn(
-                            delay: Duration(milliseconds: (i < 8 ? i : 8) * 35),
-                            child: _FilaCliente(
-                              cliente: lista[i],
-                              turnos: resumen[lista[i].id]?.turnos ?? 0,
-                              gastado: resumen[lista[i].id]?.gastado ?? 0,
                             ),
-                          ),
-                        ),
             ),
           ],
         ),

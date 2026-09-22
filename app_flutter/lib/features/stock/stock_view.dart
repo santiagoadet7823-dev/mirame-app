@@ -17,6 +17,7 @@ import '../../data/repositories/business_repository.dart';
 import '../../domain/entities/entities.dart';
 import '../../domain/rules/access.dart';
 import '../../domain/rules/stock.dart';
+import '../../shared/widgets/comportamiento.dart';
 import '../../shared/widgets/tabla_mirame.dart';
 import '../auth/session_controller.dart';
 import '../shell/app_shell.dart';
@@ -40,7 +41,9 @@ class _StockViewState extends ConsumerState<StockView> {
 
   @override
   Widget build(BuildContext context) {
-    final filas = ref.watch(stockProvider).value ?? const <db.StockItem>[];
+    final asincronos = ref.watch(stockProvider);
+    final cargando = asincronos.isLoading && !asincronos.hasValue;
+    final filas = asincronos.value ?? const <db.StockItem>[];
     final todos = filas.map(aStockItem).toList();
     // Las alertas se cuentan sobre TODO el stock, no sobre lo filtrado: si no,
     // filtrar por "sin stock" haría desaparecer el aviso de los que están bajos.
@@ -54,11 +57,14 @@ class _StockViewState extends ConsumerState<StockView> {
     final escritorio = esEscritorio(context);
 
     final vacio = EstadoVacio(
-      emoji: '📦',
-      titulo: _filtro == 'all' ? 'Sin productos' : 'Nada por acá',
+      emoji: _filtro == 'all' ? '📦' : '🔍',
+      titulo: _filtro == 'all' ? 'Sin insumos' : 'Nada en este estado',
       detalle: _filtro == 'all'
-          ? 'Agregá productos al inventario'
-          : 'Ningún producto en este estado',
+          ? 'Cargá lo que usás y la app te avisa cuando está por acabarse.'
+          : 'Hay insumos cargados, pero ninguno está en este estado.',
+      accion: _filtro == 'all'
+          ? null
+          : ('Ver todos', () => setState(() => _filtro = 'all')),
     );
 
     final filtros = FilaFiltros(
@@ -130,7 +136,13 @@ class _StockViewState extends ConsumerState<StockView> {
                     FadeSlideIn(child: filtros),
                     const SizedBox(height: 12),
                   ],
-                  if (escritorio)
+                  if (cargando)
+                    const EsqueletoDeLista(
+                      filas: 5,
+                      alto: 68,
+                      padding: EdgeInsets.zero,
+                    )
+                  else if (escritorio)
                     FadeSlideIn(
                       child: _tablaStock(
                         context,
