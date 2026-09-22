@@ -62,6 +62,12 @@ Future<void> signInConGoogle() async {
   await sb.auth.signInWithOAuth(
     OAuthProvider.google,
     redirectTo: _authRedirect,
+    // Sin esto, si el navegador tiene una sola sesión de Google abierta,
+    // Google entra con esa sin preguntar y no hay forma de elegir otra
+    // cuenta: en la compu del salón siempre entraba la cuenta personal del
+    // dueño del Edge. `select_account` fuerza la pantalla "Elegir una
+    // cuenta" con "Usar otra cuenta". Supabase lo reenvía a Google tal cual.
+    queryParams: const {'prompt': 'select_account'},
   );
 }
 
