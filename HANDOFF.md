@@ -968,7 +968,7 @@ vio, con capturas de su Edge a 1600×900: el shell tenía sidebar, pero adentro 
 teléfono a 1330 px de ancho — calendario con celdas de 185 px, buscadores de un metro, KPIs 2×2
 gigantes, sheets a pantalla completa y un FAB flotando en la esquina del monitor.
 
-**Qué se hizo** (tres commits: `f76f6ae`, `be08462` y el de tanda 3):
+**Qué se hizo** (commits `f76f6ae`, `be08462`, `1dd800f`, `d36a840`):
 
 - `lib/core/layout/layout.dart`: **un solo lugar decide el modo** (`esEscritorio`, `padVista`,
   `ContenidoEscritorio.lectura|tabla`). Todo es fluido: grillas por ancho de celda, contenido con
@@ -980,7 +980,9 @@ gigantes, sheets a pantalla completa y un FAB flotando en la esquina del monitor
 - Sidebar plegable a rail de 72 (bajo 1200 o a pedido; se guarda en `SharedPreferences`).
 - Agenda en dos paneles; acciones rápidas, KPIs y tienda en grillas fluidas.
 - `shared/widgets/tabla_mirame.dart` y `panel_lateral.dart`: **tablas ordenables** en Clientas,
-  Caja e Insumos; **ficha en panel lateral** en Clientas y Tienda.
+  Caja e Insumos; **ficha en panel lateral** en Clientas y Tienda. Las columnas marcadas
+  `opcional` (alta, teléfono, método, mínimo…) se esconden solas cuando el panel le saca lugar a
+  la tabla; el scroll horizontal queda como último recurso.
 - Cursor de mano y hover en todo lo clickeable (`PressableScale`, `ConHover`).
 - Tests: `test/core/layout_test.dart`, `test/core/tabla_test.dart` y
   `test/features/vistas_escritorio_test.dart` (humo: cada vista a 390/1000/1400 px sin
@@ -992,6 +994,9 @@ Documentado como desvío en `02-DESIGN-SYSTEM.md` §7.1 y §11. **El teléfono n
 de la PWA instalada en el Edge del usuario con un script de PowerShell
 (`SetForegroundWindow` + `CopyFromScreen`, clic por coordenadas en el sidebar), maximizada y a
 1050 px. Para repetirlo hace falta rehacer el script: era del scratchpad de la sesión.
+**Ojo con la PWA instalada:** `Ctrl+Shift+R` no le alcanza para tomar una versión nueva; hay que
+cerrar la ventana y volver a abrirla (el service worker de Flutter activa el build nuevo en el
+arranque siguiente). Se verificó a 1600×900 maximizada (sidebar completo) y a 1100×760 (rail).
 
 **Pendiente / ideas que quedaron afuera:**
 - Atajos de teclado (`/` al buscador, `Esc` cierra el panel lateral). Los diálogos ya cierran con
