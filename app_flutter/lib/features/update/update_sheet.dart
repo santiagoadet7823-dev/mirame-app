@@ -86,7 +86,7 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
     });
     try {
       final apk = await updater.descargar(
-        widget.info.apkUrl!,
+        widget.info.urlParaEsteTelefono!,
         onProgreso: (p) => mounted ? setState(() => _progreso = p) : null,
       );
       setState(() => _instalando = true);

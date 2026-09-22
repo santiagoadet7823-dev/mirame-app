@@ -64,17 +64,29 @@ jobs:
           storeFile=mirame.keystore
           EOF
 
+      # Se compila DOS veces a proposito:
+      #
+      # 1. Universal: trae las tres arquitecturas y pesa ~91 MB, de los cuales
+      #    cada telefono usa ~28. Sigue existiendo porque las versiones <= 1.18
+      #    solo saben leer `apk_url`, y porque es el respaldo para un telefono
+      #    cuya ABI no reconocemos.
+      # 2. Por arquitectura: ~37 MB el de 64 bits, ~33 el de 32. Es lo que baja
+      #    la app desde 1.19 en adelante.
+      #
+      # El de x86_64 no se publica: es de emuladores, ningun telefono lo usa.
       - name: Compilar el APK
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          flutter build apk --release \
-            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
-            --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
-            --dart-define=FLAVOR=prod \
-            --dart-define=URL_PUBLICA="https://${{ github.repository_owner }}.github.io/mirame-app/" \
-            --dart-define=FIREBASE_API_KEY="${{ secrets.FIREBASE_API_KEY }}"
+          DEFINES="--dart-define=SUPABASE_URL=$SUPABASE_URL"
+          DEFINES="$DEFINES --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY"
+          DEFINES="$DEFINES --dart-define=FLAVOR=prod"
+          DEFINES="$DEFINES --dart-define=URL_PUBLICA=https://${{ github.repository_owner }}.github.io/mirame-app/"
+          DEFINES="$DEFINES --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}"
+          flutter build apk --release $DEFINES
+          flutter build apk --release --split-per-abi $DEFINES
+          ls -la build/app/outputs/flutter-apk/
 
       # La verificacion que siempre se saltea y siempre duele: si key.properties
       # no se hubiera generado, Gradle cae a la firma de DEBUG sin fallar, y ese
@@ -82,12 +94,18 @@ jobs:
       - name: Verificar la firma
         run: |
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
-          SALIDA=$("$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk)
-          echo "$SALIDA"
-          echo "$SALIDA" | grep -qi "CN=Mirame Lash Studio" || {
-            echo "::error::El APK NO quedo firmado con el keystore de release."
-            exit 1
-          }
+          # Los tres que se publican, no solo el universal: un split sin firmar
+          # se descubriria en el telefono de una clienta, no acá.
+          for APK in app-release.apk app-arm64-v8a-release.apk app-armeabi-v7a-release.apk; do
+            RUTA="build/app/outputs/flutter-apk/$APK"
+            test -f "$RUTA" || { echo "::error::Falta $APK"; exit 1; }
+            SALIDA=$("$APKSIGNER" verify --print-certs "$RUTA")
+            echo "$APK: $SALIDA"
+            echo "$SALIDA" | grep -qi "CN=Mirame Lash Studio" || {
+              echo "::error::$APK NO quedo firmado con el keystore de release."
+              exit 1
+            }
+          done
 
       # Nombre de asset FIJO. El updater guarda esta URL en app_config y no
       # descubre nombres: si el asset cambiara de nombre en cada release, cada
@@ -97,16 +115,23 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VER=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')
-          cp build/app/outputs/flutter-apk/app-release.apk /tmp/app-release.apk
-          gh release create "apk-$VER" /tmp/app-release.apk \
+          cd build/app/outputs/flutter-apk
+          gh release create "apk-$VER" \
+            app-release.apk app-arm64-v8a-release.apk app-armeabi-v7a-release.apk \
             --title "Mírame $VER" \
             --notes "APK de Mírame $VER.
+
+          \`app-arm64-v8a-release.apk\` es el de casi cualquier teléfono actual;
+          \`app-armeabi-v7a-release.apk\`, el de los de 32 bits. \`app-release.apk\`
+          trae las tres arquitecturas y pesa el triple: está para las versiones
+          viejas de la app, que no saben elegir.
 
           Los dispositivos que ya tengan la app instalada la reciben sola cuando
           se actualice \`app_config\` en Supabase." \
             --repo "${{ github.repository }}" || \
-          gh release upload "apk-$VER" /tmp/app-release.apk --clobber \
-            --repo "${{ github.repository }}"
+          gh release upload "apk-$VER" \
+            app-release.apk app-arm64-v8a-release.apk app-armeabi-v7a-release.apk \
+            --clobber --repo "${{ github.repository }}"
 
       # Cierra el circuito: sin esto el APK queda publicado pero ningun telefono
       # se entera. Si el secret no esta, no falla — se avisa y se hace a mano.
@@ -120,7 +145,10 @@ jobs:
             exit 0
           fi
           VER=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')
-          URL="https://github.com/${{ github.repository }}/releases/download/apk-$VER/app-release.apk"
+          BASE="https://github.com/${{ github.repository }}/releases/download/apk-$VER"
+          URL="$BASE/app-release.apk"
+          URL64="$BASE/app-arm64-v8a-release.apk"
+          URL32="$BASE/app-armeabi-v7a-release.apk"
           # Solo se toca `latest_version` y `apk_url`. `min_version` es el PISO
           # y se sube a mano, despues de comprobar que la version anda: subirlo
           # automaticamente convertiria cada release en obligatorio y un release
@@ -130,5 +158,5 @@ jobs:
             -H "Authorization: Bearer $SERVICE_ROLE" \
             -H "Content-Type: application/json" \
             -H "Prefer: return=representation" \
-            -d "{\"latest_version\":\"$VER\",\"apk_url\":\"$URL\"}" | tee /tmp/r.json
+            -d "{\"latest_version\":\"$VER\",\"apk_url\":\"$URL\",\"apk_url_arm64\":\"$URL64\",\"apk_url_arm32\":\"$URL32\"}" | tee /tmp/r.json
           grep -q "$VER" /tmp/r.json || { echo "::error::app_config no se actualizo"; exit 1; }

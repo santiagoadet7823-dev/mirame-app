@@ -15,13 +15,32 @@ Future<void> montarCon(WidgetTester t, double ancho, Widget hijo) async {
 
 void main() {
   group('modoPara', () {
+    // Alto grande: un monitor o una tablet acostada.
+    ModoLayout porAncho(double ancho) => modoPara(Size(ancho, 900));
+
     test('tres modos, dos umbrales', () {
-      expect(modoPara(390), ModoLayout.movil);
-      expect(modoPara(599), ModoLayout.movil);
-      expect(modoPara(600), ModoLayout.tablet);
-      expect(modoPara(899), ModoLayout.tablet);
-      expect(modoPara(900), ModoLayout.escritorio);
-      expect(modoPara(2560), ModoLayout.escritorio);
+      expect(porAncho(390), ModoLayout.movil);
+      expect(porAncho(599), ModoLayout.movil);
+      expect(porAncho(600), ModoLayout.tablet);
+      expect(porAncho(899), ModoLayout.tablet);
+      expect(porAncho(900), ModoLayout.escritorio);
+      expect(porAncho(2560), ModoLayout.escritorio);
+    });
+
+    test('un celular acostado NO es escritorio', () {
+      // Pixel 7 horizontal: 915 de ancho, pero el lado corto son 412.
+      expect(modoPara(const Size(915, 412)), ModoLayout.tablet);
+      // iPhone 14 Pro Max horizontal.
+      expect(modoPara(const Size(932, 430)), ModoLayout.tablet);
+      // Y parado, móvil de toda la vida.
+      expect(modoPara(const Size(412, 915)), ModoLayout.movil);
+    });
+
+    test('una tablet acostada sí es escritorio', () {
+      // 1280 × 800: la del mostrador.
+      expect(modoPara(const Size(1280, 800)), ModoLayout.escritorio);
+      // La misma parada: vuelve al layout de celular, sin diseño aparte.
+      expect(modoPara(const Size(800, 1280)), ModoLayout.tablet);
     });
   });
 

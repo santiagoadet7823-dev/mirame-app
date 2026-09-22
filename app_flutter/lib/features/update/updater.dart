@@ -30,14 +30,40 @@ class InfoActualizacion {
     required this.latestVersion,
     required this.minVersion,
     required this.apkUrl,
+    this.apkUrlArm64,
+    this.apkUrlArm32,
+    this.abi,
     this.mensajeGlobal,
   });
 
   final String instalada;
   final String latestVersion;
   final String minVersion;
+
+  /// El APK universal: trae las tres arquitecturas y pesa el triple. Sigue
+  /// existiendo porque las versiones viejas solo leen esta columna, y porque
+  /// es la red de seguridad para un teléfono cuya ABI no reconocemos.
   final String? apkUrl;
+
+  /// Los APK por arquitectura. Un teléfono usa UNA: bajar las tres eran
+  /// 91 MB para instalar 37.
+  final String? apkUrlArm64;
+  final String? apkUrlArm32;
+
+  /// Lo que dijo el sistema: `arm64`, `arm32` u `otra`.
+  final String? abi;
+
   final String? mensajeGlobal;
+
+  /// El APK que le corresponde a ESTE teléfono, con el universal de respaldo.
+  String? get urlParaEsteTelefono {
+    final propio = switch (abi) {
+      'arm64' => apkUrlArm64,
+      'arm32' => apkUrlArm32,
+      _ => null,
+    };
+    return (propio?.isNotEmpty ?? false) ? propio : apkUrl;
+  }
 
   bool get obligatoria =>
       debeActualizar(instalada: instalada, minVersion: minVersion);
@@ -47,7 +73,8 @@ class InfoActualizacion {
 
   /// Sin URL no hay nada que ofrecer. Mostrar el aviso igual llevaría a un
   /// botón que falla al tocarlo.
-  bool get ofrecible => hayNueva && (apkUrl?.isNotEmpty ?? false);
+  bool get ofrecible =>
+      hayNueva && (urlParaEsteTelefono?.isNotEmpty ?? false);
 }
 
 enum ResultadoInstalacion { silenciosa, conDialogo, necesitaPermiso, error }
@@ -78,7 +105,8 @@ class Updater {
     final info = await PackageInfo.fromPlatform();
     final fila = await sb
         .from('app_config')
-        .select('latest_version, min_version, apk_url, mensaje_global')
+        .select('latest_version, min_version, apk_url, apk_url_arm64, '
+            'apk_url_arm32, mensaje_global')
         .limit(1)
         .maybeSingle();
     if (fila == null) return null;
@@ -90,8 +118,23 @@ class Updater {
       latestVersion: (fila['latest_version'] as String?) ?? info.version,
       minVersion: (fila['min_version'] as String?) ?? '0.0.0',
       apkUrl: fila['apk_url'] as String?,
+      apkUrlArm64: fila['apk_url_arm64'] as String?,
+      apkUrlArm32: fila['apk_url_arm32'] as String?,
+      abi: await _abi(),
       mensajeGlobal: fila['mensaje_global'] as String?,
     );
+  }
+
+  /// Qué arquitectura usa este teléfono, según el sistema.
+  ///
+  /// Si el canal no contesta —un APK viejo sin este método— se devuelve null
+  /// y el updater cae al APK universal, que instala en cualquiera.
+  Future<String?> _abi() async {
+    try {
+      return await _canal.invokeMethod<String>('abi');
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Descarga el APK informando progreso de 0 a 1.

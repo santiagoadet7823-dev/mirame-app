@@ -2,7 +2,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/config/app_config.dart';
@@ -16,10 +15,11 @@ import 'features/update/update_sheet.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // La app es solo vertical, igual que el manifest original
-  // (`orientation: portrait`).
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
+  // Antes se forzaba vertical, heredado del `orientation: portrait` del
+  // original. Se saca: la tablet del mostrador se usa acostada y el layout
+  // ya sabe adaptarse. En un teléfono acostado no cambia nada visible —
+  // `esEscritorio` mira el lado corto, no el ancho, justamente para que un
+  // celular horizontal no termine con el sidebar de la compu.
   try {
     await initSupabase();
   } catch (e) {

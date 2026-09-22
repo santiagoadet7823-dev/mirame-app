@@ -18,14 +18,25 @@ import '../theme/tokens.dart';
 
 enum ModoLayout { movil, tablet, escritorio }
 
-ModoLayout modoPara(double ancho) {
-  if (ancho >= MBreak.desktop) return ModoLayout.escritorio;
-  if (ancho >= MBreak.tablet) return ModoLayout.tablet;
+/// El modo sale del tamaño ENTERO, no solo del ancho.
+///
+/// Un celular acostado mide más de 900 px de ancho (un Pixel 7 da 915) y por
+/// ancho solo caería en el layout de la compu: sidebar de 248 px y tablas de
+/// filas finas en una pantalla de 6 pulgadas. Lo que distingue a un teléfono
+/// de una tablet es el **lado corto**: menos de 600 px es un teléfono, lo
+/// pongas como lo pongas. Es el mismo criterio que usa Android con
+/// `sw600dp`.
+ModoLayout modoPara(Size tamano) {
+  final esDispositivoGrande = tamano.shortestSide >= MBreak.tablet;
+  if (tamano.width >= MBreak.desktop && esDispositivoGrande) {
+    return ModoLayout.escritorio;
+  }
+  if (tamano.width >= MBreak.tablet) return ModoLayout.tablet;
   return ModoLayout.movil;
 }
 
 ModoLayout modoDe(BuildContext context) =>
-    modoPara(MediaQuery.sizeOf(context).width);
+    modoPara(MediaQuery.sizeOf(context));
 
 bool esEscritorio(BuildContext context) =>
     modoDe(context) == ModoLayout.escritorio;

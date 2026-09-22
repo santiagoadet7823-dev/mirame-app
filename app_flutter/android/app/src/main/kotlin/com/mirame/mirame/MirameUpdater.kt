@@ -41,9 +41,29 @@ class MirameUpdater : FlutterPlugin, MethodChannel.MethodCallHandler {
         canal.setMethodCallHandler(null)
     }
 
+    /// `arm64`, `arm32` o `otra`.
+    ///
+    /// Se lee de `SUPPORTED_ABIS`, que viene ordenado por preferencia: el
+    /// primero es el nativo del procesador. Un telefono arm64 tambien lista
+    /// armeabi-v7a mas abajo, asi que mirar solo "si contiene" elegiria el de
+    /// 32 bits en telefonos de 64.
+    private fun abi(): String {
+        val preferida = Build.SUPPORTED_ABIS.firstOrNull() ?: return "otra"
+        return when {
+            preferida.startsWith("arm64") -> "arm64"
+            preferida.startsWith("armeabi") -> "arm32"
+            else -> "otra"
+        }
+    }
+
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "puedeInstalar" -> result.success(puedeInstalar())
+
+            // Que arquitectura usa ESTE telefono. El APK universal trae las
+            // tres y pesa 91 MB cuando cada telefono usa 28: sabiendo cual
+            // es, el updater se baja el que corresponde.
+            "abi" -> result.success(abi())
 
             "abrirAjustesPermiso" -> {
                 abrirAjustesPermiso()
