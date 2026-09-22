@@ -1,0 +1,280 @@
+{
+ "v": 3,
+ "attachments": {},
+ "createdOnFiles": {
+  "at": "2026-09-22T04:32:27.458Z",
+  "v": 1
+ },
+ "title": "Mírame UI/UX propuesta",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "Ref-Barberia-Home.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 420,
+   "h": 700,
+   "title": "Ref · Barbería · Home"
+  },
+  "Ref-Barberia-Detalle.dc.html": {
+   "x": 500,
+   "y": 0,
+   "w": 420,
+   "h": 700,
+   "title": "Ref · Barbería · Detalle"
+  },
+  "Ref-Barberia-Login.dc.html": {
+   "x": 1000,
+   "y": 0,
+   "w": 420,
+   "h": 700,
+   "title": "Ref · Barbería · Registro"
+  },
+  "Ref-Pastel-Booking.dc.html": {
+   "x": 1500,
+   "y": 0,
+   "w": 420,
+   "h": 700,
+   "title": "Ref · Pastel · Booking"
+  },
+  "Ref-Pastel-Dashboard.dc.html": {
+   "x": 2000,
+   "y": 0,
+   "w": 420,
+   "h": 700,
+   "title": "Ref · Pastel · Dashboard"
+  },
+  "M-Inicio-Hoy.dc.html": {
+   "x": 0,
+   "y": 1000,
+   "w": 390,
+   "h": 844,
+   "title": "Inicio · HOY"
+  },
+  "M-Inicio-Propuesta.dc.html": {
+   "x": 470,
+   "y": 1000,
+   "w": 390,
+   "h": 844,
+   "title": "Inicio · PROPUESTA"
+  },
+  "M-Agenda-Hoy.dc.html": {
+   "x": 0,
+   "y": 2000,
+   "w": 390,
+   "h": 844,
+   "title": "Agenda · HOY"
+  },
+  "M-Agenda-Propuesta.dc.html": {
+   "x": 470,
+   "y": 2000,
+   "w": 390,
+   "h": 844,
+   "title": "Agenda · PROPUESTA"
+  },
+  "M-Ficha-Hoy.dc.html": {
+   "x": 0,
+   "y": 3000,
+   "w": 390,
+   "h": 844,
+   "title": "Ficha · HOY (sheet)"
+  },
+  "M-Ficha-Propuesta.dc.html": {
+   "x": 470,
+   "y": 3000,
+   "w": 390,
+   "h": 844,
+   "title": "Ficha · PROPUESTA"
+  },
+  "M-Tienda-Propuesta.dc.html": {
+   "x": 0,
+   "y": 4000,
+   "w": 390,
+   "h": 844,
+   "title": "Tienda · PROPUESTA"
+  },
+  "M-Equipo-Propuesta.dc.html": {
+   "x": 470,
+   "y": 4000,
+   "w": 390,
+   "h": 844,
+   "title": "Equipo · PROPUESTA"
+  },
+  "M-Form-Propuesta.dc.html": {
+   "x": 940,
+   "y": 4000,
+   "w": 390,
+   "h": 844,
+   "title": "Nuevo turno · PROPUESTA"
+  },
+  "D-Inicio-Hoy.dc.html": {
+   "x": 0,
+   "y": 5100,
+   "w": 1280,
+   "h": 656,
+   "title": "Escritorio · Inicio · HOY"
+  },
+  "D-Inicio-Propuesta.dc.html": {
+   "x": 1360,
+   "y": 5100,
+   "w": 1280,
+   "h": 800,
+   "title": "Escritorio · Inicio · PROPUESTA"
+  },
+  "D-Agenda-Hoy.dc.html": {
+   "x": 0,
+   "y": 6020,
+   "w": 1280,
+   "h": 656,
+   "title": "Escritorio · Agenda · HOY"
+  },
+  "D-Clientas-Hoy.dc.html": {
+   "x": 1360,
+   "y": 6020,
+   "w": 1280,
+   "h": 656,
+   "title": "Escritorio · Clientas · HOY"
+  },
+  "D-Tienda-Hoy.dc.html": {
+   "x": 0,
+   "y": 6796,
+   "w": 1280,
+   "h": 656,
+   "title": "Escritorio · Tienda · HOY"
+  },
+  "D-Insumos-Hoy.dc.html": {
+   "x": 1360,
+   "y": 6796,
+   "w": 1280,
+   "h": 656,
+   "title": "Escritorio · Insumos · HOY"
+  },
+  "W-Widget-4x4.dc.html": {
+   "x": 0,
+   "y": 7812,
+   "w": 390,
+   "h": 844,
+   "title": "Widget 4×4 · calendario + día"
+  },
+  "W-Widget-4x2.dc.html": {
+   "x": 470,
+   "y": 7812,
+   "w": 390,
+   "h": 844,
+   "title": "Widget 4×2 · turnos de hoy"
+  }
+ },
+ "order": [
+  "Ref-Barberia-Home.dc.html",
+  "Ref-Barberia-Detalle.dc.html",
+  "Ref-Barberia-Login.dc.html",
+  "Ref-Pastel-Booking.dc.html",
+  "Ref-Pastel-Dashboard.dc.html",
+  "M-Inicio-Hoy.dc.html",
+  "M-Inicio-Propuesta.dc.html",
+  "M-Agenda-Hoy.dc.html",
+  "M-Agenda-Propuesta.dc.html",
+  "M-Ficha-Hoy.dc.html",
+  "M-Ficha-Propuesta.dc.html",
+  "M-Tienda-Propuesta.dc.html",
+  "M-Equipo-Propuesta.dc.html",
+  "M-Form-Propuesta.dc.html",
+  "D-Inicio-Hoy.dc.html",
+  "D-Inicio-Propuesta.dc.html",
+  "D-Agenda-Hoy.dc.html",
+  "D-Clientas-Hoy.dc.html",
+  "D-Tienda-Hoy.dc.html",
+  "D-Insumos-Hoy.dc.html",
+  "W-Widget-4x4.dc.html",
+  "W-Widget-4x2.dc.html"
+ ],
+ "notes": {
+  "t1": {
+   "x": 0,
+   "y": 760,
+   "text": "Celular · Inicio",
+   "kind": "title1",
+   "maxW": 1400
+  },
+  "t2": {
+   "x": 0,
+   "y": 1760,
+   "text": "Celular · Agenda",
+   "kind": "title1",
+   "maxW": 1400
+  },
+  "t3": {
+   "x": 0,
+   "y": 2760,
+   "text": "Celular · Ficha de clienta",
+   "kind": "title1",
+   "maxW": 1400
+  },
+  "t4": {
+   "x": 0,
+   "y": 3760,
+   "text": "Celular · Tienda, equipo y formularios",
+   "kind": "title1",
+   "maxW": 1400
+  },
+  "t5": {
+   "x": 0,
+   "y": 4860,
+   "text": "Escritorio (PWA)",
+   "kind": "title1",
+   "maxW": 2800
+  },
+  "t6": {
+   "x": 0,
+   "y": 7572,
+   "text": "Widget de Android (pantalla de inicio)",
+   "kind": "title1",
+   "maxW": 1400
+  },
+  "s1": {
+   "x": 1000,
+   "y": 950,
+   "text": "INICIO — Propuesta\n1. Saludo con nombre y buscador global.\n2. KPI hero igual (mismo gradiente), agrega \"próximo a las\" y variación semanal.\n3. Acciones rápidas → 5 íconos circulares tintados (como la referencia). Íconos del set del diseñador, no emoji.\n4. Agenda de hoy con avatar, servicio, profesional, hora y estado.\n5. Carrusel \"Próximos retoques\" (hoy vive abajo de todo).",
+   "w": 380,
+   "fill": "purple"
+  },
+  "s2": {
+   "x": 1000,
+   "y": 1950,
+   "text": "AGENDA — Propuesta\n1. Tira semanal por defecto (7 días, día elegido en brand); \"Mes\" abre el calendario completo.\n2. Resumen del día: fecha, cantidad y monto, avatares de quién trabaja.\n3. Tarjetas de turno con avatar, servicio y profesional.\n4. Buscar turno por clienta.",
+   "w": 380,
+   "fill": "purple"
+  },
+  "s3": {
+   "x": 1000,
+   "y": 2950,
+   "text": "FICHA — Propuesta\n1. Banda superior con gradiente lav→nude, avatar grande superpuesto.\n2. Píldoras de estado: VIP, desde cuándo, próximo retoque.\n3. Barra de acciones circulares: WhatsApp · Llamar · Nuevo turno · Fotos · Compartir.\n4. Tabs: Historial · Notas · Fotos · Pagos.\n5. CTA fijo \"Agendar turno\" con safe-area.\nEn escritorio esto mismo va en el panel lateral.",
+   "w": 380,
+   "fill": "purple"
+  },
+  "s4": {
+   "x": 1470,
+   "y": 3950,
+   "text": "TIENDA / EQUIPO / FORMULARIO\nTienda: buscador + botón de filtros, chips, tarjetas con foto (esquina redondeada 14), precio en Cormorant, estado en píldora, corazón = publicado.\nEquipo: grilla de tarjetas de profesional (foto/avatar, rol, carga de hoy, \"Ver agenda\") + tarjeta punteada \"Invitar\".\nFormulario: servicio en chips, profesional en avatares seleccionables, CTA fijo abajo, Cancelar como texto.",
+   "w": 380,
+   "fill": "purple"
+  },
+  "s5": {
+   "x": 2760,
+   "y": 5100,
+   "text": "ESCRITORIO — Inicio propuesta\n1. Header con buscador global (atajo \"/\") y \"Nuevo turno\" como acción primaria.\n2. Fila de 4 KPI con variación.\n3. Gráfico de área pastel (servicios vs. tienda) — tomado de la referencia de dashboard, con los tokens lav/nude.\n4. Agenda de hoy como lista compacta.\n5. Sidebar con la persona logueada al pie.\nLas demás vistas de escritorio ya tienen tablas y panel lateral (ver capturas HOY).",
+   "w": 380,
+   "fill": "purple"
+  },
+  "s6": {
+   "x": 950,
+   "y": 7812,
+   "text": "WIDGET ANDROID\n4×4 (toda una pantalla): mes con puntos en los días con turnos, día tocado en brand; abajo el día elegido con hora · clienta · servicio · estado, botón \"+\" que abre el formulario. Tocar un día cambia la lista sin abrir la app.\n4×2: solo los turnos de hoy.\nPaleta pastel sobre tarjeta blanca al 82% (lav100/nude100/roseSoft), mismos tokens. Sin animaciones ni scroll: es RemoteViews/Glance. Solo Android — la PWA no puede tener widgets.\nEstados a diseñar: sin turnos, sin sesión, cargando.",
+   "w": 380,
+   "fill": "pink"
+  }
+ },
+ "designSystems": []
+}

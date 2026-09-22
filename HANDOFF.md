@@ -1013,3 +1013,20 @@ y no dejaba elegir otra. Arreglo (`0789111`): `queryParams: {'prompt': 'select_a
 Verificado con Playwright que el `authorize` de Supabase sale con `prompt=select_account`.
 Para probarlo hay que **cerrar sesión primero** (si ya está logueado no pasa por Google), y la
 cuenta nueva tiene que estar dada de alta en el salón (Ajustes → Equipo) o cae en "pendiente".
+
+### 2026-09-22 — Brief UI/UX + prototipo para el diseñador
+
+El usuario pasó referencias (app de barbería de Behance, booking pastel y dashboard pastel de
+Pinterest) y pidió un refresh UI/UX sin tocar paleta, logo ni funciones, más un **widget de
+Android** con calendario + turnos del día. Se decidió arrancar por el paquete para el diseñador:
+
+- `13-BRIEF-UI-UX.md`: brief pantalla por pantalla (celular y escritorio), componentes nuevos,
+  widget 4×4 / 4×2 con sus restricciones técnicas, entregables y orden.
+- Prototipo "hoy vs. propuesta" como canvas: https://claude.ai/artifact/6uNgRP7uEWK3iGrXwe2arH
+  (22 artboards: 5 referencias, 9 de celular, 6 de escritorio con capturas reales, 2 de widget).
+  Fuente en `diseno/prototipo/`.
+
+**Pendiente:** compartir el canvas con el diseñador (es privado), recibir los frames, y recién
+después implementar en Flutter. El widget es código nativo (Kotlin, AppWidget/Glance + puente
+desde Flutter vía SharedPreferences; no hay `home_widget` en pubspec) y se planifica aparte.
+Sigue pendiente la prueba del APK 1.17.3 en un teléfono de los que fallaban.
