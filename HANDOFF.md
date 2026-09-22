@@ -1104,3 +1104,36 @@ republicada del mismo commit.
 - **`min_version` sigue en `1.0.0` a propósito**: publicar el release avisa, subir `min_version`
   obliga. Nadie probó todavía la 1.18.0 en un teléfono; recién después tiene sentido tocarlo.
 - `mensaje_global` cuenta los gestos nuevos, que no se descubren solos.
+
+### 2026-09-22 — 1.19.0: la app rota y el APK pesa un tercio
+
+**Por qué tardaba 6 minutos en bajar la actualización.** Medido, no supuesto: con la misma
+conexión y al mismo tiempo, Cloudflare daba **4,09 MB/s** y GitHub **0,23 MB/s** (Releases) y
+**0,33 MB/s** (Pages). Son dos problemas sumados:
+
+1. **El APK pesaba 91,1 MB y 82 eran libs nativas de tres arquitecturas**, de las que cada
+   teléfono usa una: `x86_64` 30,3 MB (solo emuladores, ningún teléfono la toca nunca),
+   `arm64-v8a` 27,9, `armeabi-v7a` 24,2. Lo común (dex, assets, fuentes) son 8,7 MB.
+2. **GitHub sirve lento desde Argentina**, 17× más lento que un CDN normal.
+
+Arreglado lo primero: el workflow compila universal **y** `--split-per-abi`, y publica tres
+assets. `app_config` suma `apk_url_arm64` y `apk_url_arm32`; `apk_url` sigue siendo el universal
+porque las versiones ≤ 1.18 solo leen esa columna y no saben elegir. El updater pregunta la ABI
+por el canal (`Build.SUPPORTED_ABIS`, el **primero**, que es el nativo: un arm64 también lista
+armeabi-v7a más abajo y "si contiene" elegiría el de 32 bits) y baja el que corresponde:
+**36,7 MB en vez de 91,4**. Un APK viejo sin ese método del canal cae al universal.
+
+Lo segundo queda pendiente: servir el APK desde Supabase Storage (sa-east-1). **Necesita que
+cargues `SUPABASE_SERVICE_ROLE_KEY` en los secrets de GitHub**, que es el mismo secret que falta
+para que el CI actualice `app_config` solo. No se puede medir la velocidad real de Supabase sin
+subir antes un archivo grande, y para eso hace falta esa clave.
+
+**Rotación** (lo primero que notó el usuario al probar): fuera el `setPreferredOrientations`
+de `main.dart`. Y con eso apareció un problema que el candado tapaba: `modoPara` decidía solo
+por ancho, y **un celular acostado mide más de 900 px** (un Pixel 7 da 915), así que habría
+caído en el layout de escritorio, con sidebar de 248 px en una pantalla de 6 pulgadas. Ahora
+mira el **lado corto** (< 600 = teléfono), el mismo criterio que el `sw600dp` de Android.
+
+**Ojo con la tablet acostada:** hoy le toca el layout de *escritorio*, que es de puntero (hover,
+atajo `/`, filas de tabla finas). La versión de dedo —riel de 92 px, toques de 44, tarjetas más
+grandes— es la Tanda A del análisis y todavía no está.
