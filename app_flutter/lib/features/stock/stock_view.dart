@@ -17,6 +17,7 @@ import '../../data/repositories/business_repository.dart';
 import '../../domain/entities/entities.dart';
 import '../../domain/rules/access.dart';
 import '../../domain/rules/stock.dart';
+import '../../shared/widgets/tabla_mirame.dart';
 import '../auth/session_controller.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
@@ -51,6 +52,14 @@ class _StockViewState extends ConsumerState<StockView> {
     };
     final puedeEscribir = ref.watch(puedeProvider(Permiso.operarNegocio));
     final escritorio = esEscritorio(context);
+
+    final vacio = EstadoVacio(
+      emoji: '📦',
+      titulo: _filtro == 'all' ? 'Sin productos' : 'Nada por acá',
+      detalle: _filtro == 'all'
+          ? 'Agregá productos al inventario'
+          : 'Ningún producto en este estado',
+    );
 
     final filtros = FilaFiltros(
       opciones: const [
@@ -121,15 +130,18 @@ class _StockViewState extends ConsumerState<StockView> {
                     FadeSlideIn(child: filtros),
                     const SizedBox(height: 12),
                   ],
-                  if (items.isEmpty)
-                    EstadoVacio(
-                      emoji: '📦',
-                      titulo:
-                          _filtro == 'all' ? 'Sin productos' : 'Nada por acá',
-                      detalle: _filtro == 'all'
-                          ? 'Agregá productos al inventario'
-                          : 'Ningún producto en este estado',
+                  if (escritorio)
+                    FadeSlideIn(
+                      child: _tablaStock(
+                        context,
+                        ref,
+                        items,
+                        puedeEscribir: puedeEscribir,
+                        vacio: vacio,
+                      ),
                     )
+                  else if (items.isEmpty)
+                    vacio
                   else
                     for (var i = 0; i < items.length; i++)
                       FadeSlideIn(
@@ -282,6 +294,158 @@ class _FilaStock extends ConsumerWidget {
     return '📦';
   }
 }
+
+/// El inventario como tabla, para escritorio. La barra fina de nivel y el
+/// número grande con color son los mismos de la tarjeta: son lo que se mira
+/// de reojo para saber si falta algo.
+Widget _tablaStock(
+  BuildContext context,
+  WidgetRef ref,
+  List<StockItem> items, {
+  required bool puedeEscribir,
+  required Widget vacio,
+}) =>
+    TablaMirame<StockItem>(
+      filas: items,
+      claveDe: (i) => i.id,
+      expandir: false,
+      altoFila: 56,
+      vacio: vacio,
+      onTap: (i) => _mostrarFormulario(context, ref, item: i),
+      columnas: [
+        ColumnaTabla(
+          titulo: 'Producto',
+          flex: 3,
+          ordenarPor: (i) => i.nombre.toLowerCase(),
+          celda: (_, i) => Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: MColors.bg2,
+                  border: Border.all(color: MColors.border),
+                  borderRadius: BorderRadius.circular(MRadius.sm),
+                ),
+                child: Text(
+                  _FilaStock._iconoCategoria(i.categoria),
+                  style: const TextStyle(fontSize: 15),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Flexible(child: CeldaTexto(i.nombre, peso: 600)),
+            ],
+          ),
+        ),
+        ColumnaTabla(
+          titulo: 'Categoría',
+          flex: 2,
+          ordenarPor: (i) => (i.categoria ?? '').toLowerCase(),
+          celda: (_, i) => CeldaTexto(
+            i.categoria?.isNotEmpty ?? false ? i.categoria! : 'General',
+            color: MColors.tSecondary,
+          ),
+        ),
+        ColumnaTabla(
+          titulo: 'Nivel',
+          ancho: 140,
+          ordenarPor: (i) => stockBarPct(i),
+          celda: (_, i) {
+            final estado = stockStatus(i);
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: stockBarPct(i) / 100,
+                minHeight: 3,
+                backgroundColor: MColors.bg3,
+                color: switch (estado) {
+                  StockStatus.out => MColors.stockOut,
+                  StockStatus.low => MColors.stockLow,
+                  StockStatus.ok => MColors.stockOk,
+                },
+              ),
+            );
+          },
+        ),
+        ColumnaTabla(
+          titulo: 'Stock',
+          ancho: 90,
+          numerica: true,
+          ordenarPor: (i) => i.cantidad,
+          celda: (_, i) {
+            final estado = stockStatus(i);
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  '${i.cantidad}',
+                  style: sans(
+                    size: 16,
+                    weight: 700,
+                    tabular: true,
+                    color: switch (estado) {
+                      StockStatus.out => MColors.dangerText,
+                      StockStatus.low => MColors.warningText,
+                      StockStatus.ok => MColors.tPrimary,
+                    },
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(i.unidad, style: sans(size: 10, color: MColors.tMuted)),
+              ],
+            );
+          },
+        ),
+        ColumnaTabla(
+          titulo: 'Mínimo',
+          ancho: 80,
+          numerica: true,
+          ordenarPor: (i) => i.minimo,
+          celda: (_, i) => CeldaTexto(
+            '${i.minimo}',
+            numerica: true,
+            color: MColors.tMuted,
+          ),
+        ),
+        ColumnaTabla(
+          titulo: 'Estado',
+          ancho: 100,
+          ordenarPor: (i) => stockStatus(i).index,
+          celda: (_, i) {
+            final estado = stockStatus(i);
+            return estado == StockStatus.ok
+                ? const CeldaTexto('OK', color: MColors.tLight)
+                : _ChipAlerta(sinStock: estado == StockStatus.out);
+          },
+        ),
+        if (puedeEscribir)
+          ColumnaTabla(
+            titulo: '',
+            ancho: 72,
+            celda: (_, i) => Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _BotonAjuste(
+                  simbolo: '\u2212',
+                  activo: i.cantidad > 0,
+                  onTap: () =>
+                      ref.read(businessRepoProvider)?.ajustarStock(i.id, -1),
+                ),
+                const SizedBox(width: 4),
+                _BotonAjuste(
+                  simbolo: '+',
+                  activo: true,
+                  onTap: () =>
+                      ref.read(businessRepoProvider)?.ajustarStock(i.id, 1),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
 
 /// `.stk-alert` — chip chico, radio 5 (no píldora), 9px en negrita.
 class _ChipAlerta extends StatelessWidget {

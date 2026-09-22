@@ -164,9 +164,13 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
                             crossAxisAlignment: CrossAxisAlignment.baseline,
                             textBaseline: TextBaseline.alphabetic,
                             children: [
-                              Text(
-                                _tituloDia(_dia),
-                                style: serif(size: 22, weight: 600),
+                              Flexible(
+                                child: Text(
+                                  _tituloDia(_dia),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: serif(size: 22, weight: 600),
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Text(

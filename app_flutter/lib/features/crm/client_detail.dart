@@ -30,9 +30,8 @@ import '../shell/vistas_comunes.dart';
 import 'clients_view.dart';
 
 /// Historial de una clienta, del más nuevo al más viejo.
-final historialClienteProvider =
-    StreamProvider.autoDispose.family<List<db.Appointment>, String>(
-        (ref, clienteId) {
+final historialClienteProvider = StreamProvider.autoDispose
+    .family<List<db.Appointment>, String>((ref, clienteId) {
   final repo = ref.watch(businessRepoProvider);
   if (repo == null) return const Stream.empty();
   return repo.verTurnosDeCliente(clienteId);
@@ -48,38 +47,49 @@ Future<void> mostrarFichaCliente(BuildContext context, db.Client cliente) =>
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
-        builder: (_, scroll) =>
-            _FichaCliente(cliente: cliente, scroll: scroll),
+        builder: (_, scroll) => FichaCliente(cliente: cliente, scroll: scroll),
       ),
     );
 
-class _FichaCliente extends ConsumerWidget {
-  const _FichaCliente({required this.cliente, required this.scroll});
+/// La ficha: cabecera, tres números, WhatsApp, observaciones e historial.
+///
+/// Vive en un sheet en el teléfono y en el panel lateral en escritorio
+/// ([enPanel]): mismo contenido, sin manija ni fondo propio, y "Editar" no
+/// tiene nada que cerrar antes de abrir el formulario.
+class FichaCliente extends ConsumerWidget {
+  const FichaCliente({
+    super.key,
+    required this.cliente,
+    this.scroll,
+    this.enPanel = false,
+  });
 
   final db.Client cliente;
-  final ScrollController scroll;
+  final ScrollController? scroll;
+  final bool enPanel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final turnos =
-        (ref.watch(historialClienteProvider(cliente.id)).value ??
-                const <db.Appointment>[])
-            .map((f) => aAppointment(f))
-            .toList();
+    final turnos = (ref.watch(historialClienteProvider(cliente.id)).value ??
+            const <db.Appointment>[])
+        .map((f) => aAppointment(f))
+        .toList();
 
     final total = turnos.fold<num>(0, (a, t) => a + t.precio);
     final promedio = turnos.isEmpty ? 0 : (total / turnos.length).round();
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: MColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(MRadius.xl)),
+        borderRadius: enPanel
+            ? null
+            : const BorderRadius.vertical(top: Radius.circular(MRadius.xl)),
       ),
       child: ListView(
         controller: scroll,
         padding: const EdgeInsets.fromLTRB(18, 12, 18, 28),
         children: [
-          const ManijaSheet(),
+          if (!enPanel) const ManijaSheet(),
 
           // 1 · Cabecera
           Padding(
@@ -96,8 +106,7 @@ class _FichaCliente extends ConsumerWidget {
                   ),
                   child: Text(
                     initials(cliente.nombre),
-                    style:
-                        sans(size: 26, weight: 700, color: MColors.tWhite),
+                    style: sans(size: 26, weight: 700, color: MColors.tWhite),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -138,8 +147,7 @@ class _FichaCliente extends ConsumerWidget {
           if (cliente.telefono?.isNotEmpty ?? false)
             TarjetaMirame(
               margenInferior: 10,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               hijo: Row(
                 children: [
                   const Text('📱', style: TextStyle(fontSize: 18)),
@@ -164,8 +172,7 @@ class _FichaCliente extends ConsumerWidget {
           if (cliente.notas?.isNotEmpty ?? false)
             TarjetaMirame(
               margenInferior: 12,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               hijo: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -208,7 +215,7 @@ class _FichaCliente extends ConsumerWidget {
           const SizedBox(height: 14),
           PressableScale(
             onTap: () {
-              Navigator.of(context).pop();
+              if (!enPanel) Navigator.of(context).pop();
               mostrarFormularioCliente(context, ref, cliente: cliente);
             },
             child: Container(
@@ -221,8 +228,7 @@ class _FichaCliente extends ConsumerWidget {
               child: Text(
                 'Editar datos',
                 textAlign: TextAlign.center,
-                style:
-                    sans(size: 14, weight: 600, color: MColors.tSecondary),
+                style: sans(size: 14, weight: 600, color: MColors.tSecondary),
               ),
             ),
           ),
@@ -290,8 +296,7 @@ class _BotonWa extends StatelessWidget {
           ),
           child: Text(
             'WA',
-            style:
-                sans(size: 12, weight: 600, color: MColors.successText),
+            style: sans(size: 12, weight: 600, color: MColors.successText),
           ),
         ),
       );
@@ -309,16 +314,14 @@ class _FilaHistorial extends StatelessWidget {
         hijo: Row(
           children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
               decoration: BoxDecoration(
                 color: MColors.brandBg,
                 borderRadius: BorderRadius.circular(MRadius.sm),
               ),
               child: Text(
                 formatDateShort(turno.fecha),
-                style:
-                    sans(size: 10, weight: 700, color: MColors.brand),
+                style: sans(size: 10, weight: 700, color: MColors.brand),
               ),
             ),
             const SizedBox(width: 10),

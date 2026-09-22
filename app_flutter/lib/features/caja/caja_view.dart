@@ -20,6 +20,7 @@ import '../../domain/rules/access.dart';
 import '../../domain/rules/finance.dart';
 import '../../domain/rules/formatting.dart';
 import '../../domain/rules/period.dart';
+import '../../shared/widgets/tabla_mirame.dart';
 import '../auth/session_controller.dart';
 import 'cierre_sheet.dart';
 import '../shell/app_shell.dart';
@@ -116,6 +117,15 @@ class _CajaViewState extends ConsumerState<CajaView> {
 
     final escritorio = esEscritorio(context);
 
+    final vacio = EstadoVacio(
+      emoji: '💸',
+      titulo: 'Sin movimientos',
+      detalle: _filtro == 'all'
+          ? 'No hay movimientos en ${nombreMes(_mes)}'
+          : 'No hay ${_filtro == "income" ? "ingresos" : "gastos"} '
+              'en ${nombreMes(_mes)}',
+    );
+
     final selector = _SelectorMes(
       mes: _mes,
       onAnterior: () => setState(() => _offsetMes--),
@@ -207,15 +217,20 @@ class _CajaViewState extends ConsumerState<CajaView> {
                     // tarjetas de 600 px y el neto abajo solo se leen como un
                     // formulario de celular.
                     FadeSlideIn(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(child: ingresos),
-                          const SizedBox(width: 12),
-                          Expanded(child: gastos),
-                          const SizedBox(width: 12),
-                          Expanded(child: neto),
-                        ],
+                      // IntrinsicHeight: dentro de un ListView el alto es
+                      // infinito y `stretch` a secas no tiene contra qué
+                      // estirar; así las tres tarjetas quedan igual de altas.
+                      child: IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(child: ingresos),
+                            const SizedBox(width: 12),
+                            Expanded(child: gastos),
+                            const SizedBox(width: 12),
+                            Expanded(child: neto),
+                          ],
+                        ),
                       ),
                     )
                   else ...[
@@ -257,15 +272,18 @@ class _CajaViewState extends ConsumerState<CajaView> {
                       ),
                     ),
                   ),
-                  if (movimientos.isEmpty)
-                    EstadoVacio(
-                      emoji: '💸',
-                      titulo: 'Sin movimientos',
-                      detalle: _filtro == 'all'
-                          ? 'No hay movimientos en ${nombreMes(_mes)}'
-                          : 'No hay ${_filtro == "income" ? "ingresos" : "gastos"} '
-                              'en ${nombreMes(_mes)}',
+                  if (escritorio)
+                    FadeSlideIn(
+                      delay: const Duration(milliseconds: 130),
+                      child: _tablaMovimientos(
+                        context,
+                        ref,
+                        movimientos,
+                        vacio: vacio,
+                      ),
                     )
+                  else if (movimientos.isEmpty)
+                    vacio
                   else
                     for (var i = 0; i < movimientos.length; i++)
                       FadeSlideIn(
@@ -282,6 +300,87 @@ class _CajaViewState extends ConsumerState<CajaView> {
     );
   }
 }
+
+/// Los movimientos como tabla, para escritorio: fecha, concepto, categoría,
+/// método y el monto con signo y color a la derecha. Ordenable por fecha y
+/// por monto; arranca del más nuevo al más viejo, como la lista.
+Widget _tablaMovimientos(
+  BuildContext context,
+  WidgetRef ref,
+  List<Transaction> movimientos, {
+  required Widget vacio,
+}) =>
+    TablaMirame<Transaction>(
+      filas: movimientos,
+      claveDe: (m) => m.id,
+      expandir: false,
+      vacio: vacio,
+      onTap: (m) => _mostrarFormulario(context, ref, mov: m),
+      columnas: [
+        ColumnaTabla(
+          titulo: 'Fecha',
+          ancho: 110,
+          ordenarPor: (m) => m.fecha,
+          celda: (_, m) =>
+              CeldaTexto(formatDateShort(m.fecha), color: MColors.tSecondary),
+        ),
+        ColumnaTabla(
+          titulo: 'Concepto',
+          flex: 3,
+          celda: (_, m) => Row(
+            children: [
+              Text(
+                m.tipo == TxTipo.income ? '✅' : '🔴',
+                style: const TextStyle(fontSize: 13),
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: CeldaTexto(
+                  m.descripcion?.isNotEmpty ?? false
+                      ? m.descripcion!
+                      : (m.categoria?.isNotEmpty ?? false
+                          ? m.categoria!
+                          : 'Movimiento'),
+                  peso: 500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        ColumnaTabla(
+          titulo: 'Categoría',
+          flex: 2,
+          ordenarPor: (m) => (m.categoria ?? '').toLowerCase(),
+          celda: (_, m) => CeldaTexto(
+            m.categoria?.isNotEmpty ?? false ? m.categoria! : '—',
+            color: MColors.tSecondary,
+          ),
+        ),
+        ColumnaTabla(
+          titulo: 'Método',
+          ancho: 120,
+          celda: (_, m) => CeldaTexto(
+            _FilaMovimiento._metodo(m.metodo),
+            color: MColors.tMuted,
+          ),
+        ),
+        ColumnaTabla(
+          titulo: 'Monto',
+          ancho: 130,
+          numerica: true,
+          ordenarPor: (m) => m.tipo == TxTipo.income ? m.monto : -m.monto,
+          celda: (_, m) {
+            final esIngreso = m.tipo == TxTipo.income;
+            return CeldaTexto(
+              '${esIngreso ? '+' : '-'}${formatMoney(m.monto)}',
+              numerica: true,
+              peso: 700,
+              color: esIngreso ? MColors.ingreso : MColors.gasto,
+            );
+          },
+        ),
+      ],
+    );
 
 class _Total extends StatelessWidget {
   const _Total({

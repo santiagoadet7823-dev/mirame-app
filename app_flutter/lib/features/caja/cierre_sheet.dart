@@ -84,9 +84,7 @@ class _SheetCierre extends StatelessWidget {
                     style: serif(
                       size: 32,
                       weight: 600,
-                      color: s.neta < 0
-                          ? MColors.dangerText
-                          : MColors.tPrimary,
+                      color: s.neta < 0 ? MColors.dangerText : MColors.tPrimary,
                     ),
                   ),
                   const SizedBox(height: 6),

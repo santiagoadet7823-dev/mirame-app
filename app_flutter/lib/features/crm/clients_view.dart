@@ -14,6 +14,8 @@ import '../../data/local/database.dart';
 import '../../data/repositories/business_repository.dart';
 import '../../domain/rules/access.dart';
 import '../../domain/rules/formatting.dart';
+import '../../shared/widgets/panel_lateral.dart';
+import '../../shared/widgets/tabla_mirame.dart';
 import '../auth/session_controller.dart';
 import '../dashboard/dashboard_view.dart';
 import '../shell/app_shell.dart';
@@ -43,9 +45,30 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
   String _busqueda = '';
   String _filtro = 'all';
 
+  /// La clienta abierta en el panel lateral (solo escritorio). Se guarda el
+  /// id y no el objeto: si se edita, la fila nueva viene de la base y el
+  /// panel tiene que mostrar los datos nuevos.
+  String? _abiertaId;
+
+  Widget _tabla(
+    List<Client> lista,
+    Map<String, ({int turnos, double gastado})> resumen,
+    Widget vacio,
+  ) =>
+      _tablaClientas(
+        lista,
+        resumen,
+        vacio,
+        abiertaId: _abiertaId,
+        // Tocar la fila abierta la cierra: es el gesto natural de "listo".
+        onAbrir: (c) =>
+            setState(() => _abiertaId = _abiertaId == c.id ? null : c.id),
+      );
+
   @override
   Widget build(BuildContext context) {
     final todas = ref.watch(clientesProvider).value ?? const <Client>[];
+    final escritorio = esEscritorio(context);
     final busqueda = _busqueda.trim().toLowerCase();
     final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirAgenda));
     final resumen = ref.watch(resumenClientesProvider).value ??
@@ -69,6 +92,21 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
     } else if (_filtro == 'recent') {
       lista = [...lista]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
       lista = lista.take(20).toList();
+    }
+
+    final vacio = EstadoVacio(
+      // Textos literales de `renderClients`.
+      emoji: busqueda.isEmpty ? '🌸' : '🔍',
+      titulo: busqueda.isEmpty ? 'Sin clientas' : 'Sin resultados',
+      detalle: busqueda.isEmpty
+          ? 'Registrá tu primera clienta'
+          : 'Probá con otro nombre o teléfono',
+    );
+    Client? abierta;
+    if (_abiertaId != null) {
+      for (final c in todas) {
+        if (c.id == _abiertaId) abierta = c;
+      }
     }
 
     return Scaffold(
@@ -125,28 +163,39 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
               ),
             ),
             Expanded(
-              child: lista.isEmpty
-                  ? EstadoVacio(
-                      // Textos literales de `renderClients`.
-                      emoji: busqueda.isEmpty ? '🌸' : '🔍',
-                      titulo:
-                          busqueda.isEmpty ? 'Sin clientas' : 'Sin resultados',
-                      detalle: busqueda.isEmpty
-                          ? 'Registrá tu primera clienta'
-                          : 'Probá con otro nombre o teléfono',
-                    )
-                  : ListView.builder(
+              child: escritorio
+                  ? Padding(
                       padding: padVista(context, sinArriba: true),
-                      itemCount: lista.length,
-                      itemBuilder: (_, i) => FadeSlideIn(
-                        delay: Duration(milliseconds: (i < 8 ? i : 8) * 35),
-                        child: _FilaCliente(
-                          cliente: lista[i],
-                          turnos: resumen[lista[i].id]?.turnos ?? 0,
-                          gastado: resumen[lista[i].id]?.gastado ?? 0,
-                        ),
+                      child: MaestroDetalle(
+                        lista: _tabla(lista, resumen, vacio),
+                        panel: abierta == null
+                            ? null
+                            : PanelLateral(
+                                titulo: 'Ficha',
+                                onCerrar: () =>
+                                    setState(() => _abiertaId = null),
+                                child: FichaCliente(
+                                  key: ValueKey(abierta.id),
+                                  cliente: abierta,
+                                  enPanel: true,
+                                ),
+                              ),
                       ),
-                    ),
+                    )
+                  : lista.isEmpty
+                      ? vacio
+                      : ListView.builder(
+                          padding: padVista(context, sinArriba: true),
+                          itemCount: lista.length,
+                          itemBuilder: (_, i) => FadeSlideIn(
+                            delay: Duration(milliseconds: (i < 8 ? i : 8) * 35),
+                            child: _FilaCliente(
+                              cliente: lista[i],
+                              turnos: resumen[lista[i].id]?.turnos ?? 0,
+                              gastado: resumen[lista[i].id]?.gastado ?? 0,
+                            ),
+                          ),
+                        ),
             ),
           ],
         ),
@@ -154,6 +203,103 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
     );
   }
 }
+
+/// La tabla de escritorio. Las mismas cosas que la tarjeta —nombre, VIP,
+/// teléfono, turnos, gasto— pero una por columna, ordenables.
+Widget _tablaClientas(
+  List<Client> lista,
+  Map<String, ({int turnos, double gastado})> resumen,
+  Widget vacio, {
+  required String? abiertaId,
+  required void Function(Client) onAbrir,
+}) =>
+    TablaMirame<Client>(
+      filas: lista,
+      claveDe: (c) => c.id,
+      seleccionada: abiertaId,
+      onTap: onAbrir,
+      vacio: vacio,
+      altoFila: 56,
+      columnas: [
+        ColumnaTabla(
+          titulo: 'Clienta',
+          flex: 3,
+          ordenarPor: (c) => c.nombre.toLowerCase(),
+          celda: (_, c) => Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: MGradient.avatar(avatarIndex(c.nombre)),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  initials(c.nombre),
+                  style: sans(size: 12, weight: 700, color: MColors.tWhite),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Flexible(child: CeldaTexto(c.nombre, peso: 600)),
+              if (c.vip) ...[
+                const SizedBox(width: 8),
+                const TagVip(),
+              ],
+            ],
+          ),
+        ),
+        ColumnaTabla(
+          titulo: 'Teléfono',
+          flex: 2,
+          celda: (_, c) => CeldaTexto(
+            c.telefono?.isNotEmpty ?? false ? c.telefono! : '—',
+            color: MColors.tSecondary,
+          ),
+        ),
+        ColumnaTabla(
+          titulo: 'Turnos',
+          ancho: 90,
+          numerica: true,
+          ordenarPor: (c) => resumen[c.id]?.turnos ?? 0,
+          celda: (_, c) => CeldaTexto(
+            '${resumen[c.id]?.turnos ?? 0}',
+            numerica: true,
+          ),
+        ),
+        ColumnaTabla(
+          titulo: 'Total',
+          ancho: 120,
+          numerica: true,
+          ordenarPor: (c) => resumen[c.id]?.gastado ?? 0,
+          celda: (_, c) {
+            final g = resumen[c.id]?.gastado ?? 0;
+            return CeldaTexto(
+              g > 0 ? formatMoney(g) : '—',
+              numerica: true,
+              peso: g > 0 ? 600 : 400,
+              color: g > 0 ? MColors.brand : MColors.tLight,
+            );
+          },
+        ),
+        ColumnaTabla(
+          titulo: 'Alta',
+          ancho: 110,
+          ordenarPor: (c) => c.createdAt,
+          celda: (_, c) => CeldaTexto(
+            formatDateShort(c.createdAt),
+            color: MColors.tMuted,
+          ),
+        ),
+        ColumnaTabla(
+          titulo: '',
+          ancho: 44,
+          celda: (_, c) => c.telefono?.isNotEmpty ?? false
+              ? _BotonWhatsapp(telefono: c.telefono!)
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
 
 /// `.cli-card` — avatar de 46, nombre, tag VIP, teléfono, estadísticas y la
 /// flecha `›` a la derecha.

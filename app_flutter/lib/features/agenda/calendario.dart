@@ -99,11 +99,15 @@ class CalendarioMes extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _BotonNav(simbolo: '‹', onTap: () => onCambiarMes(-1)),
-                Text(
-                  // "Agosto 2026" — el original capitaliza el mes.
-                  '${monthName(mes.month)} ${mes.year}',
-                  style: serif(size: 17, weight: 600)
-                      .copyWith(letterSpacing: 0.2),
+                Flexible(
+                  child: Text(
+                    // "Agosto 2026" — el original capitaliza el mes.
+                    '${monthName(mes.month)} ${mes.year}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: serif(size: 17, weight: 600)
+                        .copyWith(letterSpacing: 0.2),
+                  ),
                 ),
                 _BotonNav(simbolo: '›', onTap: () => onCambiarMes(1)),
               ],
