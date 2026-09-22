@@ -1090,3 +1090,17 @@ Todo lo nuevo vive en `app_flutter/lib/shared/widgets/comportamiento.dart`, con 
 colapsable y tabs pegadas en la ficha, CTA fijo que se esconde, sheet de filtros de Tienda,
 degradé del carrusel de retoques. Y la rotación con el panel abierto espera a la Tanda A, porque
 `main.dart` todavía fuerza vertical.
+
+### 2026-09-22 — Publicada la 1.18.0 (APK + PWA)
+
+Primera versión con la capa de comportamiento. Release `apk-1.18.0`
+(`app-release.apk`, 95,8 MB, se sirve con `application/vnd.android.package-archive`) y PWA
+republicada del mismo commit.
+
+`app_config` actualizado a mano por SQL, como siempre —falta el secret
+`SUPABASE_SERVICE_ROLE_KEY` en GitHub para que lo haga el CI—:
+
+- `latest_version` → `1.18.0`, `apk_url` → el release nuevo.
+- **`min_version` sigue en `1.0.0` a propósito**: publicar el release avisa, subir `min_version`
+  obliga. Nadie probó todavía la 1.18.0 en un teléfono; recién después tiene sentido tocarlo.
+- `mensaje_global` cuenta los gestos nuevos, que no se descubren solos.
