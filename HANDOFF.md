@@ -1030,3 +1030,32 @@ Android** con calendario + turnos del día. Se decidió arrancar por el paquete 
 después implementar en Flutter. El widget es código nativo (Kotlin, AppWidget/Glance + puente
 desde Flutter vía SharedPreferences; no hay `home_widget` en pubspec) y se planifica aparte.
 Sigue pendiente la prueba del APK 1.17.3 en un teléfono de los que fallaban.
+
+### 2026-09-22 — Llegó la entrega del diseñador (y la vista de tablet)
+
+El diseñador entregó ocho artboards en `Mobile app UIUX design/entrega-uiux/` (fuera del repo):
+componentes, celular, escritorio, widget y **APK en tablet horizontal 1280×800**, que el usuario
+pidió aparte para usar la app apoyada en el mostrador.
+
+Análisis completo en **`14-ANALISIS-ENTREGA-UIUX.md`**: qué entregó, qué ya está construido, qué
+cambia, qué necesita datos que no existen, las 8 inconsistencias entre archivos, y la capa de
+comportamiento que faltaba (scroll, zonas fijas, esqueletos, gestos).
+
+**Dos hallazgos que bloquean la tablet:**
+1. `main.dart:21` fuerza `portraitUp`: **la app no gira**. El manifest ya declara los
+   `configChanges`, así que alcanza con sacar esa línea. El usuario pidió giro libre en todos los
+   dispositivos.
+2. `core/layout/layout.dart` decide solo por ancho: una tablet de 1280 caería hoy en el layout de
+   escritorio (hover, atajo `/`, tablas de 52). Falta el eje **dedo vs. puntero**
+   (`!kIsWeb && (Android||iOS)`), con riel de 92 y escalas táctiles.
+
+**Decisiones ya tomadas por el usuario:** tokens nuevos aprobados (`skyBg`, `sky300`, `sky700`,
+`nude700`, `widgetSurface`), retoques antes que alertas de stock, corazón de Tienda = publicada,
+y Caja en tablet abre en "cobrar el turno de ahora".
+
+**Abierto:** si la KPI hero pasa de gradiente claro a brand sólido con texto blanco (cambia el
+elemento más reconocible de la app), y si la ficha lleva tab Fotos (no hay tabla de fotos de
+clienta: es proyecto aparte con migración y storage).
+
+**Plan por tandas** (A giro + táctil · B componentes · C pantallas · D comportamiento · E widget y
+fotos) en el §8 del análisis. Sigue pendiente la prueba del APK 1.17.3.
