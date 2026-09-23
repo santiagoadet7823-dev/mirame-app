@@ -1373,3 +1373,50 @@ Dos cosas que quedan de esto:
 - **Antes de publicar, correr `flutter build web --release` en local.** `analyze` + tests no alcanzan:
   hay una clase de error que solo aparece al compilar. El comando, con Git Bash, necesita
   `MSYS_NO_PATHCONV=1` o convierte `/mirame-app/` en una ruta de Windows.
+
+### 2026-09-23 — 1.23.0: Realtime, el offline auditado, y pasar la app
+
+#### Auditoria del camino offline (pedida: "que no se pierdan los datos sin internet")
+
+Casi todo estaba bien y vale dejarlo escrito: la escritura va **primero a SQLite local**, el outbox
+es una **tabla persistida** que sobrevive a que se cierre la app, **nada la borra salvo una subida
+exitosa** (`olvidarCursores` solo toca `sync_state`), el ciclo **sube antes de bajar** \u2014bajando
+primero, la version vieja del servidor pisaria un cambio sin subir\u2014 y el stock viaja como **delta**
+y no como valor absoluto, asi que dos descuentos hechos sin senal se aplican los dos. Tampoco hay
+claves foraneas declaradas localmente, asi que el `insert or replace` del pull no arrastra hijos.
+
+**El agujero estaba en los reintentos**, y el propio `05-OFFLINE-SYNC.md` ya decia como tenia que
+ser: "un error de red **no cuenta** como intento fallido". El codigo contaba cualquier error. Con
+`kMaxIntentos = 8` y el backoff, unos veinte minutos sin senal dejaban un cambio **trabado**, y al
+volver el internet no subia solo: habia que entrar a Ajustes y tocar Reintentar, sabiendo que eso
+existe. El dato no se borraba nunca, pero para quien lo cargo es lo mismo que perderlo. Y el cambio
+de la tanda anterior lo empeoraba: sincronizando cada 45 s en vez de cada 3 minutos, los ocho
+intentos se gastan cinco veces mas rapido.
+
+`esRechazoDelServidor` separa "el servidor dijo que no" de "no llegue al servidor". Solo cuenta un
+`PostgrestException` con codigo de clase permanente: `22xxx`, `23xxx`, `42xxx` (ahi cae RLS con
+42501) y los `PGRST`. Un `40001` o un `57014` son transitorios. **Ante la duda no cuenta**: una fila
+que reintenta de mas se ve en el contador de pendientes, una que dejo de reintentar no se ve en
+ningun lado. El test encola un cambio y pide veinte ciclos sin servidor: sigue subible, con su
+payload entero y sin un intento gastado.
+
+#### Realtime
+
+Publicadas las 19 tablas de sync (`sql/12_realtime.sql`). La app se suscribe al salon activo y usa
+el evento **solo como aviso**: corre un ciclo de pull normal, no aplica el payload. Es lo que pide
+§8 del doc de offline \u2014 acelerador del pull, nunca un reemplazo. Si la suscripcion no conecta, el
+ciclo periodico converge igual.
+
+El websocket se cierra en segundo plano, igual que el timer. Ajustes dice si esta "En vivo", porque
+en vivo y no en vivo se ven identicos hasta que uno mira el reloj.
+
+#### Pasar la app
+
+Faltaba un link y un QR para que otra persona se la instale. Las dos piezas existian y no se
+encontraban: `descargar.html` ya esta publicada y resuelve `releases/latest` sola, y el QR ya estaba
+escrito en `features/admin/invite_screen.dart` \u2014 colgado del panel de plataforma, o sea que llegaba
+el superadmin y nadie mas. Ahora hay una tarjeta en Ajustes con el link, Compartir, Copiar y Ver QR.
+
+El link va a `descargar.html` y **no** al `.apk` directo (un apk abierto desde la camara de un
+iPhone es un callejon sin salida), y **no** lleva el slug del salon: esto es "bajate la app", no
+"entra a mi salon". Los tests fijan las dos cosas, porque son faciles de romper sin que se note.
