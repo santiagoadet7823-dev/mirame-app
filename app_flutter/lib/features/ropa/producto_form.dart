@@ -662,24 +662,49 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              _botonFoto(
-                  icono: Icons.photo_camera_outlined,
-                  texto: 'Cámara',
-                  onTap: () => _agregarFoto(true)),
-              _botonFoto(
-                  icono: Icons.image_outlined,
-                  texto: 'Galería',
-                  onTap: () => _agregarFoto(false)),
+              // Los dos botones solo en el celular. En la PWA comprimir y
+              // guardar usan `dart:io`: el picker abría igual, fallaba en
+              // silencio y al volver no pasaba nada, así que la persona creía
+              // haber elegido mal la foto. Un botón que no puede cumplir es
+              // peor que un botón que no está.
+              if (puedeCargarFotos) ...[
+                _botonFoto(
+                    icono: Icons.photo_camera_outlined,
+                    texto: 'Cámara',
+                    onTap: () => _agregarFoto(true)),
+                _botonFoto(
+                    icono: Icons.image_outlined,
+                    texto: 'Galería',
+                    onTap: () => _agregarFoto(false)),
+              ],
+              // Los tres `errorBuilder` son el mismo trato que la portada del
+              // catálogo: sin ellos, una foto que falla dibuja el recuadro gris
+              // con la X de Flutter, que parece la app rota y no una foto que
+              // no está. El archivo local cae a nada —el fondo de la miniatura
+              // ya es un hueco, y arriba está la X de quitarla—; la remota cae
+              // al emoji tenue, que dice "acá había una prenda".
               for (final f in yaCargadas)
                 _miniatura(
                   hijo: f.pendienteDeSubir && f.rutaLocal != null
-                      ? Image.file(File(f.rutaLocal!), fit: BoxFit.cover)
-                      : Image.network(f.path, fit: BoxFit.cover),
+                      ? Image.file(
+                          File(f.rutaLocal!),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const SizedBox(),
+                        )
+                      : Image.network(
+                          f.path,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _fotoCaida(),
+                        ),
                   onQuitar: () => _quitarFotoGuardada(f),
                 ),
               for (var i = 0; i < _fotosNuevas.length; i++)
                 _miniatura(
-                  hijo: Image.file(File(_fotosNuevas[i]), fit: BoxFit.cover),
+                  hijo: Image.file(
+                    File(_fotosNuevas[i]),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox(),
+                  ),
                   onQuitar: () => setState(() => _fotosNuevas.removeAt(i)),
                 ),
             ],
@@ -791,6 +816,15 @@ class _FormProductoState extends ConsumerState<_FormProducto> {
               Text(texto, style: sans(size: 10, color: MColors.tMuted)),
             ],
           ),
+        ),
+      );
+
+  /// El reemplazo de una foto remota que no cargó. El mismo emoji tenue del
+  /// catálogo, más chico porque acá el hueco mide 76 y no media tarjeta.
+  Widget _fotoCaida() => Center(
+        child: Opacity(
+          opacity: 0.25,
+          child: Text('👗', style: const TextStyle(fontSize: 26)),
         ),
       );
 

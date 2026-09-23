@@ -299,6 +299,15 @@ class _MiTiendaState extends ConsumerState<_MiTienda> {
                 style: sans(size: 12, color: MColors.tSecondary),
               ),
               const SizedBox(height: 12),
+              // El logo y la portada solo se pueden elegir desde el celular:
+              // comprimir usa `dart:io`. En la PWA el selector abría y después
+              // no pasaba nada. Se siguen viendo los que ya están cargados; lo
+              // que no se ofrece es cambiarlos desde acá.
+              if (!puedeCargarFotos)
+                Text(
+                  'Para cambiar el logo o la portada, entrá desde el celular.',
+                  style: sans(size: 12, color: MColors.tMuted),
+                ),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -486,7 +495,9 @@ class _Imagen extends StatelessWidget {
         Text(etiqueta, style: sans(size: 11.5, color: MColors.tSecondary)),
         const SizedBox(height: 6),
         GestureDetector(
-          onTap: onElegir,
+          // Sin `onTap` donde no puede cumplir: tocar y que no pase nada se lee
+          // como app rota.
+          onTap: puedeCargarFotos ? onElegir : null,
           child: Container(
             height: alto,
             width: redondo ? alto : null,
@@ -498,7 +509,12 @@ class _Imagen extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             child: hay
                 ? (local != null
-                    ? Image.file(File(local!), fit: BoxFit.cover)
+                    // Cae a nada, como la remota de al lado: el fondo del
+                    // `Container` ya es el hueco, y sin `errorBuilder` una foto
+                    // que se borró del teléfono dibujaba la X gris de Flutter.
+                    ? Image.file(File(local!),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox())
                     : Image.network(remota!,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const SizedBox()))

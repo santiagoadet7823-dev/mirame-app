@@ -92,10 +92,37 @@ class RopaView extends ConsumerStatefulWidget {
   ConsumerState<RopaView> createState() => _RopaViewState();
 }
 
+/// Las mismas opciones en el sheet del teléfono y en la columna de la tablet.
+/// Estaban escritas dos veces y ya se habían despegado: la columna tenía RUBRO
+/// y el sheet no.
+const _rubros = [
+  ('todo', 'Todo'),
+  ('ropa', 'Ropa'),
+  ('arbell', 'Arbell'),
+  ('insumos', 'Insumos'),
+];
+
+const _estados = [
+  ('todos', 'Todos'),
+  ('publicados', 'En la tienda'),
+  ('sin_publicar', 'Sin publicar'),
+  ('sin_stock', 'Sin stock'),
+];
+
+/// `nuevas` es el orden con el que el repositorio ya entrega los productos
+/// (`createdAt desc`), así que es el default y no ordena nada.
+const _ordenes = [
+  ('nuevas', 'Más nuevas'),
+  ('precio', 'Precio'),
+  ('stock', 'Stock'),
+];
+
 class _RopaViewState extends ConsumerState<RopaView> {
   final _busqueda = TextEditingController();
   String _filtro = 'todos';
   String _rubro = 'todo';
+  String _proveedor = 'todos';
+  String _orden = 'nuevas';
 
   /// Producto abierto en el panel lateral (solo escritorio). Por id: si se
   /// edita, el panel muestra la fila nueva.
@@ -109,9 +136,16 @@ class _RopaViewState extends ConsumerState<RopaView> {
 
   /// Sheet de filtros. El CTA cuenta el resultado ANTES de aplicar: elegir a
   /// ciegas y descubrir que no quedó nada es el camino largo.
+  ///
+  /// Los tres grupos vuelven juntos en un registro: con un `String` suelto
+  /// había que abrir un sheet por filtro, y el contador del CTA solo podía
+  /// contar uno de ellos.
   Future<void> _abrirFiltros(BuildContext context) async {
-    var elegido = _filtro;
-    final r = await showAppSheet<String>(
+    var estado = _filtro;
+    var proveedor = _proveedor;
+    var orden = _orden;
+    final proveedores = ref.read(proveedoresProvider).value ?? const [];
+    final r = await showAppSheet<(String, String, String)>(
       context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) => Container(
@@ -136,7 +170,11 @@ class _RopaViewState extends ConsumerState<RopaView> {
                           Text('Filtros', style: serif(size: 22, weight: 600)),
                     ),
                     PressableScale(
-                      onTap: () => setSheet(() => elegido = 'todos'),
+                      onTap: () => setSheet(() {
+                        estado = 'todos';
+                        proveedor = 'todos';
+                        orden = 'nuevas';
+                      }),
                       child: Text(
                         'Limpiar',
                         style: sans(
@@ -151,48 +189,62 @@ class _RopaViewState extends ConsumerState<RopaView> {
                   spacing: 7,
                   runSpacing: 7,
                   children: [
-                    for (final (clave, etiqueta) in const [
-                      ('todos', 'Todos'),
-                      ('publicados', 'En la tienda'),
-                      ('sin_publicar', 'Sin publicar'),
-                      ('sin_stock', 'Sin stock'),
-                    ])
-                      PressableScale(
-                        onTap: () => setSheet(() => elegido = clave),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 9),
-                          decoration: BoxDecoration(
-                            color: elegido == clave
-                                ? MColors.brandBg
-                                : MColors.surface,
-                            border: Border.all(
-                              color: elegido == clave
-                                  ? MColors.borderLav
-                                  : MColors.border,
-                            ),
-                            borderRadius: BorderRadius.circular(MRadius.full),
-                          ),
-                          child: Text(
-                            etiqueta,
-                            style: sans(
-                              size: 12.5,
-                              weight: elegido == clave ? 600 : 500,
-                              color: elegido == clave
-                                  ? MColors.brandDark
-                                  : MColors.tSecondary,
-                            ),
-                          ),
+                    for (final (clave, etiqueta) in _estados)
+                      _ChipFiltro(
+                        texto: etiqueta,
+                        activo: estado == clave,
+                        onTap: () => setSheet(() => estado = clave),
+                      ),
+                  ],
+                ),
+                // Un grupo con una sola opción no es un filtro: si no hay
+                // proveedores cargados, "Todos" solo ocupa lugar.
+                if (proveedores.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  const EtiquetaSeccion('PROVEEDOR'),
+                  Wrap(
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: [
+                      _ChipFiltro(
+                        texto: 'Todos',
+                        activo: proveedor == 'todos',
+                        onTap: () => setSheet(() => proveedor = 'todos'),
+                      ),
+                      for (final p in proveedores)
+                        _ChipFiltro(
+                          texto: p.nombre,
+                          activo: proveedor == p.id,
+                          onTap: () => setSheet(() => proveedor = p.id),
                         ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 18),
+                const EtiquetaSeccion('ORDEN'),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  children: [
+                    for (final (clave, etiqueta) in _ordenes)
+                      _ChipFiltro(
+                        texto: etiqueta,
+                        activo: orden == clave,
+                        onTap: () => setSheet(() => orden = clave),
                       ),
                   ],
                 ),
                 const SizedBox(height: 20),
                 CtaFijo(
-                  texto: 'Ver ${_cuantosCon(elegido)} '
-                      '${_cuantosCon(elegido) == 1 ? "artículo" : "artículos"}',
+                  // El orden no cambia cuántos quedan, así que no entra en la
+                  // cuenta: solo estado y proveedor.
+                  texto: switch (_cuantosCon(estado, proveedor)) {
+                    1 => 'Ver 1 artículo',
+                    final n => 'Ver $n artículos',
+                  },
                   conDegrade: false,
-                  onTap: () => Navigator.of(ctx).pop(elegido),
+                  onTap: () =>
+                      Navigator.of(ctx).pop((estado, proveedor, orden)),
                 ),
               ],
             ),
@@ -200,11 +252,18 @@ class _RopaViewState extends ConsumerState<RopaView> {
         ),
       ),
     );
-    if (r != null && mounted) setState(() => _filtro = r);
+    if (r != null && mounted) {
+      setState(() {
+        _filtro = r.$1;
+        _proveedor = r.$2;
+        _orden = r.$3;
+      });
+    }
   }
 
-  /// Cuántos quedarían con ese estado, sin tocar el filtro todavía.
-  int _cuantosCon(String estado) {
+  /// Cuántos quedarían con ese estado y ese proveedor, sin tocar los filtros
+  /// todavía.
+  int _cuantosCon(String estado, String proveedor) {
     final productos = ref.read(productosProvider).value ?? const [];
     final variantes = ref.read(variantesProvider).value ?? const {};
     final stock = ref.read(stockRopaProvider).value ?? const {};
@@ -212,6 +271,7 @@ class _RopaViewState extends ConsumerState<RopaView> {
         (variantes[id] ?? const []).fold(0, (a, v) => a + (stock[v.id] ?? 0));
     return productos.where((p) {
       if (_rubro != 'todo' && p.rubro != _rubro) return false;
+      if (proveedor != 'todos' && p.proveedorId != proveedor) return false;
       return switch (estado) {
         'publicados' => p.publicado,
         'sin_publicar' => !p.publicado,
@@ -229,7 +289,14 @@ class _RopaViewState extends ConsumerState<RopaView> {
     final variantes = ref.watch(variantesProvider).value ?? const {};
     final stock = ref.watch(stockRopaProvider).value ?? const {};
     final portadas = ref.watch(portadasProvider).value ?? const {};
+    final proveedores = ref.watch(proveedoresProvider).value ?? const [];
     final puedeEscribir = ref.watch(puedeProvider(Permiso.operarNegocio));
+
+    // Si el proveedor elegido se borró, el filtro dejaría la grilla vacía sin
+    // que nada lo explique: se cae a "Todos" solo.
+    final proveedor = proveedores.any((p) => p.id == _proveedor)
+        ? _proveedor
+        : 'todos';
 
     /// Cuántas unidades hay de un producto, sumando todas sus variantes.
     int stockDe(String productoId) => (variantes[productoId] ?? const [])
@@ -245,6 +312,7 @@ class _RopaViewState extends ConsumerState<RopaView> {
         if (!enNombre && !enCodigo) return false;
       }
       if (_rubro != 'todo' && p.rubro != _rubro) return false;
+      if (proveedor != 'todos' && p.proveedorId != proveedor) return false;
       return switch (_filtro) {
         'publicados' => p.publicado,
         'sin_publicar' => !p.publicado,
@@ -252,6 +320,22 @@ class _RopaViewState extends ConsumerState<RopaView> {
         _ => true,
       };
     }).toList();
+
+    // "Más nuevas" no ordena nada: es el orden con el que el repositorio ya
+    // entrega los productos (`createdAt desc`). Los otros dos se ordenan en
+    // memoria, como Clientas y Stats — y el stock no puede ser de otra forma:
+    // no es una columna, se suma por variante, así que SQL no lo ve.
+    switch (_orden) {
+      case 'precio':
+        // Ascendente: la pregunta que se hace en el mostrador es "¿qué tenés
+        // más barato?". Para encontrar lo caro nadie necesita ayuda.
+        visibles.sort((a, b) => a.precio.compareTo(b.precio));
+      case 'stock':
+        // Descendente: ordenar por stock es para mover lo que sobra (de ahí
+        // Liquidar). Lo que falta ya tiene su propio filtro, Estado → Sin
+        // stock, y arriba de la grilla no sirve de nada.
+        visibles.sort((a, b) => stockDe(b.id).compareTo(stockDe(a.id)));
+    }
 
     final escritorio = esPantallaGrande(context);
     // La tablet del mostrador: el ancho que sobra se usa para dejar los
@@ -292,8 +376,10 @@ class _RopaViewState extends ConsumerState<RopaView> {
                   ),
                 ),
           lista: _conColumnaDeFiltros(
-            tablet,
-            ListView(
+            tablet: tablet,
+            proveedores: proveedores,
+            proveedor: proveedor,
+            grilla: ListView(
               padding: tablet
                   ? padVista(context).copyWith(left: 0)
                   : padVista(context),
@@ -384,19 +470,18 @@ class _RopaViewState extends ConsumerState<RopaView> {
                     children: [
                       Expanded(
                         child: FilaFiltros(
-                          opciones: const [
-                            ('todo', 'Todo'),
-                            ('ropa', 'Ropa'),
-                            ('arbell', 'Arbell'),
-                            ('insumos', 'Insumos'),
-                          ],
+                          opciones: _rubros,
                           activo: _rubro,
                           onElegir: (v) => setState(() => _rubro = v),
                         ),
                       ),
                       const SizedBox(width: 9),
                       _BotonFiltros(
-                        activos: _filtro == 'todos' ? 0 : 1,
+                        activos: [
+                          _filtro != 'todos',
+                          proveedor != 'todos',
+                          _orden != 'nuevas',
+                        ].where((v) => v).length,
                         onTap: () => _abrirFiltros(context),
                       ),
                     ],
@@ -423,58 +508,54 @@ class _RopaViewState extends ConsumerState<RopaView> {
               else
                 // `GridView` adentro de un `ListView`: shrinkWrap y sin scroll
                 // propio, para que la página entera se desplace como una sola.
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: EdgeInsets.zero,
-                  gridDelegate: tablet
-                      // Cuatro fijas, como las pidió el diseñador: con la
-                      // columna de filtros al costado el ancho ya está
-                      // decidido, y una quinta dejaría la foto muy chica.
-                      ? const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          crossAxisSpacing: 14,
-                          mainAxisSpacing: 14,
-                          childAspectRatio: 0.66,
-                        )
-                      : escritorio
-                      // Por ancho máximo de tarjeta, no por cantidad: así entran
-                      // 4 en una notebook y 6 en un monitor grande sin un caso
-                      // especial para cada pantalla.
-                      ? const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 230,
-                          crossAxisSpacing: 14,
-                          mainAxisSpacing: 14,
-                          childAspectRatio: 0.62,
-                        )
-                      : const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          // Más alto que ancho: la foto es vertical y abajo
-                          // entran nombre, precio y stock.
-                          childAspectRatio: 0.62,
+                //
+                // Y adentro de un `LayoutBuilder`, porque el ancho de la grilla
+                // no es el de la pantalla: le comieron la columna de filtros y
+                // —cuando está abierto— el panel lateral de 400 px.
+                LayoutBuilder(
+                  builder: (ctx, limites) => GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                    gridDelegate: _grillaPrendas(
+                      ctx,
+                      ancho: limites.maxWidth,
+                      espacio: escritorio ? 14 : 12,
+                      // En el teléfono son dos y punto: por ancho mínimo daría
+                      // una sola columna, o sea una lista con fotos enormes.
+                      columnas: !escritorio
+                          ? 2
+                          : columnasPara(
+                              limites.maxWidth,
+                              minAncho: 220,
+                              // A los 924 px que le quedan a la tablet de 1280
+                              // esto da las cuatro que pidió el diseñador; con
+                              // el panel abierto baja solo.
+                              max: tablet ? 4 : 6,
+                            ),
+                    ),
+                    itemCount: visibles.length,
+                    itemBuilder: (_, i) {
+                      final p = visibles[i];
+                      return FadeSlideIn(
+                        delay:
+                            Duration(milliseconds: 100 + (i < 8 ? i : 8) * 30),
+                        child: _TarjetaPrenda(
+                          producto: p,
+                          portada: portadas[p.id],
+                          stock: stockDe(p.id),
+                          variantes: (variantes[p.id] ?? const []).length,
+                          // En escritorio, tocar abre el panel de al lado; en
+                          // el teléfono va directo al formulario, como siempre.
+                          onTap: escritorio
+                              ? () => setState(() =>
+                                  _abiertoId = _abiertoId == p.id ? null : p.id)
+                              : () => abrirFormularioProducto(context, ref,
+                                  producto: p),
                         ),
-                  itemCount: visibles.length,
-                  itemBuilder: (_, i) {
-                    final p = visibles[i];
-                    return FadeSlideIn(
-                      delay: Duration(milliseconds: 100 + (i < 8 ? i : 8) * 30),
-                      child: _TarjetaPrenda(
-                        producto: p,
-                        portada: portadas[p.id],
-                        stock: stockDe(p.id),
-                        variantes: (variantes[p.id] ?? const []).length,
-                        // En escritorio, tocar abre el panel de al lado; en
-                        // el teléfono va directo al formulario, como siempre.
-                        onTap: escritorio
-                            ? () => setState(() =>
-                                _abiertoId = _abiertoId == p.id ? null : p.id)
-                            : () => abrirFormularioProducto(context, ref,
-                                producto: p),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
             ],
             ),
@@ -487,7 +568,12 @@ class _RopaViewState extends ConsumerState<RopaView> {
   /// En la tablet los filtros van fijos a la izquierda de la grilla: con la
   /// clienta enfrente, abrir un sheet para cambiar de rubro y volver a
   /// cerrarlo es el camino largo, y el ancho está.
-  Widget _conColumnaDeFiltros(bool tablet, Widget grilla) {
+  Widget _conColumnaDeFiltros({
+    required bool tablet,
+    required List<db.Proveedore> proveedores,
+    required String proveedor,
+    required Widget grilla,
+  }) {
     if (!tablet) return grilla;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,8 +585,13 @@ class _RopaViewState extends ConsumerState<RopaView> {
             child: _ColumnaFiltros(
               rubro: _rubro,
               estado: _filtro,
+              proveedor: proveedor,
+              proveedores: proveedores,
+              orden: _orden,
               onRubro: (v) => setState(() => _rubro = v),
               onEstado: (v) => setState(() => _filtro = v),
+              onProveedor: (v) => setState(() => _proveedor = v),
+              onOrden: (v) => setState(() => _orden = v),
             ),
           ),
         ),
@@ -517,45 +608,72 @@ class _ColumnaFiltros extends StatelessWidget {
   const _ColumnaFiltros({
     required this.rubro,
     required this.estado,
+    required this.proveedor,
+    required this.proveedores,
+    required this.orden,
     required this.onRubro,
     required this.onEstado,
+    required this.onProveedor,
+    required this.onOrden,
   });
 
   final String rubro;
   final String estado;
+  final String proveedor;
+  final List<db.Proveedore> proveedores;
+  final String orden;
   final ValueChanged<String> onRubro;
   final ValueChanged<String> onEstado;
+  final ValueChanged<String> onProveedor;
+  final ValueChanged<String> onOrden;
 
   @override
+  // Sin aire extra entre grupos: `EtiquetaSeccion` ya trae 20 arriba y 8
+  // abajo, y los cuatro grupos suman unos 900 px. Una tablet de 1280x800 que
+  // reporta densidad 1,5 tiene **533** de alto, o sea ~405 utiles: la columna
+  // scrollea igual, pero cada pixel que se ahorra es una fila mas de filtro
+  // que se ve sin tener que descubrir que se puede scrollear.
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Filtros', style: serif(size: 20, weight: 600)),
           const SizedBox(height: 16),
           const EtiquetaSeccion('RUBRO'),
-          for (final (clave, etiqueta) in const [
-            ('todo', 'Todo'),
-            ('ropa', 'Ropa'),
-            ('arbell', 'Arbell'),
-            ('insumos', 'Insumos'),
-          ])
+          for (final (clave, etiqueta) in _rubros)
             _FilaFiltro(
               texto: etiqueta,
               activo: rubro == clave,
               onTap: () => onRubro(clave),
             ),
-          const SizedBox(height: 18),
           const EtiquetaSeccion('ESTADO'),
-          for (final (clave, etiqueta) in const [
-            ('todos', 'Todos'),
-            ('publicados', 'En la tienda'),
-            ('sin_publicar', 'Sin publicar'),
-            ('sin_stock', 'Sin stock'),
-          ])
+          for (final (clave, etiqueta) in _estados)
             _FilaFiltro(
               texto: etiqueta,
               activo: estado == clave,
               onTap: () => onEstado(clave),
+            ),
+          // Sin proveedores cargados el grupo sería "Todos" solo: una opción
+          // única no filtra nada, ocupa 44 px y hace dudar de si falta algo.
+          if (proveedores.isNotEmpty) ...[
+              const EtiquetaSeccion('PROVEEDOR'),
+            _FilaFiltro(
+              texto: 'Todos',
+              activo: proveedor == 'todos',
+              onTap: () => onProveedor('todos'),
+            ),
+            for (final p in proveedores)
+              _FilaFiltro(
+                texto: p.nombre,
+                activo: proveedor == p.id,
+                onTap: () => onProveedor(p.id),
+              ),
+          ],
+          const EtiquetaSeccion('ORDEN'),
+          for (final (clave, etiqueta) in _ordenes)
+            _FilaFiltro(
+              texto: etiqueta,
+              activo: orden == clave,
+              onTap: () => onOrden(clave),
             ),
         ],
       );
@@ -591,11 +709,53 @@ class _FilaFiltro extends StatelessWidget {
             ),
             child: Text(
               texto,
+              // El nombre de un proveedor lo escribe la dueña y la columna
+              // mide 210: sin esto, "Distribuidora del Norte SRL" desbordaba.
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: sans(
                 size: 13.5,
                 weight: activo ? 600 : 500,
                 color: activo ? MColors.brandDark : MColors.tSecondary,
               ),
+            ),
+          ),
+        ),
+      );
+}
+
+/// El chip del sheet de filtros del teléfono. Existe para no repetir el mismo
+/// `Container` en los tres grupos: cada copia era una chance de que una quedara
+/// con el borde viejo.
+class _ChipFiltro extends StatelessWidget {
+  const _ChipFiltro({
+    required this.texto,
+    required this.activo,
+    required this.onTap,
+  });
+
+  final String texto;
+  final bool activo;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => PressableScale(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            color: activo ? MColors.brandBg : MColors.surface,
+            border: Border.all(
+              color: activo ? MColors.borderLav : MColors.border,
+            ),
+            borderRadius: BorderRadius.circular(MRadius.full),
+          ),
+          child: Text(
+            texto,
+            style: sans(
+              size: 12.5,
+              weight: activo ? 600 : 500,
+              color: activo ? MColors.brandDark : MColors.tSecondary,
             ),
           ),
         ),
@@ -906,6 +1066,53 @@ class _Opcion extends StatelessWidget {
       );
 }
 
+/// Lo que mide el bloque de texto de una tarjeta: código + nombre en dos
+/// líneas + precio + stock, con su padding.
+///
+/// Se **reserva**, no se mide: el `GridView` necesita la relación de aspecto de
+/// la celda antes de construir una sola tarjeta. Pero no es un ojímetro, es una
+/// cuenta exacta, y se puede porque el tema pone `MText.cuerpoSec` en
+/// `bodyMedium` y todos los `sans()`/`serif()` sin `height` propio heredan su
+/// 1,6: cada línea mide tamaño × 1,6 justo, sin depender de las métricas de la
+/// fuente. Las cuatro líneas son 9 (código), 13 × 2 (el nombre, con
+/// `maxLines: 2`), 17 (precio) y 10 (stock), y se escalan de a una porque la
+/// fuente del sistema no escala lineal en Android 14.
+///
+/// Los `scale` van sobre cada tamaño y no sobre la suma, y sobran 5 px: pasarse
+/// deja un poco de aire abajo, quedarse corto rompe la `Column` de la tarjeta.
+double _altoTextoTarjeta(BuildContext context) {
+  final f = MediaQuery.textScalerOf(context);
+  final texto =
+      1.6 * (f.scale(9) + 2 * f.scale(13) + f.scale(17) + f.scale(10));
+  // 22 del padding (10 + 12), 3 abajo del código y los dos `SizedBox` de 5 y 6.
+  return 36 + texto + 5;
+}
+
+/// La grilla de prendas: la celda se calcula, no se fija.
+///
+/// Con `childAspectRatio` a mano la foto se quedaba con lo que sobrara después
+/// del texto, y el texto mide siempre lo mismo. En la tablet, al abrirse el
+/// panel lateral de 400 px, la celda pasaba de 220×334 a 115×175 y a la foto le
+/// quedaban 62 px: una tira horizontal de la prenda. Con la fuente al 130 % le
+/// quedaban cero y la `Column` desbordaba, clipeada en silencio.
+///
+/// Ahora manda la foto —cuadrada, como en el panel lateral— y el alto de la
+/// celda sale de sumarle el texto.
+SliverGridDelegate _grillaPrendas(
+  BuildContext context, {
+  required double ancho,
+  required int columnas,
+  required double espacio,
+}) {
+  final anchoCelda = (ancho - espacio * (columnas - 1)) / columnas;
+  return SliverGridDelegateWithFixedCrossAxisCount(
+    crossAxisCount: columnas,
+    crossAxisSpacing: espacio,
+    mainAxisSpacing: espacio,
+    childAspectRatio: anchoCelda / (anchoCelda + _altoTextoTarjeta(context)),
+  );
+}
+
 class _TarjetaPrenda extends StatelessWidget {
   const _TarjetaPrenda({
     required this.producto,
@@ -939,7 +1146,14 @@ class _TarjetaPrenda extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _Portada(foto: portada, sinStock: sinStock)),
+            // Cuadrada y no `Expanded`: la foto manda su alto, igual que en el
+            // panel lateral. Con `Expanded` se quedaba con el resto, y el resto
+            // depende del texto — ver `_grillaPrendas`. El `Container` de
+            // arriba ya clipea, así que no hace falta un `ClipRRect` acá.
+            AspectRatio(
+              aspectRatio: 1,
+              child: _Portada(foto: portada, sinStock: sinStock),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(11, 10, 11, 12),
               child: Column(
@@ -950,6 +1164,10 @@ class _TarjetaPrenda extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 3),
                       child: Text(
                         c,
+                        // Una línea: el alto de la tarjeta cuenta con que sean
+                        // cuatro líneas y un código largo sumaría una quinta.
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: sans(
                           size: 9,
                           weight: 600,
@@ -967,24 +1185,38 @@ class _TarjetaPrenda extends StatelessWidget {
                   const SizedBox(height: 5),
                   Text(
                     formatMoney(producto.precio),
+                    // En una línea o nada: con la fuente al 130 %, un precio de
+                    // seis cifras pasaba a dos líneas y esa línea de más es la
+                    // que rompía la tarjeta.
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: serif(size: 17, weight: 600),
                   ),
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Text(
-                        sinStock ? 'Sin stock' : '$stock en stock',
-                        style: sans(
-                          size: 10,
-                          weight: sinStock ? 600 : 400,
-                          color: sinStock ? MColors.dangerText : MColors.tMuted,
+                      Flexible(
+                        child: Text(
+                          sinStock ? 'Sin stock' : '$stock en stock',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: sans(
+                            size: 10,
+                            weight: sinStock ? 600 : 400,
+                            color:
+                                sinStock ? MColors.dangerText : MColors.tMuted,
+                          ),
                         ),
                       ),
                       if (variantes > 1) ...[
                         Text(' · ',
                             style: sans(size: 10, color: MColors.tLight)),
-                        Text('$variantes talles',
-                            style: sans(size: 10, color: MColors.tMuted)),
+                        Flexible(
+                          child: Text('$variantes talles',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: sans(size: 10, color: MColors.tMuted)),
+                        ),
                       ],
                     ],
                   ),
