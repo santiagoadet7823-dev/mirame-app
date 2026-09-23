@@ -80,6 +80,10 @@ de avatares de quiénes trabajan; la línea de tiempo con la hora afuera y un pu
 el riel. La hora del **próximo turno** va en lavanda y el resto en gris.
 
 **Escritorio Inicio — la KPI hero se parte** (`features/dashboard/dashboard_view.dart`)
+✅ **Construido en la 1.22.0**, los cinco puntos: 4 KPI en una fila (entraban 3 + 1 en dos filas,
+porque la grilla se armaba por celda de 320 px y el contenido mide 1032), gráfico de dos series
+—servicios y tienda, que se pasaba `serieB: const []`— en 3/5, agenda del día en 2/5, buscador
+global en el header con atajo `/` y bloque de usuaria al pie del sidebar.
 Hoy: la misma tarjeta hero del celular, estirada a 1000 px, y la agenda vacía ocupando el ancho.
 Entrega: 4 tarjetas KPI (Turnos hoy · Esta semana · Este mes · Pendientes) con la variación en
 texto (▲ 12 %), gráfico de área pastel de dos series (servicios / tienda) ocupando 3/5, y la
@@ -188,12 +192,25 @@ Falta un segundo eje: **dedo o puntero**. En Flutter se resuelve con la platafor
 Y al girar la tablet a vertical (menos de 900 px de ancho) vuelve sola al layout de celular con la
 barra de abajo — que es lo que ya hace hoy, sin diseño aparte. ✅ Coincide con la entrega.
 
-**Construido en la 1.21.0.** Las cinco filas de la tabla de arriba están: riel de 92, filas de 64
-(las decide `TablaMirame`, no cada vista), tarjeta de turno de 76 con avatar de 46 y chips de 58.
-Además, adentro de cada vista: Clientas en tarjetas + ficha al lado, Tienda con la columna de
-filtros fija y grilla de 4, Agenda con "Quiénes trabajan" y los huecos tocables, Inicio con
-retoques y alertas. Lo que NO entró son los filtros de proveedor y orden de la columna de Tienda:
-no existen en la app, ni en el sheet del teléfono ni en la base.
+**Construido en la 1.21.0, y recién ejecutándose desde la 1.22.0.** Las cinco filas de la tabla de
+arriba están: riel de 92, filas de 64 (las decide `TablaMirame`, no cada vista), tarjeta de turno de
+76 con avatar de 46 y chips de 58. Además, adentro de cada vista: Clientas en tarjetas + ficha al
+lado, Tienda con la columna de filtros fija y grilla de 4, Agenda con "Quiénes trabajan" y los
+huecos tocables, Inicio con retoques y alertas.
+
+⚠️ **Nada de eso se vio en la tablet hasta la 1.22.0**, y vale dejar escrito por qué: todo cuelga de
+`esTabletTactil`, que exigía 900 px de ancho y 600 de lado corto **lógicos**. La tablet del
+mostrador es de 1280×800 pero reporta densidad 1,5, o sea entrega 853×533 — la condición era falsa y
+apagaba las seis composiciones de una sola vez, porque las seis están anidadas en ramas
+`if (escritorio)`. Se veía la app vertical con los laterales vacíos. Los umbrales ahora son 520/840,
+el shell y las vistas usan **la misma** función, y hay un interruptor manual en Ajustes → Pantalla
+con la medida del aparato a la vista, porque ningún umbral acierta con todos los aparatos.
+
+Los filtros de **proveedor y orden** entraron en la 1.22.0. La afirmación de que "no existen en la
+base" era imprecisa: `productos.proveedor_id`, `created_at` y `precio` ya estaban, y hay tabla,
+repositorio, provider y pantalla de proveedores funcionando. Lo único que faltaba era la UI del
+filtro, sin migración. El stock no es columna —se suma de las variantes— así que ese orden se
+resuelve en memoria, como ya hacen Clientas y Stats.
 
 **Caja en tablet abre en "cobrar el turno de ahora"** ✅ aprobado y construido en la 1.21.0. La
 lista del mes sigue debajo: arriba aparece el turno de hoy más cercano a esta hora, con el monto y

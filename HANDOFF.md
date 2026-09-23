@@ -4,7 +4,7 @@
 > Dice en qué estado está el proyecto, qué se decidió y cuál es el próximo paso.
 > Actualizarlo al terminar cada sesión no es opcional.
 
-**Última actualización:** 2026-09-22
+**Última actualización:** 2026-09-23
 **Estado general:** PWA publicada y APK distribuyéndose solo. Repo `mirame-app` vivo.
 **Fase actual:** 5 — falta solo Estadísticas. Después: fase 6 (panel) y 7 (notificaciones)
 
@@ -1217,3 +1217,134 @@ las filas de cualquier `TablaMirame` a 64 px —lo decide la tabla, no cada vist
 **Falta**: los filtros de proveedor y orden de la columna de Tienda (hoy no existen en la app),
 la Tanda E (widget de Android en Kotlin, fotos de clienta) y servir el APK desde Supabase Storage,
 que sigue esperando el secret `SUPABASE_SERVICE_ROLE_KEY`.
+
+### 2026-09-23 — 1.22.0: la tablet no llegaba a ejecutarse, y el escritorio del disenador
+
+Reporte del usuario, probando la 1.21.0 en la tablet del mostrador: **"no esta nada construido de
+la vista de tablet... sigue siendo la misma app vertical con los laterales vacios"**. Y aparte:
+**"la pwa no usaste nada de lo que el disenador hizo"**.
+
+Las dos cosas eran ciertas, y la primera no era un problema de diseno sino de una condicion falsa.
+
+#### La causa, medida
+
+`MediaQuery.size` son pixeles **logicos** (`fisicos / densidad`). La tablet es de 1280x800 y
+reporta densidad 1,5, asi que entrega **853x533**. Con los umbrales que habia:
+
+| Donde | Regla | En 853x533 |
+|---|---|---|
+| `app_shell.dart` | `ancho >= 900` | false -> rama del telefono |
+| `app_shell.dart` | `ancho >= 600 ? 430 : inf` | **columna de 430 centrada**, 211 px vacios por lado |
+| `layout.dart` | `ancho >= 900 && lado corto >= 600` | false -> `esEscritorio` false |
+| `esTabletTactil` | `esTactil && escritorio` | **false** |
+
+O sea: las seis composiciones de tablet de la 1.21.0 estaban escritas, bien escritas, y **no se
+ejecutaban ni una vez** en ese aparato. El unico interruptor las apagaba todas juntas, porque las
+seis estan anidadas dentro de ramas `if (escritorio)`.
+
+Y habia **dos fuentes de verdad** para "pantalla grande": el shell decidia con `ancho >= 900` y las
+vistas con ancho + lado corto. En la franja donde discrepan salia el hibrido que el docstring de
+`layout.dart` decia haber arreglado: riel de tablet al costado, pantallas de telefono adentro, el
+FAB flotando y 96 px muertos abajo (un teléfono acostado cae justo ahi).
+
+#### Lo que se hizo
+
+- `esEscritorio` -> **`esPantallaGrande`**, y la usa tambien el shell. El nombre viejo era parte del
+  problema: en la tablet tambien era true, asi que quien leia el codigo le dejaba hover y filas
+  finas de 52 px. Para "hay mouse" esta `esEscritorioPuntero`, que antes tenia **cero usos**.
+- `ModoLayout` queda en dos valores. El `tablet` del medio (600-900) no lo leia nadie: caia igual en
+  el telefono centrado a 430. Un modo que nadie implementa no es un modo.
+- Umbrales **520 / 840**, que siguen dejando afuera cualquier telefono acostado (el lado corto mas
+  grande que existe es 430: un Pixel 7 da 412).
+- El tope de 430 se aplica **solo en el navegador**, donde emula un telefono en una ventana ancha.
+- **Ajustes -> Pantalla**: Automatico / Telefono / Tablet, persistido, mas la linea que dice que
+  mide el aparato (logicos, reales, densidad, modo, y donde guarda la PWA). Ningun umbral acierta
+  con todos los aparatos; esto se arregla en el momento y no esperando otra release.
+
+Tres bugs que el cambio destapo, todos reales en 533 px de alto:
+
+- El **riel se cortaba 32 px**: ocho celdas no entran. Justo Ajustes, la celda desde la que se
+  arregla cualquier otra cosa. Scrollea.
+- El **Inicio de escritorio** dejaba el panel de agenda en 133 px y desbordaba 67 px hacia abajo,
+  clipeados en silencio. Por debajo de 860 px los dos paneles se apilan.
+- Los **4 KPI entraban 3 + 1** en dos filas a 1032 px. Ahora van por ancho con `columnasPara`, que
+  estaba escrito y sin usar.
+
+#### El escritorio del disenador (PWA)
+
+De los cinco puntos de `D-Inicio-Propuesta.dc.html` + brief 13 §3.7 faltaban cuatro:
+
+- Los 4 KPI en **una** fila (estaban en dos).
+- El grafico con las **dos** series, servicios y tienda: se pasaba `serieB: const []`. El dato ya
+  existia, la venta de tienda se registra con `categoria: 'ropa'`.
+- **Buscador global** en el header (clienta, turno o producto), con atajo `/` solo con puntero — el
+  brief de la tablet pide explicitamente que la tecla no se dibuje ahi.
+- **Bloque de usuaria** al pie del sidebar, con el rol nombrado igual que en Equipo.
+
+Un punto del plan se descarto leyendo la entrega: iba a pasar los sheets de la tablet a bottom
+sheet, y el brief pide lo contrario (formularios en dialogo de 560).
+
+#### Sync: "cargo desde la compu y demora en aparecer en el celu"
+
+No era una sensacion: el timer era de **3 minutos** y no habia nada mas. Ahora sincroniza **al
+volver a primer plano** —justo cuando la persona mira esperando ver lo que cargo— y el intervalo
+baja a **45 s con la app en pantalla**, apagandose en segundo plano. Instantaneo pide Supabase
+Realtime, que implica habilitar replicacion por tabla; queda propuesto, no hecho.
+
+#### Otros defectos de la auditoria
+
+- `stats_view.dart`: los dos `shouldRepaint` comparaban listas recreadas en cada `build` -> siempre
+  true, las dos graficas se repintaban en cada frame. Mismo bug ya arreglado en el Inicio, pesa mas
+  en la PWA porque el canvas es el doble de alto.
+- `equipoProvider` era el unico spinner sin `timeout`: con red colgada giraba para siempre.
+- `ConHover` no monta `MouseRegion` con el dedo. `TablaMirame` envuelve **cada fila**, asi que una
+  tabla de Caja en la tablet eran decenas de regiones esperando un evento que nunca llega.
+- Exportar CSV, backup, PDF de liquidacion y cargar fotos **no pueden** funcionar en la PWA (usan
+  `dart:io`): antes decian "no se pudo", que invita a reintentar. Ahora dicen que es del celular.
+- La apertura de la base en web se instrumenta. `drift` degrada solo a IndexedDB y despues a
+  memoria, y el problema no es que degrade: degradado se ve **igual** que sano hasta que se cierra
+  la ventana y se perdio todo. Se muestra en Ajustes.
+
+#### Por que los tests no lo vieron
+
+Los cuatro archivos de tests de layout fijaban **`devicePixelRatio = 1`**, que es la unica
+configuracion en la que el codigo de tablet era alcanzable, y montaban las vistas **sin el shell**,
+asi que la contradiccion entre los dos umbrales era estructuralmente invisible.
+`vistas_escritorio_test` solo afirmaba `takeException() == null`: una vista que renderiza el
+telefono pasaba en verde.
+
+`tablet_de_verdad_test.dart` monta el shell completo con metricas **fisicas** y densidad de
+aparatos reales —incluida la que fallo— y afirma dos cosas que nadie afirmaba: **que navegacion se
+dibuja** y **cuanto ancho recibe el contenido**. `escritorio_disenador_test.dart` hace lo mismo con
+los cinco puntos de la entrega de escritorio.
+
+#### Tienda: la foto estaba decapitada
+
+Lo que el usuario llamo "roto la imagen" tenia un segundo culpable, aparte del layout: la tarjeta de
+prenda pon\u00eda la foto en un `Expanded` \u2014lo que sobre despues del texto\u2014 con la grilla en
+`crossAxisCount: 4` fijo. Al abrir el panel lateral de 400 px la celda pasaba de 220x334 a 115x175 y
+a la foto le quedaban **62 px**: una tira horizontal. A 130 % de fuente le quedaban cero y la columna
+desbordaba, clipeada en silencio. Ahora manda la foto (cuadrada) y el alto de la celda sale de
+sumarle el texto; las columnas salen de `columnasPara`.
+
+**Dato util para futuras cuentas de alto:** el tema pone `height: 1.6` en `bodyMedium`, y todo
+`sans()`/`serif()` sin `height` propio lo hereda. Cada linea mide exactamente `tamano x 1,6`, sin
+depender de las metricas de la fuente, asi que reservar alto es una cuenta exacta y no un ojimetro.
+
+**Proveedor y orden entraron sin migracion**: `proveedor_id`, `created_at` y `precio` ya estaban, y
+la pantalla de proveedores ya funcionaba. El stock no es columna (se suma de las variantes), asi que
+ese orden va en memoria.
+
+**Decision abierta:** los cuatro grupos de la columna de filtros suman ~900 px y una tablet de
+1280x800 con densidad 1,5 tiene ~405 utiles. La columna scrollea, pero ORDEN queda abajo del borde.
+Si molesta en el aparato, ORDEN sale de la columna a un control compacto arriba de la grilla.
+
+#### Pendiente de la sesion
+
+- **Supabase Realtime** para que lo cargado en la compu aparezca en el celular en el momento, en vez
+  de esperar los 45 s del timer. Implica habilitar replicacion por tabla y decidir el costo de un
+  socket abierto en el telefono. Propuesto, no hecho.
+- Bajar archivos desde la PWA (CSV, backup, PDF) y cargar fotos: hoy avisan que es del celular. Se
+  puede resolver con una descarga del navegador, que pide un camino web-only.
+- Sigue faltando el secret `SUPABASE_SERVICE_ROLE_KEY` para servir el APK desde Supabase Storage.
+- Tanda E: widget de Android en Kotlin y fotos de clienta (tabla + bucket + consentimiento).
