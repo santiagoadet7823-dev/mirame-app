@@ -39,7 +39,7 @@ import '../shell/vistas_comunes.dart';
 final movimientosDeMesProvider =
     StreamProvider.autoDispose.family<List<db.Transaction>, int>((ref, offset) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   final hoy = DateTime.now();
   return repo.verMovimientosEntre(
     DateTime(hoy.year, hoy.month + offset, 1),

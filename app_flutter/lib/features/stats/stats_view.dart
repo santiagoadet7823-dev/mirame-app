@@ -46,7 +46,7 @@ import '../shell/vistas_comunes.dart';
 final movimientosRecientesProvider =
     StreamProvider.autoDispose<List<db.Transaction>>((ref) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   final hoy = DateTime.now();
   return repo.verMovimientosEntre(
     DateTime(hoy.year, hoy.month - 3, 1),
@@ -58,7 +58,7 @@ final movimientosRecientesProvider =
 final turnosDelMesProvider =
     StreamProvider.autoDispose<List<db.Appointment>>((ref) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   final hoy = DateTime.now();
   return repo.verTurnosEntre(
     DateTime(hoy.year, hoy.month, 1),

@@ -8,6 +8,7 @@
 /// gigante.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/shadows.dart';
@@ -316,9 +317,12 @@ class _PintorDeArea extends CustomPainter {
     serie(serieA, MColors.brand);
   }
 
+  // Por contenido y no por identidad: las listas se arman de nuevo en cada
+  // build, así que comparar las referencias daba `true` siempre y el gráfico
+  // se repintaba en cada frame aunque los números fueran los mismos.
   @override
   bool shouldRepaint(_PintorDeArea viejo) =>
-      viejo.serieA != serieA || viejo.serieB != serieB;
+      !listEquals(viejo.serieA, serieA) || !listEquals(viejo.serieB, serieB);
 }
 
 /// La agenda del día en la columna angosta del escritorio.

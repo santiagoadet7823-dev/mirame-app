@@ -292,11 +292,20 @@ class _RopaViewState extends ConsumerState<RopaView> {
             padding: padVista(context),
             children: [
               FadeSlideIn(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // `Wrap` y no `Row`: el título más los tres atajos no entran
+                // en 390 px, y el que quedaba afuera era "Proveedores". Así
+                // bajan a una segunda línea en vez de cortarse.
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 8,
                   children: [
                     Text('Productos', style: serif(size: 24, weight: 500)),
-                    Row(
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 16,
+                      runSpacing: 6,
                       children: [
                         GestureDetector(
                           behavior: HitTestBehavior.opaque,

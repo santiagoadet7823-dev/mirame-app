@@ -101,16 +101,34 @@ class NavegadorShell extends InheritedWidget {
   const NavegadorShell({
     super.key,
     required this.irA,
+    required this.indiceActivo,
     required super.child,
   });
 
   final void Function(int) irA;
 
+  /// Cual de las vistas se esta viendo. Hace falta porque el `IndexedStack`
+  /// construye las ocho a la vez: sin esto, una vista que nadie ve igual se
+  /// cree en pantalla.
+  final int indiceActivo;
+
+  /// Sin dependencia: `ir` se llama desde un `onTap`, y registrar ahi una
+  /// dependencia marca sucio al que toco el boton cada vez que cambia de
+  /// seccion, sin motivo.
   static void ir(BuildContext context, int indice) =>
-      context.dependOnInheritedWidgetOfExactType<NavegadorShell>()?.irA(indice);
+      context.getInheritedWidgetOfExactType<NavegadorShell>()?.irA(indice);
+
+  /// Para que solo la vista que se ve pida el foco. Dos nodos con `autofocus`
+  /// montados a la vez se lo sacan entre ellos en cada frame, y eso es una app
+  /// que nunca llega a reposo: los clics entran tarde.
+  static bool esLaVista(BuildContext context, int indice) =>
+      context.dependOnInheritedWidgetOfExactType<NavegadorShell>()
+          ?.indiceActivo ==
+      indice;
 
   @override
-  bool updateShouldNotify(NavegadorShell viejo) => false;
+  bool updateShouldNotify(NavegadorShell viejo) =>
+      viejo.indiceActivo != indiceActivo;
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
@@ -174,12 +192,24 @@ class _AppShellState extends ConsumerState<AppShell> {
     final cuerpo = ObservadorDeScroll(
       child: NavegadorShell(
         irA: irA,
+        indiceActivo: _indice,
         child: ProgramadorAvisos(
           child: Column(
             children: [
               const _BarraSync(),
               Expanded(
-                child: IndexedStack(index: _indice, children: widget.vistas),
+                // `TickerMode` apagado en las que no se ven: el
+                // `IndexedStack` las mantiene montadas y con animación viva,
+                // así que un esqueleto latiendo en Insumos hacía trabajar al
+                // hilo de UI mientras la persona estaba en la Agenda. Con esto
+                // solo late lo que está en pantalla.
+                child: IndexedStack(
+                  index: _indice,
+                  children: [
+                    for (var i = 0; i < widget.vistas.length; i++)
+                      TickerMode(enabled: i == _indice, child: widget.vistas[i]),
+                  ],
+                ),
               ),
             ],
           ),

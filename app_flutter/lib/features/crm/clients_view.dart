@@ -37,7 +37,7 @@ final resumenClientesProvider =
     StreamProvider.autoDispose<Map<String, ({int turnos, double gastado})>>(
         (ref) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const {});
   return repo.verResumenClientes();
 });
 
@@ -140,7 +140,8 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
         },
       },
       child: Focus(
-        autofocus: true,
+        // Solo si es la vista que se esta viendo: las ocho estan montadas.
+        autofocus: NavegadorShell.esLaVista(context, Vistas.clientas),
         child: Scaffold(
           backgroundColor: Colors.transparent,
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,

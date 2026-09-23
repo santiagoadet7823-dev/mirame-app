@@ -48,14 +48,14 @@ import '../stock/stock_view.dart';
 final turnosDeHoyProvider =
     StreamProvider.autoDispose<List<db.Appointment>>((ref) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   return repo.verTurnosDe(DateTime.now());
 });
 
 final movimientosDelMesProvider =
     StreamProvider.autoDispose<List<db.Transaction>>((ref) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   final hoy = DateTime.now();
   return repo.verMovimientosEntre(
     DateTime(hoy.year, hoy.month, 1),
@@ -70,26 +70,26 @@ final movimientosDelMesProvider =
 final turnosRecientesProvider =
     StreamProvider.autoDispose<List<db.Appointment>>((ref) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   return repo.verTurnosRecientes();
 });
 
 final serviciosDeTurnosProvider =
     StreamProvider.autoDispose<Map<String, List<String>>>((ref) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const {});
   return repo.verServiciosDeTurnos();
 });
 
 final serviciosProvider = StreamProvider.autoDispose<List<db.Service>>((ref) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   return repo.verServicios();
 });
 
 final clientesProvider = StreamProvider.autoDispose<List<db.Client>>((ref) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   return repo.verClientes();
 });
 
@@ -97,7 +97,7 @@ final clientesProvider = StreamProvider.autoDispose<List<db.Client>>((ref) {
 final movimientosDeLaSemanaProvider =
     StreamProvider.autoDispose<List<db.Transaction>>((ref) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   final hoy = DateTime.now();
   // Semana domingo→sábado, igual que el original (`weekRange`).
   final domingo = hoy.subtract(Duration(days: hoy.weekday % 7));

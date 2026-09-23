@@ -109,7 +109,12 @@ class SettingsView extends ConsumerWidget {
                 // soporte a distancia es adivinar.
                 if (sync.error case final e?) ('Detalle', e),
               ],
-              accion: Row(
+              // `Wrap` y no `Row`: tres botones de texto no entran en el
+              // ancho de la tarjeta en un teléfono, y "Reintentar" —el que
+              // aparece justo cuando algo está mal— era el que se cortaba.
+              accion: Wrap(
+                spacing: 4,
+                runSpacing: 2,
                 children: [
                   TextButton.icon(
                     onPressed: () =>
@@ -364,7 +369,11 @@ class _TarjetaAvisosState extends State<_TarjetaAvisos> {
       ],
       accion: !servicio.disponible
           ? null
-          : Row(
+          : // `Wrap` y no `Row`: los dos botones juntos no entran en el ancho
+          // de la tarjeta en un teléfono angosto, y ahí el segundo se cortaba.
+          Wrap(
+              spacing: 4,
+              runSpacing: 2,
               children: [
                 if (!servicio.permitido)
                   TextButton.icon(

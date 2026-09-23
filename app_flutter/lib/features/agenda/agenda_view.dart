@@ -35,7 +35,7 @@ final turnosDelDiaProvider =
     StreamProvider.autoDispose.family<List<db.Appointment>, String>(
   (ref, claveDia) {
     final repo = ref.watch(businessRepoProvider);
-    if (repo == null) return const Stream.empty();
+    if (repo == null) return Stream.value(const []);
     // La clave es el 'YYYY-MM-DD' y no un DateTime: dos DateTime del mismo día
     // con distinta hora son objetos distintos, y `family` crearía un provider
     // nuevo en cada rebuild.
@@ -49,7 +49,7 @@ final turnosDelDiaProvider =
 final turnosDelMesVisibleProvider = StreamProvider.autoDispose
     .family<List<db.Appointment>, String>((ref, claveMes) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   final partes = claveMes.split('-');
   final y = int.parse(partes[0]);
   final m = int.parse(partes[1]);
@@ -231,7 +231,8 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
           const SingleActivator(LogicalKeyboardKey.keyT): _volverAHoy,
         },
         child: Focus(
-          autofocus: true,
+          // Solo si es la vista que se esta viendo: las ocho estan montadas.
+          autofocus: NavegadorShell.esLaVista(context, Vistas.agenda),
           child: ContenidoEscritorio.tabla(
             child: Column(
               children: [

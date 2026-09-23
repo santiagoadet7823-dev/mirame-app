@@ -211,12 +211,37 @@ class Esqueleto extends StatefulWidget {
   State<Esqueleto> createState() => _EsqueletoState();
 }
 
-class _EsqueletoState extends State<Esqueleto>
+/// El latido que comparten todos los esqueletos de un grupo.
+///
+/// Antes cada barra creaba su propio `AnimationController`: una lista de seis
+/// filas eran dieciocho relojes latiendo cada uno por su cuenta. Con el
+/// `IndexedStack` del shell, que monta las ocho vistas a la vez, eso pasaba
+/// también en las que nadie estaba mirando. Uno por grupo alcanza, y de paso
+/// laten sincronizados, que es como se ve bien.
+class LatidoEsqueleto extends StatefulWidget {
+  const LatidoEsqueleto({super.key, required this.child});
+
+  final Widget child;
+
+  /// El latido de arriba, o null si este esqueleto está solo.
+  static Animation<double>? de(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_LatidoHeredado>()?.animacion;
+
+  @override
+  State<LatidoEsqueleto> createState() => _LatidoEsqueletoState();
+}
+
+class _LatidoEsqueletoState extends State<LatidoEsqueleto>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1100),
   )..repeat(reverse: true);
+
+  late final Animation<double> _opacidad =
+      Tween<double>(begin: 0.45, end: 0.9).animate(
+    CurvedAnimation(parent: _c, curve: MMotion.ease),
+  );
 
   @override
   void dispose() {
@@ -225,14 +250,54 @@ class _EsqueletoState extends State<Esqueleto>
   }
 
   @override
+  Widget build(BuildContext context) =>
+      _LatidoHeredado(animacion: _opacidad, child: widget.child);
+}
+
+class _LatidoHeredado extends InheritedWidget {
+  const _LatidoHeredado({required this.animacion, required super.child});
+
+  final Animation<double> animacion;
+
+  @override
+  bool updateShouldNotify(_LatidoHeredado viejo) =>
+      viejo.animacion != animacion;
+}
+
+class _EsqueletoState extends State<Esqueleto>
+    with SingleTickerProviderStateMixin {
+  AnimationController? _c;
+  Animation<double>? _propio;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reloj propio solo si no hay uno compartido arriba.
+    if (_c == null && LatidoEsqueleto.de(context) == null) {
+      _c = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1100),
+      )..repeat(reverse: true);
+      _propio = Tween<double>(begin: 0.45, end: 0.9).animate(
+        CurvedAnimation(parent: _c!, curve: MMotion.ease),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _c?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Con "reducir movimiento" activado no late: queda en un gris fijo.
     final anima = !MediaQuery.disableAnimationsOf(context);
+    final latido = LatidoEsqueleto.de(context) ?? _propio;
     return FadeTransition(
-      opacity: anima
-          ? Tween<double>(begin: 0.45, end: 0.9).animate(
-              CurvedAnimation(parent: _c, curve: MMotion.ease),
-            )
+      opacity: anima && latido != null
+          ? latido
           : const AlwaysStoppedAnimation(0.6),
       child: Container(
         width: widget.ancho,
@@ -269,17 +334,19 @@ class EsqueletoDeLista extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [for (var i = 0; i < filas; i++) _fila(i)];
-    if (!desplazable) {
-      return Padding(
-        padding: padding,
-        child: Column(mainAxisSize: MainAxisSize.min, children: items),
-      );
-    }
-    return ListView(
-      padding: padding,
-      // No hay nada que tocar mientras carga.
-      physics: const NeverScrollableScrollPhysics(),
-      children: items,
+    // Un solo latido para las tres barras de cada fila.
+    return LatidoEsqueleto(
+      child: !desplazable
+          ? Padding(
+              padding: padding,
+              child: Column(mainAxisSize: MainAxisSize.min, children: items),
+            )
+          : ListView(
+              padding: padding,
+              // No hay nada que tocar mientras carga.
+              physics: const NeverScrollableScrollPhysics(),
+              children: items,
+            ),
     );
   }
 

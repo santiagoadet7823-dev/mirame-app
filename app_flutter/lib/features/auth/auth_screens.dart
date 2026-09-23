@@ -143,14 +143,17 @@ class _SplashDemora extends ConsumerWidget {
             AuthError(estado.error!),
           ],
           const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          // `Wrap` y no `Row`: los dos botones juntos no entran en los 300 px
+          // del panel, y este cartel aparece justo cuando algo ya salió mal.
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 8,
             children: [
               GhostButton(
                 texto: 'Reintentar',
                 onTap: estado.cargando ? null : notifier.refrescar,
               ),
-              const SizedBox(width: 10),
               GhostButton(
                 texto: 'Cerrar sesión',
                 onTap: notifier.cerrarSesion,

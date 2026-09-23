@@ -25,7 +25,7 @@ import '../shell/vistas_comunes.dart';
 
 final stockProvider = StreamProvider.autoDispose<List<db.StockItem>>((ref) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   return repo.verStock();
 });
 

@@ -36,7 +36,7 @@ import 'clients_view.dart';
 final historialClienteProvider = StreamProvider.autoDispose
     .family<List<db.Appointment>, String>((ref, clienteId) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   return repo.verTurnosDeCliente(clienteId);
 });
 
@@ -45,7 +45,7 @@ final historialClienteProvider = StreamProvider.autoDispose
 final pagosClienteProvider = StreamProvider.autoDispose
     .family<List<db.Transaction>, String>((ref, clienteId) {
   final repo = ref.watch(businessRepoProvider);
-  if (repo == null) return const Stream.empty();
+  if (repo == null) return Stream.value(const []);
   return repo.verMovimientosDeCliente(clienteId);
 });
 

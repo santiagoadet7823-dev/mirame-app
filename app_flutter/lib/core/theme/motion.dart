@@ -35,19 +35,29 @@ class FadeSlideIn extends StatefulWidget {
 
 class _FadeSlideInState extends State<FadeSlideIn>
     with SingleTickerProviderStateMixin {
+  // El delay va DENTRO de la animación, como un tramo quieto al principio, y
+  // no en un `Future.delayed` que arranca el controlador más tarde. Con un
+  // temporizador suelto la espera corre igual en una vista que nadie ve —el
+  // shell las tiene todas montadas— y además quedaba un timer pendiente que
+  // no depende de que haya frames; el tramo quieto se congela con la vista.
+  late final Duration _total = widget.delay + widget.duration;
   late final AnimationController _c =
-      AnimationController(vsync: this, duration: widget.duration);
-  late final Animation<double> _a =
-      CurvedAnimation(parent: _c, curve: MMotion.easeOut);
+      AnimationController(vsync: this, duration: _total);
+  late final Animation<double> _a = CurvedAnimation(
+    parent: _c,
+    curve: Interval(
+      _total.inMicroseconds == 0
+          ? 0
+          : widget.delay.inMicroseconds / _total.inMicroseconds,
+      1,
+      curve: MMotion.easeOut,
+    ),
+  );
 
   @override
   void initState() {
     super.initState();
-    // El delay se resuelve acá y no con un Timer suelto para que se cancele
-    // solo si el widget se desmonta antes.
-    Future<void>.delayed(widget.delay, () {
-      if (mounted) _c.forward();
-    });
+    _c.forward();
   }
 
   @override
