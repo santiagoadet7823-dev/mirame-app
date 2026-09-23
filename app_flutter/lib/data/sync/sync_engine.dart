@@ -12,7 +12,13 @@ import 'package:drift/drift.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
-    show PostgrestException;
+    show
+        PostgresChangeEvent,
+        PostgresChangeFilter,
+        PostgresChangeFilterType,
+        PostgrestException,
+        RealtimeChannel,
+        RealtimeSubscribeStatus;
 
 import '../local/database.dart';
 import '../remote/supabase_client.dart';
@@ -63,9 +69,16 @@ class SyncStatus {
     this.trabados = 0,
     this.ultimoOk,
     this.error,
+    this.envivo = false,
   });
 
   final EstadoSync estado;
+
+  /// Si la suscripción en vivo está conectada.
+  ///
+  /// Se expone para poder mirarlo en Ajustes. No cambia nada del
+  /// comportamiento: en vivo o no, el pull periódico converge igual.
+  final bool envivo;
 
   /// Cuántas escrituras esperan en la cola. Es lo que la UI muestra como
   /// "faltan N por subir".
@@ -87,6 +100,7 @@ class SyncStatus {
     int? trabados,
     DateTime? ultimoOk,
     String? error,
+    bool? envivo,
     bool limpiarError = false,
   }) =>
       SyncStatus(
@@ -95,6 +109,7 @@ class SyncStatus {
         trabados: trabados ?? this.trabados,
         ultimoOk: ultimoOk ?? this.ultimoOk,
         error: limpiarError ? null : (error ?? this.error),
+        envivo: envivo ?? this.envivo,
       );
 }
 
@@ -577,13 +592,17 @@ class SyncController extends Notifier<SyncStatus> {
   Timer? _periodico;
   StreamSubscription<List<ConnectivityResult>>? _red;
   _CicloDeVida? _ciclo;
+  RealtimeChannel? _canal;
+  Timer? _rebote;
   String? _tenant;
 
   @override
   SyncStatus build() {
     ref.onDispose(() {
       _periodico?.cancel();
+      _rebote?.cancel();
       _red?.cancel();
+      if (_canal case final c?) unawaited(sb.removeChannel(c));
       if (_ciclo case final c?) WidgetsBinding.instance.removeObserver(c);
     });
     return const SyncStatus();
@@ -617,10 +636,15 @@ class SyncController extends Notifier<SyncStatus> {
         alVolver: () {
           unawaited(sincronizar());
           _arrancarTimer();
+          if (_tenant case final t?) _suscribir(t);
         },
+        // El websocket se cierra con la app en segundo plano, igual que el
+        // timer: un socket abierto con la pantalla bloqueada es bateria por
+        // nada, y al volver se reconecta y se sincroniza en el mismo paso.
         alIrse: () {
           _periodico?.cancel();
           _periodico = null;
+          _desuscribir();
         },
       );
       // Una sola vez: `addObserver` con el mismo objeto dos veces lo deja dos
@@ -629,6 +653,72 @@ class SyncController extends Notifier<SyncStatus> {
     }
 
     _arrancarTimer();
+    _suscribir(tenantId);
+  }
+
+  /// Se suscribe a los cambios del salón para no tener que preguntar.
+  ///
+  /// **Es un acelerador del pull, no un reemplazo.** El evento no trae el dato:
+  /// solo avisa que algo cambió, y entonces se corre un ciclo normal. Eso es a
+  /// propósito: el pull ya sabe de cursores, de tombstones y de columnas que
+  /// esta version de la app no conoce. Aplicar el payload del evento por su
+  /// cuenta seria una segunda implementación de lo mismo, con sus propios bugs.
+  ///
+  /// Y si la suscripción no se conecta —replicación apagada del lado del
+  /// servidor, un proxy que corta websockets, el celular en una red que los
+  /// bloquea— **no se rompe nada**: el ciclo cada 45 segundos converge igual.
+  /// Nada del motor puede depender de que esto esté vivo.
+  void _suscribir(String tenantId) {
+    if (_canal != null) return;
+    final canal = sb.channel('mirame:$tenantId');
+    for (final tabla in [...tablasSync, _tablaServicios]) {
+      canal.onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: tabla,
+        // Filtrado por salón del lado del servidor. Sin esto, cada cambio de
+        // cualquier salón despertaria a todos los aparatos de la flota.
+        //
+        // `appointment_services` no tiene `tenant_id` —es una tabla puente
+        // pura— asi que va sin filtro: sus cambios siempre acompanan a un turno
+        // que si esta filtrado, y de ultima un ciclo de mas no cuesta nada.
+        filter: tabla == _tablaServicios
+            ? null
+            : PostgresChangeFilter(
+                type: PostgresChangeFilterType.eq,
+                column: 'tenant_id',
+                value: tenantId,
+              ),
+        callback: (_) => _sincronizarConRebote(),
+      );
+    }
+    canal.subscribe((estado, _) {
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        envivo: estado == RealtimeSubscribeStatus.subscribed,
+      );
+    });
+    _canal = canal;
+  }
+
+  void _desuscribir() {
+    _rebote?.cancel();
+    _rebote = null;
+    if (_canal case final c?) unawaited(sb.removeChannel(c));
+    _canal = null;
+    if (ref.mounted) state = state.copyWith(envivo: false);
+  }
+
+  /// Un ciclo por ráfaga, no uno por fila.
+  ///
+  /// Otro aparato subiendo veinte cambios emite veinte eventos en un segundo.
+  /// Sin esto serian veinte ciclos completos pisandose entre ellos.
+  void _sincronizarConRebote() {
+    _rebote?.cancel();
+    _rebote = Timer(
+      const Duration(milliseconds: 700),
+      () => unawaited(sincronizar()),
+    );
   }
 
   /// Red de seguridad: `connectivity_plus` avisa que hay interfaz, no que haya
@@ -644,6 +734,7 @@ class SyncController extends Notifier<SyncStatus> {
   void detener() {
     _periodico?.cancel();
     _red?.cancel();
+    _desuscribir();
     if (_ciclo case final c?) WidgetsBinding.instance.removeObserver(c);
     _ciclo = null;
     _periodico = null;

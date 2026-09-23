@@ -27,6 +27,7 @@ import '../../core/config/app_config.dart';
 import '../ropa/mi_tienda.dart';
 import '../update/update_sheet.dart';
 import 'backup_view.dart';
+import 'compartir_app.dart';
 import 'restaurar_backup.dart';
 import '../../domain/rules/access.dart';
 import 'catalogo.dart';
@@ -79,6 +80,12 @@ class SettingsView extends ConsumerWidget {
           const SizedBox(height: 12),
 
           FadeSlideIn(
+            delay: const Duration(milliseconds: 70),
+            child: const TarjetaCompartirApp(),
+          ),
+          const SizedBox(height: 12),
+
+          FadeSlideIn(
             delay: const Duration(milliseconds: 80),
             child: _Tarjeta(
               titulo: 'Sincronización',
@@ -112,6 +119,17 @@ class SettingsView extends ConsumerWidget {
                 (
                   'Última vez',
                   sync.ultimoOk == null ? 'Todavía no' : _hora(sync.ultimoOk!),
+                ),
+                // En vivo = el servidor avisa cuando algo cambia, en vez de que
+                // la app pregunte cada 45 segundos. Si dice que no, **no está
+                // roto**: sigue funcionando por el ciclo periódico, solo que lo
+                // cargado en otro aparato tarda un rato en aparecer. Se muestra
+                // porque las dos cosas se ven igual hasta que uno mira el reloj.
+                (
+                  'En vivo',
+                  sync.envivo
+                      ? 'Sí, los cambios llegan solos'
+                      : 'No, se revisa cada 45 segundos',
                 ),
                 // El texto del error, no solo "con problemas". Sin esto, dar
                 // soporte a distancia es adivinar.
