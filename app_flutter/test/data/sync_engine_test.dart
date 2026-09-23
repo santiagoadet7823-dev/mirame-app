@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart' show Value;
@@ -5,6 +6,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mirame/data/local/database.dart';
 import 'package:mirame/data/sync/sync_engine.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show PostgrestException;
 
 void main() {
   group('esperaDeReintento', () {
@@ -109,6 +112,110 @@ void main() {
       expect(await engine.empujar('t1'), 0);
       // Y la fila sigue ahí: no se descarta en silencio, queda para revisar.
       expect(await engine.pendientes('t1'), 1);
+    });
+  });
+
+  group('quedarse sin internet no puede costar el trabajo cargado', () {
+    // El caso que motivó estos tests: el salón se queda sin datos, se sigue
+    // cargando, y al volver el internet **todo tiene que subir solo**.
+    //
+    // Antes no: cada fallo de red gastaba uno de los ocho intentos, así que
+    // veinte minutos sin señal dejaban el cambio trabado, y al volver la
+    // conexión no se subía. Había que entrar a Ajustes y tocar Reintentar,
+    // sabiendo que eso existe. El dato no se borraba nunca, pero para la
+    // persona que lo cargó es lo mismo que perderlo.
+    late MirameDb db;
+    late SyncEngine engine;
+
+    setUp(() {
+      db = MirameDb.paraTest(NativeDatabase.memory());
+      engine = SyncEngine(db);
+    });
+
+    tearDown(() => db.close());
+
+    Future<void> encolarUna(String id) => engine.encolar(
+          tenantId: 't1',
+          tabla: 'clients',
+          filaId: id,
+          operacion: 'upsert',
+          payload: {'id': id, 'nombre': 'Ana'},
+        );
+
+    /// Adelanta el reloj de la cola para poder pedir otro ciclo enseguida.
+    Future<void> pasaElTiempo() =>
+        (db.update(db.outbox)).write(OutboxCompanion(
+          reintentarAt: Value(DateTime.now().subtract(const Duration(hours: 2))),
+        ));
+
+    // En los tests Supabase no está inicializado, así que `_subir` tira antes
+    // de llegar a la red: es exactamente "no hay servidor al otro lado", que es
+    // el escenario que hay que probar.
+
+    test('un ciclo sin servidor no gasta el intento', () async {
+      await encolarUna('c1');
+      await engine.empujar('t1');
+
+      final fila = (await db.select(db.outbox).get()).single;
+      expect(fila.intentos, 0, reason: 'sin servidor no se gasta intento');
+      expect(fila.ultimoError, isNotNull, reason: 'igual queda el motivo');
+      expect(await engine.pendientes('t1'), 1);
+    });
+
+    test('veinte ciclos sin internet y el cambio sigue subible', () async {
+      await encolarUna('c1');
+      for (var i = 0; i < 20; i++) {
+        await pasaElTiempo();
+        await engine.empujar('t1');
+      }
+
+      expect((await engine.trabados('t1')).cuantos, 0,
+          reason: 'sin señal nada puede quedar trabado');
+      expect(await engine.pendientes('t1'), 1);
+      // Y lo cargado sigue entero: el payload es lo que se vuelve a mandar.
+      final fila = (await db.select(db.outbox).get()).single;
+      expect(jsonDecode(fila.payload), {'id': 'c1', 'nombre': 'Ana'});
+    });
+
+    test('sin servidor corta el ciclo en la primera', () async {
+      // Si no hay servidor para la primera fila no lo va a haber para las
+      // otras: seguir escribe una fila de la base por cada una, por nada.
+      await encolarUna('c1');
+      await encolarUna('c2');
+      await encolarUna('c3');
+      await engine.empujar('t1');
+
+      final tocadas = (await db.select(db.outbox).get())
+          .where((f) => f.ultimoError != null)
+          .length;
+      expect(tocadas, 1);
+      expect(await engine.pendientes('t1'), 3, reason: 'ninguna se pierde');
+    });
+  });
+
+  group('esRechazoDelServidor', () {
+    // Lo que decide si el intento se gasta. Del lado de "rechazo" van los
+    // códigos permanentes: el servidor contestó y va a contestar igual.
+    test('un rechazo de Postgres cuenta', () {
+      expect(esRechazoDelServidor(PostgrestException(message: 'rls', code: '42501')), isTrue);
+      expect(esRechazoDelServidor(PostgrestException(message: 'fk', code: '23503')), isTrue);
+      expect(esRechazoDelServidor(PostgrestException(message: 'dato', code: '22P02')), isTrue);
+      expect(esRechazoDelServidor(PostgrestException(message: 'schema', code: 'PGRST204')), isTrue);
+    });
+
+    test('lo transitorio NO cuenta, aunque venga del servidor', () {
+      // 40001 es un choque de serialización y 57014 un timeout de consulta:
+      // los dos se resuelven reintentando, y gastar intentos por eso termina
+      // trabando una fila que estaba perfecta.
+      expect(esRechazoDelServidor(PostgrestException(message: 'x', code: '40001')), isFalse);
+      expect(esRechazoDelServidor(PostgrestException(message: 'x', code: '57014')), isFalse);
+      expect(esRechazoDelServidor(PostgrestException(message: 'x')), isFalse);
+    });
+
+    test('no llegar al servidor no cuenta', () {
+      expect(esRechazoDelServidor(Exception('SocketException: sin ruta')), isFalse);
+      expect(esRechazoDelServidor(TimeoutException('tarde')), isFalse);
+      expect(esRechazoDelServidor(StateError('cualquier cosa'), ), isFalse);
     });
   });
 

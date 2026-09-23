@@ -11,6 +11,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show PostgrestException;
 
 import '../local/database.dart';
 import '../remote/supabase_client.dart';
@@ -115,10 +117,44 @@ Duration esperaDeReintento(int intentos) {
 
 /// Cuántos fallos antes de dejar de reintentar y pedir intervención.
 ///
-/// Una fila que falló 8 veces no falla por la red: falla por su contenido
-/// (una foreign key rota, un campo que el servidor no acepta). Seguir
-/// intentando no la arregla y tapa la cola de las que sí podrían subir.
+/// Una fila que falló 8 veces **por rechazo del servidor** no falla por la red:
+/// falla por su contenido (una foreign key rota, un campo que no acepta).
+/// Seguir intentando no la arregla y tapa la cola de las que sí podrían subir.
+///
+/// Solo cuentan los rechazos. Ver [esRechazoDelServidor].
 const kMaxIntentos = 8;
+
+/// Cuánto esperar cuando el problema es que no hay servidor al otro lado.
+///
+/// Plano y corto: no es un castigo a la fila, es no golpear la red cada 45
+/// segundos. Al volver el internet, el evento de conectividad ya dispara un
+/// ciclo, así que esto es solo la red de seguridad.
+const kEsperaSinRed = Duration(seconds: 60);
+
+/// El servidor contestó y dijo que no — contra "no llegué al servidor".
+///
+/// **Esta distinción es la que evita perder trabajo.** [kMaxIntentos] existe
+/// para las filas que el servidor rechaza por su contenido, no para castigar
+/// quedarse sin datos. Contando también los fallos de red, un salón sin señal
+/// veinte minutos dejaba sus cambios **trabados**, y al volver el internet no
+/// subían solos: había que entrar a Ajustes y tocar Reintentar, sabiendo que
+/// eso existe. El dato nunca se borraba, pero para quien lo cargo es lo mismo
+/// que perderlo.
+///
+/// Cuenta como rechazo un `PostgrestException` cuyo código sea de una clase
+/// permanente de Postgres: `22xxx` (dato inválido), `23xxx` (viola una
+/// restricción), `42xxx` (permisos o SQL, ahí cae RLS con 42501) y los `PGRST`
+/// de PostgREST. Un `40001` o un `57014` son transitorios y no cuentan.
+///
+/// **Ante la duda, no cuenta.** Una fila que reintenta de más se ve en el
+/// contador de pendientes; una que dejó de reintentar no se ve en ningún lado.
+bool esRechazoDelServidor(Object e) {
+  if (e is! PostgrestException) return false;
+  final codigo = e.code ?? '';
+  if (codigo.startsWith('PGRST')) return true;
+  return codigo.length >= 2 &&
+      const {'22', '23', '42'}.contains(codigo.substring(0, 2));
+}
 
 class SyncEngine {
   SyncEngine(this._db);
@@ -212,18 +248,26 @@ class SyncEngine {
             .go();
         subidas++;
       } catch (e) {
-        final intentos = fila.intentos + 1;
+        // El intento solo se cuenta si el servidor contestó que no. Sin esto,
+        // quedarse sin datos gastaba los ocho intentos y dejaba el cambio
+        // trabado para siempre.
+        final rechazo = esRechazoDelServidor(e);
+        final intentos = rechazo ? fila.intentos + 1 : fila.intentos;
         await (_db.update(_db.outbox)..where((o) => o.id.equals(fila.id)))
             .write(
           OutboxCompanion(
             intentos: Value(intentos),
             ultimoError: Value('$e'),
-            reintentarAt:
-                Value(DateTime.now().add(esperaDeReintento(intentos))),
+            reintentarAt: Value(DateTime.now()
+                .add(rechazo ? esperaDeReintento(intentos) : kEsperaSinRed)),
           ),
         );
-        // No se corta el bucle: una fila trabada no puede bloquear a las
-        // demás. Ese fue exactamente el modo de falla del legacy.
+        // Con un rechazo se sigue: una fila trabada no puede bloquear a las
+        // demás, que fue exactamente el modo de falla del legacy. Pero si no
+        // hay servidor para la primera, no lo va a haber para las 199
+        // siguientes: cortar ahorra doscientas escrituras a la base y
+        // doscientos timeouts por nada.
+        if (!rechazo) break;
       }
     }
     return subidas;
