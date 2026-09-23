@@ -7,6 +7,8 @@ library;
 
 import 'package:flutter/widgets.dart';
 
+import '../layout/layout.dart';
+
 import 'tokens.dart';
 
 bool _sinMovimiento(BuildContext c) => MediaQuery.of(c).disableAnimations;
@@ -223,9 +225,16 @@ class _ConHoverState extends State<ConHover> {
   bool _encima = false;
 
   @override
-  Widget build(BuildContext context) => MouseRegion(
-        onEnter: (_) => setState(() => _encima = true),
-        onExit: (_) => setState(() => _encima = false),
-        child: widget.builder(context, _encima),
-      );
+  Widget build(BuildContext context) {
+    // Con el dedo no hay puntero, así que el `MouseRegion` no puede hacer nada
+    // más que costar. Y no es uno: `TablaMirame` envuelve **cada fila**, y en
+    // la tablet del mostrador una tabla de Caja son decenas de regiones vivas
+    // esperando un evento que nunca llega.
+    if (esTactil) return widget.builder(context, false);
+    return MouseRegion(
+      onEnter: (_) => setState(() => _encima = true),
+      onExit: (_) => setState(() => _encima = false),
+      child: widget.builder(context, _encima),
+    );
+  }
 }

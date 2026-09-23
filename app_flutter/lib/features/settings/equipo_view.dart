@@ -52,10 +52,15 @@ final equipoProvider =
 
   // El join trae el perfil: sin eso la lista serían UUIDs, que no le dicen
   // nada a nadie.
+  // Con `timeout`: es la única pantalla de la app que muestra un spinner de
+  // Material, y sin corte de tiempo una red colgada —un portal cautivo del
+  // shopping, un DNS que no contesta— lo dejaba girando para siempre. La rama
+  // `error:` que ya estaba escrita debajo nunca se alcanzaba.
   final filas = await sb
       .from('tenant_members')
       .select('user_id, rol, estado, profiles(email, nombre)')
-      .eq('tenant_id', tenant.id) as List;
+      .eq('tenant_id', tenant.id)
+      .timeout(kEsperaServidor) as List;
 
   return filas.map((f) {
     final row = f as Map<String, dynamic>;
@@ -87,7 +92,10 @@ const _queHace = {
   MiembroRol.lectura: 'Solo mira. No puede cambiar nada.',
 };
 
-const _comoSeLlama = {
+/// Cómo se le dice a cada rol. Lo usa Equipo y el bloque de usuaria del
+/// sidebar, así que es público: dos nombres distintos para el mismo rol en dos
+/// pantallas es el tipo de detalle que hace dudar de si son lo mismo.
+const nombreDeRol = {
   MiembroRol.owner: 'Dueña',
   MiembroRol.admin: 'Administradora',
   MiembroRol.encargado: 'Encargada',
@@ -257,7 +265,7 @@ class _Fila extends ConsumerWidget {
                           ? 'Bloqueada'
                           : pendiente
                               ? 'Está esperando que la apruebes'
-                              : _comoSeLlama[miembro.rol]!,
+                              : nombreDeRol[miembro.rol]!,
                       style: sans(size: 12, color: MColors.tSecondary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -347,7 +355,7 @@ class _Fila extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(_comoSeLlama[r]!,
+                          Text(nombreDeRol[r]!,
                               style: sans(size: 14, weight: 600)),
                           const SizedBox(height: 3),
                           Text(_queHace[r]!,

@@ -29,7 +29,10 @@ import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
 import '../../data/sync/sync_engine.dart';
+import '../../shared/widgets/piezas.dart';
+import '../settings/equipo_view.dart';
 import '../auth/session_controller.dart';
+import 'buscador_global.dart';
 import 'notificaciones.dart';
 import 'programador_avisos.dart';
 import '../../core/notificaciones/servicio_avisos.dart';
@@ -193,30 +196,37 @@ class _AppShellState extends ConsumerState<AppShell> {
     void irA(int i) => setState(() => _indice = i);
 
     // El observador va acá y no en cada vista: el header y el FAB cuelgan del
-    // `Scaffold`, fuera del cuerpo que scrollea, y no se enterarían nunca.
-    final cuerpo = ObservadorDeScroll(
-      child: NavegadorShell(
-        irA: irA,
-        indiceActivo: _indice,
-        child: ProgramadorAvisos(
-          child: Column(
-            children: [
-              const _BarraSync(),
-              Expanded(
-                // `TickerMode` apagado en las que no se ven: el
-                // `IndexedStack` las mantiene montadas y con animación viva,
-                // así que un esqueleto latiendo en Insumos hacía trabajar al
-                // hilo de UI mientras la persona estaba en la Agenda. Con esto
-                // solo late lo que está en pantalla.
-                child: IndexedStack(
-                  index: _indice,
-                  children: [
-                    for (var i = 0; i < widget.vistas.length; i++)
-                      TickerMode(enabled: i == _indice, child: widget.vistas[i]),
-                  ],
+    // `Scaffold`, fuera del cuerpo que scrollea, y no se enterarían nunca. Y el
+    // atajo `/` envuelve al cuerpo por lo mismo: es del caparazón, y se aprieta
+    // mirando cualquier sección.
+    final cuerpo = AtajoBuscar(
+      child: ObservadorDeScroll(
+        child: NavegadorShell(
+          irA: irA,
+          indiceActivo: _indice,
+          child: ProgramadorAvisos(
+            child: Column(
+              children: [
+                const _BarraSync(),
+                Expanded(
+                  // `TickerMode` apagado en las que no se ven: el
+                  // `IndexedStack` las mantiene montadas y con animación viva,
+                  // así que un esqueleto latiendo en Insumos hacía trabajar al
+                  // hilo de UI mientras la persona estaba en la Agenda. Con esto
+                  // solo late lo que está en pantalla.
+                  child: IndexedStack(
+                    index: _indice,
+                    children: [
+                      for (var i = 0; i < widget.vistas.length; i++)
+                        TickerMode(
+                          enabled: i == _indice,
+                          child: widget.vistas[i],
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -355,14 +365,20 @@ class _Header extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          if (conTitulo)
+          if (conTitulo) ...[
             Expanded(
               child: Text(
                 titulo!,
                 style:
                     serif(size: 26, weight: 600).copyWith(letterSpacing: 0.2),
               ),
-            )
+            ),
+            // El buscador del header, punto 1 de la entrega de escritorio. Solo
+            // en pantalla grande: en el teléfono no hay 300 px libres al lado
+            // del logo, y ahí cada vista tiene el suyo.
+            const PildoraBuscar(),
+            const SizedBox(width: 10),
+          ]
           else ...[
             const _LogoRedondo(),
             const SizedBox(width: 11),
@@ -763,6 +779,12 @@ class _Sidebar extends StatelessWidget {
                 ),
               ),
             const Spacer(),
+            // El bloque de usuaria al pie, punto 5 de la entrega de escritorio.
+            // Con varios salones y la posibilidad de impersonar, saber con qué
+            // cuenta y con qué rol se está trabajando no es decoración: es la
+            // diferencia entre "no me deja" y "no te deja tu rol".
+            _ChipUsuaria(plegado: plegado),
+            const SizedBox(height: 10),
             Align(
               alignment: plegado ? Alignment.center : Alignment.centerRight,
               child: Tooltip(
@@ -792,6 +814,68 @@ class _Sidebar extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// Quién está usando la app, al pie del sidebar: avatar, nombre y rol.
+///
+/// Plegado queda solo el avatar con el nombre en tooltip — en 72 px no entra
+/// nada más, y sacarlo del todo hacía que plegar el menú perdiera información.
+class _ChipUsuaria extends ConsumerWidget {
+  const _ChipUsuaria({required this.plegado});
+
+  final bool plegado;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final nombre = ref.watch(miNombreProvider);
+    final rol = ref.watch(miRolProvider);
+    final subtitulo = rol == null ? 'Sin salón' : nombreDeRol[rol]!;
+
+    if (plegado) {
+      return Tooltip(
+        message: '$nombre · $subtitulo',
+        child: AvatarMirame(nombre: nombre, lado: 32),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: MColors.surface,
+        border: Border.all(color: MColors.border),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: MShadow.xs,
+      ),
+      child: Row(
+        children: [
+          AvatarMirame(nombre: nombre, lado: 32),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  nombre,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: sans(size: 13, weight: 600),
+                ),
+                Text(
+                  subtitulo,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: sans(size: 11, color: MColors.tMuted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ItemSidebar extends StatelessWidget {

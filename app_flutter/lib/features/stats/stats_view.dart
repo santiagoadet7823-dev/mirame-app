@@ -22,6 +22,7 @@ library;
 
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -776,8 +777,15 @@ class _BarrasPainter extends CustomPainter {
     }
   }
 
+  // Por CONTENIDO, no por identidad. `valores` se arma con un literal de
+  // colección en cada `build` y `List` no sobreescribe `==`, así que `!=` daba
+  // siempre true y las barras se repintaban en cada frame aunque los números
+  // fueran los mismos. Es el mismo bug que ya se arregló en el gráfico del
+  // Inicio de escritorio, y pesa más en la PWA: ahí el canvas es casi el doble
+  // de alto y CanvasKit cobra el repintado completo.
   @override
-  bool shouldRepaint(_BarrasPainter viejo) => viejo.valores != valores;
+  bool shouldRepaint(_BarrasPainter viejo) =>
+      !listEquals(viejo.valores, valores);
 }
 
 /// Anillo de gastos. Las porciones llegan en porcentaje entero.
@@ -812,6 +820,8 @@ class _DonutPainter extends CustomPainter {
     }
   }
 
+  // Mismo caso que `_BarrasPainter`: comparar contenido, no identidad.
   @override
-  bool shouldRepaint(_DonutPainter viejo) => viejo.porciones != porciones;
+  bool shouldRepaint(_DonutPainter viejo) =>
+      !listEquals(viejo.porciones, porciones);
 }

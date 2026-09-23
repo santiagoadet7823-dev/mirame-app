@@ -13,7 +13,16 @@ library;
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show BuildContext, RenderBox, Offset;
+// Con `show` porque `pdf/widgets.dart` trae sus propios `Text`, `Padding` y
+// compañía: sin la lista, cada widget del PDF sería ambiguo.
+import 'package:flutter/material.dart'
+    show
+        BuildContext,
+        Offset,
+        RenderBox,
+        ScaffoldMessenger,
+        SnackBar,
+        Text;
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -287,6 +296,19 @@ Future<void> compartirLiquidacion(
   final caja = context.findRenderObject() as RenderBox?;
   final origen =
       caja == null ? null : caja.localToGlobal(Offset.zero) & caja.size;
+  // El PDF se arma en memoria sin problema, pero guardarlo y compartirlo usa
+  // `dart:io` y la hoja del sistema, que en el navegador no existen.
+  if (kIsWeb) {
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'El PDF de la liquidación se baja desde el celular: la versión web '
+          'todavía no puede guardar archivos.',
+        ),
+      ),
+    );
+    return;
+  }
   try {
     final ahora = DateTime.now();
     final bytes = await construirLiquidacionPdf(

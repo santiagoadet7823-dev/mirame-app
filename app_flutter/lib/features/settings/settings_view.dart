@@ -12,12 +12,12 @@ import '../../core/notificaciones/push.dart';
 import '../../core/notificaciones/servicio_avisos.dart';
 import '../../core/layout/layout.dart';
 import '../../core/layout/preferencia_pantalla.dart';
-import '../../shared/widgets/piezas.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/theme/typography.dart';
 import '../../data/sync/sync_engine.dart';
+import '../../shared/widgets/piezas.dart';
 import '../../shared/widgets/version_label.dart';
 import '../auth/session_controller.dart';
 import 'package:flutter/services.dart';
@@ -303,6 +303,7 @@ class _TarjetaPantalla extends ConsumerWidget {
       filas: [
         ('Composición', _etiquetas[elegido]!),
         ('Este aparato', medida.resumen),
+        if (medida.guardado case final g?) ('Datos', g),
       ],
       // Con scroll horizontal: tres opciones con la fuente del sistema
       // agrandada no entran en el ancho de la tarjeta en un teléfono, y este

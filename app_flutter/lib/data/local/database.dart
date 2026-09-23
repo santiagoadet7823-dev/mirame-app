@@ -517,6 +517,17 @@ Future<void> _indicesRopa(MirameDb db) async {
   }
 }
 
+/// Como quedó guardada la base en la PWA, para poder decirlo en Ajustes.
+///
+/// `drift` degrada solo: si el navegador no da OPFS usa IndexedDB, y si tampoco
+/// hay, **memoria** — y ahí todo lo que se carga se pierde al cerrar la
+/// pestaña. El problema no es que degrade, es que degradado se ve** igual** que
+/// sano: misma pantalla, mismos datos, hasta que se cierra la ventana. Se anota
+/// para que la línea de diagnóstico lo pueda mostrar.
+///
+/// Null en Android, donde no hay nada que elegir.
+String? guardadoWeb;
+
 QueryExecutor _abrir() => driftDatabase(
       name: 'mirame',
       // Obligatorio en web: sin esto la PWA no arranca y muestra
@@ -526,5 +537,18 @@ QueryExecutor _abrir() => driftDatabase(
       web: DriftWebOptions(
         sqlite3Wasm: Uri.parse('sqlite3.wasm'),
         driftWorker: Uri.parse('drift_worker.js'),
+        onResult: (r) {
+          guardadoWeb = switch (r.chosenImplementation) {
+            WasmStorageImplementation.opfsShared ||
+            WasmStorageImplementation.opfsLocks =>
+              'en el disco del navegador',
+            WasmStorageImplementation.sharedIndexedDb ||
+            WasmStorageImplementation.unsafeIndexedDb =>
+              'en IndexedDB',
+            // Lo único que hay que mirar de toda esta línea.
+            WasmStorageImplementation.inMemory =>
+              'SOLO en memoria: se pierde al cerrar la ventana',
+          };
+        },
       ),
     );

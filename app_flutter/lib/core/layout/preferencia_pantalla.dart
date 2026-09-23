@@ -15,6 +15,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data/local/database.dart' show guardadoWeb;
 import 'layout.dart';
 
 /// Clave de la preferencia. Ausente = automático.
@@ -93,4 +94,10 @@ class MedidaDePantalla {
         : 'teléfono';
     return '$l lógicos · $f reales · densidad $d · $m';
   }
+
+  /// Dónde guarda la PWA, o null en el APK.
+  ///
+  /// Se muestra porque una PWA que degradó a memoria —y por lo tanto pierde
+  /// todo al cerrar la ventana— se ve **exactamente igual** que una sana.
+  String? get guardado => guardadoWeb;
 }

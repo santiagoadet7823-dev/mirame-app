@@ -7,6 +7,7 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -21,6 +22,19 @@ import '../auth/session_controller.dart';
 /// Arma el JSON y lo entrega a la hoja de compartir.
 Future<void> exportarBackup(BuildContext context, WidgetRef ref) async {
   final messenger = ScaffoldMessenger.maybeOf(context);
+  // Mismo caso que el CSV: `dart:io` + hoja de compartir, ninguna de las dos en
+  // el navegador. Decirlo es mejor que un "no se pudo" que invita a reintentar.
+  if (kIsWeb) {
+    messenger?.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Bajar archivos es del celular: la versión web todavía no puede '
+          'guardar en el disco.',
+        ),
+      ),
+    );
+    return;
+  }
   final caja = context.findRenderObject() as RenderBox?;
   final repo = ref.read(businessRepoProvider);
   if (repo == null) return;

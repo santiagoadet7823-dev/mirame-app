@@ -19,6 +19,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Si en este aparato se pueden cargar fotos.
+///
+/// En la PWA no: comprimir y guardar usan `dart:io`. Sin este freno el picker
+/// abría igual, la compresión fallaba y al volver **no pasaba nada** — la
+/// persona se quedaba pensando que eligió mal la foto. La UI lo consulta para
+/// no ofrecer un botón que no puede cumplir.
+const puedeCargarFotos = !kIsWeb;
+
 /// Bucket de Supabase Storage. Lectura pública: la vitrina la abre gente sin
 /// cuenta.
 const kBucketProductos = 'productos';
@@ -35,6 +43,7 @@ const kCalidad = 80;
 /// Devuelve la ruta local. **No sube nada**: subir es un paso aparte que puede
 /// fallar por falta de señal, y la prenda tiene que quedar cargada igual.
 Future<String?> elegirYComprimir({required bool desdeCamara}) async {
+  if (!puedeCargarFotos) return null;
   try {
     final x = await ImagePicker().pickImage(
       source: desdeCamara ? ImageSource.camera : ImageSource.gallery,
@@ -61,6 +70,7 @@ Future<String?> elegirYComprimir({required bool desdeCamara}) async {
 /// de cinco. La red que atrapa lo que igual se pierda es
 /// [recuperarFotosPerdidas].
 Future<List<String>> elegirVariasYComprimir() async {
+  if (!puedeCargarFotos) return const [];
   try {
     final elegidas = await ImagePicker().pickMultiImage(
       maxWidth: kLadoMaximo.toDouble(),

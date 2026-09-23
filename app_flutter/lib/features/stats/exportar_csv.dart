@@ -9,6 +9,7 @@ library;
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -29,6 +30,21 @@ Future<void> compartirCsv(
 }) async {
   final messenger = ScaffoldMessenger.maybeOf(context);
   final caja = context.findRenderObject() as RenderBox?;
+  // En la PWA esto no puede funcionar: escribe un archivo con `dart:io` y lo
+  // entrega a la hoja de compartir del sistema, y el navegador no tiene ni una
+  // cosa ni la otra. Antes caía al `catch` y decía "no se pudo", que suena a
+  // falla pasajera y hacía reintentar. Es una limitación, y conviene decirla.
+  if (kIsWeb) {
+    messenger?.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Bajar archivos es del celular: la versión web todavía no puede '
+          'guardar en el disco.',
+        ),
+      ),
+    );
+    return;
+  }
   try {
     final dir = await getTemporaryDirectory();
     final archivo = File('${dir.path}/$nombre');

@@ -16,6 +16,7 @@ import '../../data/remote/supabase_client.dart';
 import '../../data/repositories/access_cache.dart';
 import '../../data/repositories/access_repository.dart';
 import '../../data/sync/sync_engine.dart';
+import '../../domain/entities/access.dart';
 import '../../domain/rules/access.dart';
 
 const _kTenantActivo = 'mirame.tenant_activo';
@@ -298,3 +299,36 @@ final puedeVolverAlPanelProvider = Provider<bool>((ref) {
 final esSuperadminProvider = Provider<bool>((ref) => ref.watch(
       sessionProvider.select((s) => s.esSuperadmin),
     ));
+
+/// Quién está usando la app, para el bloque del sidebar que pide la entrega.
+///
+/// Sale de los metadatos de Supabase, que es donde Google deja el nombre. Si no
+/// hay nombre queda la parte del mail antes del arroba: es lo que la persona
+/// reconoce como suyo, y mejor que un UUID o un mail entero que no entra en
+/// 248 px.
+final miNombreProvider = Provider<String>((ref) {
+  // Depende de la sesión a propósito: al entrar o salir hay que recalcularlo.
+  ref.watch(sessionProvider);
+  // En `try` porque `sb` afirma que Supabase ya está inicializado, y esto lo
+  // lee el sidebar: un provider que tira desde ahí no deja sin nombre, deja
+  // **sin pantalla**. Si no se puede saber quién es, se dice así.
+  try {
+    final usuario = sb.auth.currentUser;
+    final meta = usuario?.userMetadata;
+    for (final clave in const ['nombre', 'full_name', 'name']) {
+      final v = meta?[clave];
+      if (v is String && v.trim().isNotEmpty) return v.trim();
+    }
+    final mail = usuario?.email;
+    if (mail != null && mail.contains('@')) return mail.split('@').first;
+  } catch (_) {
+    // Sin Supabase inicializado (tests, arranque fallido) no hay cuenta.
+  }
+  return 'Vos';
+});
+
+/// El rol con el que entró, o null si todavía no está adentro de un salón.
+final miRolProvider = Provider<MiembroRol?>((ref) {
+  final d = ref.watch(sessionProvider).decision;
+  return d is GoToApp ? d.rol : null;
+});
