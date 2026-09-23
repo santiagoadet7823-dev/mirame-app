@@ -1348,3 +1348,28 @@ Si molesta en el aparato, ORDEN sale de la columna a un control compacto arriba 
   puede resolver con una descarga del navegador, que pide un camino web-only.
 - Sigue faltando el secret `SUPABASE_SERVICE_ROLE_KEY` para servir el APK desde Supabase Storage.
 - Tanda E: widget de Android en Kotlin y fotos de clienta (tabla + bucket + consentimiento).
+
+#### Incidente: `main.dart` vacio, y por que ningun control lo agarro
+
+Durante esta sesion `lib/main.dart` quedo en **0 bytes** y se comitio asi cinco veces seguidas. La
+causa fue un comando de edicion con la forma `open(p,'w').write(open(p).read())`: Python evalua el
+primer `open` \u2014que **trunca** el archivo\u2014 antes de leerlo, asi que escribe cadena vacia. **No usar
+nunca esa forma**: leer a una variable, cerrar, y despues escribir.
+
+Lo que importa es que **los tres controles del repo lo dejaron pasar**:
+
+1. `flutter analyze` \u2192 "No issues found". Un archivo Dart vacio es valido.
+2. Los 392 tests \u2192 todos en verde. **Ninguno importaba el punto de entrada**: montan vistas o el
+   shell directamente, nunca `package:mirame/main.dart`.
+3. `git status` \u2192 limpio, porque el archivo vacio ya era lo que estaba en HEAD.
+
+Lo unico que fallaba era el build, que en local nadie corre. En CI la PWA se habria caido con
+`Undefined name 'main'` y el APK tampoco habria compilado: se publicaba una version que no arranca.
+
+Dos cosas que quedan de esto:
+
+- `test/arranque_test.dart` importa `package:mirame/main.dart` y toca `main` y `MirameApp`. Si el
+  punto de entrada vuelve a vaciarse, no compila.
+- **Antes de publicar, correr `flutter build web --release` en local.** `analyze` + tests no alcanzan:
+  hay una clase de error que solo aparece al compilar. El comando, con Git Bash, necesita
+  `MSYS_NO_PATHCONV=1` o convierte `/mirame-app/` en una ruta de Windows.
