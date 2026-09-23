@@ -145,6 +145,7 @@ class TarjetaTurno extends StatelessWidget {
     this.compacta = false,
     this.onTap,
     this.destacada = false,
+    this.grande = false,
   });
 
   final Appointment turno;
@@ -157,6 +158,10 @@ class TarjetaTurno extends StatelessWidget {
   /// El próximo turno del día: fondo lavanda suave. Es la fila que se mira
   /// primero al abrir la app.
   final bool destacada;
+
+  /// La escala de la tablet del mostrador: 76 px de alto y avatar de 46, que
+  /// es lo que pidió el diseñador para que se toque con la mano apoyada.
+  final bool grande;
 
   Color get _colorEstado => switch (turno.estado) {
         TurnoEstado.done => MColors.successText,
@@ -188,7 +193,11 @@ class TarjetaTurno extends StatelessWidget {
             MColors.dangerBorder,
             MColors.dangerText
           ),
-        TurnoEstado.confirmed => (MColors.lav50, MColors.lav200, MColors.lav700),
+        TurnoEstado.confirmed => (
+            MColors.lav50,
+            MColors.lav200,
+            MColors.lav700
+          ),
       };
 
   String get _subtitulo => [
@@ -260,7 +269,11 @@ class TarjetaTurno extends StatelessWidget {
           )
         : Row(
             children: [
-              _Avatar(nombre: nombre, lado: 42, cancelado: cancelado),
+              _Avatar(
+                nombre: nombre,
+                lado: grande ? 46 : 42,
+                cancelado: cancelado,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -274,10 +287,10 @@ class TarjetaTurno extends StatelessWidget {
                             nombre,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: sans(size: 14, weight: 600).copyWith(
-                              decoration: cancelado
-                                  ? TextDecoration.lineThrough
-                                  : null,
+                            style: sans(size: grande ? 15 : 14, weight: 600)
+                                .copyWith(
+                              decoration:
+                                  cancelado ? TextDecoration.lineThrough : null,
                               color: cancelado ? MColors.tMuted : null,
                             ),
                           ),
@@ -354,10 +367,20 @@ class TarjetaTurno extends StatelessWidget {
           child: Container(
             // Alto MÍNIMO, no fijo: con el texto del sistema en grande la
             // tarjeta tiene que crecer, no recortar el nombre.
-            constraints: BoxConstraints(minHeight: compacta ? 46 : 68),
+            constraints: BoxConstraints(
+              minHeight: compacta
+                  ? 46
+                  : grande
+                      ? 76
+                      : 68,
+            ),
             padding: EdgeInsets.symmetric(
               horizontal: compacta ? 12 : 13,
-              vertical: compacta ? 9 : 12,
+              vertical: compacta
+                  ? 9
+                  : grande
+                      ? 15
+                      : 12,
             ),
             decoration: BoxDecoration(
               color: destacada ? MColors.lav50 : MColors.surface,
@@ -417,8 +440,7 @@ class _Avatar extends StatelessWidget {
         decoration: BoxDecoration(
           // Cancelado sin gradiente: el color es para lo que está vivo.
           color: cancelado ? MColors.bg2 : null,
-          gradient:
-              cancelado ? null : MGradient.avatar(avatarIndex(nombre)),
+          gradient: cancelado ? null : MGradient.avatar(avatarIndex(nombre)),
           shape: BoxShape.circle,
         ),
         child: Text(
@@ -504,9 +526,8 @@ class TiraSemanal extends StatelessWidget {
                             style: sans(
                               size: 10,
                               weight: 600,
-                              color: esElegido
-                                  ? MColors.tWhite
-                                  : MColors.tMuted,
+                              color:
+                                  esElegido ? MColors.tWhite : MColors.tMuted,
                             ).copyWith(letterSpacing: 0.3),
                           ),
                           const SizedBox(height: 4),
@@ -591,8 +612,7 @@ class SelectorDeVista extends StatelessWidget {
                     style: sans(
                       size: 11.5,
                       weight: o == activa ? 600 : 500,
-                      color:
-                          o == activa ? MColors.tPrimary : MColors.tMuted,
+                      color: o == activa ? MColors.tPrimary : MColors.tMuted,
                     ),
                   ),
                 ),
@@ -667,9 +687,8 @@ class TabsMirame extends StatelessWidget {
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: t == activa
-                              ? MColors.brand
-                              : Colors.transparent,
+                          color:
+                              t == activa ? MColors.brand : Colors.transparent,
                           width: 2,
                         ),
                       ),
@@ -749,8 +768,8 @@ class CtaFijo extends StatelessWidget {
                       ],
                       Text(
                         texto,
-                        style: sans(
-                            size: 15, weight: 600, color: MColors.tWhite),
+                        style:
+                            sans(size: 15, weight: 600, color: MColors.tWhite),
                       ),
                     ],
                   ),

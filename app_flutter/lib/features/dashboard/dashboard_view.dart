@@ -184,6 +184,9 @@ class DashboardView extends ConsumerWidget {
         .length;
 
     final escritorio = esEscritorio(context);
+    // La tablet del mostrador: mismo reparto que el escritorio, escalas de
+    // dedo. Los chips de 44 son para apuntar con el mouse.
+    final tablet = esTabletTactil(context);
 
     // Cinco acciones en círculos tintados, no seis tarjetas con emoji: el
     // emoji lo dibuja cada sistema a su manera y a 22 px un 📅 de Samsung no
@@ -273,9 +276,9 @@ class DashboardView extends ConsumerWidget {
                   // fijo porque la barra reparte a sus hijos y adentro de
                   // una fila no sabría entre cuánto repartir.
                   SizedBox(
-                    width: 64.0 * (acciones.length - 1),
+                    width: (tablet ? 80.0 : 64.0) * (acciones.length - 1),
                     child: BarraDeAcciones(
-                      lado: 44,
+                      lado: tablet ? 58 : 44,
                       acciones: acciones.sublist(1),
                     ),
                   ),
@@ -351,6 +354,51 @@ class DashboardView extends ConsumerWidget {
                   ],
                 ),
               ),
+              // Los retoques y los insumos bajo el mínimo existían solo en el
+              // teléfono: en la pantalla grande sobraba lugar y justo faltaban
+              // las dos cosas que hacen falta mirar sin que nadie las pida.
+              if (recordatorios.isNotEmpty || alertas.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (recordatorios.isNotEmpty)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            FilaSeccion(
+                              titulo: 'PRÓXIMOS RETOQUES ✂️',
+                              accion: 'Ver clientas',
+                              onAccion: () =>
+                                  NavegadorShell.ir(context, Vistas.clientas),
+                            ),
+                            for (final r in recordatorios.take(3))
+                              _FilaRecordatorio(recordatorio: r),
+                          ],
+                        ),
+                      ),
+                    if (recordatorios.isNotEmpty && alertas.isNotEmpty)
+                      const SizedBox(width: 16),
+                    if (alertas.isNotEmpty)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            FilaSeccion(
+                              titulo: 'ALERTAS DE STOCK',
+                              accion: 'Ver insumos',
+                              onAccion: () =>
+                                  NavegadorShell.ir(context, Vistas.stock),
+                            ),
+                            for (final a in alertas.take(3))
+                              _FilaAlertaStock(item: a),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),

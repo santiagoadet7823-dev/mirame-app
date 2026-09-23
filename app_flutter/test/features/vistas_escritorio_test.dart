@@ -8,6 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mirame/core/layout/layout.dart';
 import 'package:mirame/core/theme/app_theme.dart';
 import 'package:mirame/domain/rules/access.dart';
 import 'package:mirame/features/agenda/agenda_view.dart';
@@ -59,6 +60,24 @@ void main() {
       for (final e in vistas.entries) {
         testWidgets('${e.key} se monta sin errores', (t) async {
           await montar(t, ancho, e.value);
+          final ex = t.takeException();
+          expect(ex, isNull,
+              reason: ex is FlutterError ? ex.toStringDeep() : null);
+        });
+      }
+    });
+  }
+
+  // La tablet acostada y la PWA en la compu miden lo mismo pero no se
+  // componen igual: la tablet usa tarjetas, filtros fijos y filas de 64. Son
+  // dos caminos distintos en el código, así que los dos se prueban.
+  for (final tactil in [true, false]) {
+    group(tactil ? 'tablet acostada (dedo)' : 'escritorio (puntero)', () {
+      tearDown(() => modoTactilForzado = null);
+      for (final e in vistas.entries) {
+        testWidgets('${e.key} se monta sin errores', (t) async {
+          modoTactilForzado = tactil;
+          await montar(t, 1280, e.value);
           final ex = t.takeException();
           expect(ex, isNull,
               reason: ex is FlutterError ? ex.toStringDeep() : null);

@@ -442,6 +442,7 @@ class TarjetaMirame extends StatelessWidget {
     this.onTap,
     this.onLongPress,
     this.borde,
+    this.fondo,
   });
 
   final Widget hijo;
@@ -451,13 +452,16 @@ class TarjetaMirame extends StatelessWidget {
   final VoidCallback? onLongPress;
   final Color? borde;
 
+  /// Para marcar la tarjeta abierta cuando la lista convive con un panel.
+  final Color? fondo;
+
   @override
   Widget build(BuildContext context) {
     final tarjeta = Container(
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: MColors.surface,
+        color: fondo ?? MColors.surface,
         border: Border.all(color: borde ?? MColors.border),
         borderRadius: BorderRadius.circular(MRadius.lg),
         boxShadow: MShadow.xs,

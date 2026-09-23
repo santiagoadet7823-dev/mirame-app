@@ -67,6 +67,30 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
             setState(() => _abiertaId = _abiertaId == c.id ? null : c.id),
       );
 
+  /// La lista de tarjetas de la tablet: la misma tarjeta del teléfono, pero
+  /// abriendo la ficha en el panel de al lado en vez de una pantalla nueva.
+  Widget _tarjetas(
+    List<Client> lista,
+    Map<String, ({int turnos, double gastado})> resumen,
+    Widget vacio,
+  ) =>
+      lista.isEmpty
+          ? vacio
+          : ListView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: lista.length,
+              itemBuilder: (_, i) => _FilaCliente(
+                cliente: lista[i],
+                turnos: resumen[lista[i].id]?.turnos ?? 0,
+                gastado: resumen[lista[i].id]?.gastado ?? 0,
+                seleccionada: lista[i].id == _abiertaId,
+                onTap: () => setState(
+                  () => _abiertaId =
+                      _abiertaId == lista[i].id ? null : lista[i].id,
+                ),
+              ),
+            );
+
   @override
   Widget build(BuildContext context) {
     final asincronas = ref.watch(clientesProvider);
@@ -205,7 +229,12 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
                           ? Padding(
                               padding: padVista(context, sinArriba: true),
                               child: MaestroDetalle(
-                                lista: _tabla(lista, resumen, vacio),
+                                // La tabla de 56 px es de puntero. En la
+                                // tablet del mostrador la misma información va
+                                // en tarjetas, que se tocan con el dedo.
+                                lista: esTabletTactil(context)
+                                    ? _tarjetas(lista, resumen, vacio)
+                                    : _tabla(lista, resumen, vacio),
                                 panel: abierta == null
                                     ? null
                                     : PanelLateral(
@@ -355,19 +384,28 @@ class _FilaCliente extends ConsumerWidget {
     required this.cliente,
     required this.turnos,
     required this.gastado,
+    this.onTap,
+    this.seleccionada = false,
   });
 
   final Client cliente;
   final int turnos;
   final num gastado;
 
+  /// En la tablet la tarjeta abre la ficha en el panel de al lado, no una
+  /// pantalla completa: hay ancho para las dos cosas a la vez.
+  final VoidCallback? onTap;
+  final bool seleccionada;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) => TarjetaMirame(
         margenInferior: 8,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        borde: seleccionada ? MColors.borderLav : null,
+        fondo: seleccionada ? MColors.lav50 : null,
         // Abre la ficha, no la edición: lo que se hace todo el tiempo es
         // mirar el historial, no cambiarle el nombre.
-        onTap: () => mostrarFichaCliente(context, cliente),
+        onTap: onTap ?? () => mostrarFichaCliente(context, cliente),
         // El toque largo saltea la ficha para las dos cosas que se hacen con
         // el teléfono en la mano: escribirle o agendarla.
         onLongPress: () => _menuRapido(context, ref, cliente),

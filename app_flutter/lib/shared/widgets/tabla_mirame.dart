@@ -14,6 +14,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../core/layout/layout.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -124,6 +125,12 @@ class TablaMirame<T> extends StatefulWidget {
 class _TablaMirameState<T> extends State<TablaMirame<T>> {
   int? _columnaOrden;
   bool _ascendente = true;
+
+  /// En la tablet del mostrador las filas van a 64 px: las de 52 son de
+  /// puntero, y con el dedo se toca la fila de al lado. No es cada vista la
+  /// que lo decide, para que ninguna se olvide.
+  double _alto(BuildContext context) =>
+      esTabletTactil(context) && widget.altoFila < 64 ? 64 : widget.altoFila;
 
   @override
   void initState() {
@@ -237,7 +244,7 @@ class _TablaMirameState<T> extends State<TablaMirame<T>> {
           duration: MMotion.t1,
           // Alto MÍNIMO y no fijo: con el texto del sistema al 130 % una fila
           // de 52 px recorta el nombre en vez de crecer.
-          constraints: BoxConstraints(minHeight: widget.altoFila),
+          constraints: BoxConstraints(minHeight: _alto(context)),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: elegida

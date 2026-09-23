@@ -23,6 +23,7 @@ import '../../domain/rules/period.dart';
 import '../../shared/widgets/comportamiento.dart';
 import '../../shared/widgets/tabla_mirame.dart';
 import '../auth/session_controller.dart';
+import '../dashboard/dashboard_view.dart';
 import 'cierre_sheet.dart';
 import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
@@ -48,6 +49,90 @@ final movimientosDeMesProvider =
     DateTime(hoy.year, hoy.month + offset + 1, 0),
   );
 });
+
+/// "Cobrar el turno de ahora", arriba de Caja en la tablet del mostrador.
+///
+/// Es el turno de hoy más cercano a esta hora que todavía no se cobró. Con la
+/// clienta enfrente, el camino era: mirar la agenda, acordarse del precio,
+/// volver a Caja, tocar +, tipear el monto. Acá es un toque y confirmar.
+class _CobrarAhora extends ConsumerWidget {
+  const _CobrarAhora();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final turnos = (ref.watch(turnosDeHoyProvider).value ?? const [])
+        .map(aAppointment)
+        .where((t) => t.estado != TurnoEstado.cancelled)
+        .toList();
+    if (turnos.isEmpty) return const SizedBox.shrink();
+
+    // El más cercano a la hora actual: puede ser el que está pasando o el que
+    // acaba de terminar, que es cuando se cobra.
+    final ahora = DateTime.now();
+    final minutosAhora = ahora.hour * 60 + ahora.minute;
+    int distancia(Appointment t) {
+      final h = t.hora;
+      if (h == null) return 24 * 60;
+      return (h.hour * 60 + h.minute - minutosAhora).abs();
+    }
+
+    final turno = turnos.reduce((a, b) => distancia(a) <= distancia(b) ? a : b);
+    if (turno.precio <= 0) return const SizedBox.shrink();
+
+    final nombre = ref
+            .watch(clientesProvider)
+            .value
+            ?.where((c) => c.id == turno.clientId)
+            .map((c) => c.nombre)
+            .firstOrNull ??
+        'la clienta';
+
+    return FadeSlideIn(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+        decoration: BoxDecoration(
+          color: MColors.lav50,
+          border: Border.all(color: MColors.lav200),
+          borderRadius: BorderRadius.circular(MRadius.lg),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const EtiquetaSeccion('EL TURNO DE AHORA'),
+                  Text(
+                    '$nombre · ${turno.hora?.toString() ?? ""}',
+                    style: sans(size: 15, weight: 600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    turno.estado == TurnoEstado.done
+                        ? 'Ya está hecho'
+                        : 'Todavía no se cobró',
+                    style: sans(size: 12.5, color: MColors.tSecondary),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 14),
+            BotonPrimario(
+              texto: 'Cobrar ${formatMoney(turno.precio)}',
+              onTap: () => _mostrarFormulario(
+                context,
+                ref,
+                monto: turno.precio,
+                descripcion: 'Turno de $nombre',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 /// `.cal-hdr` — el mes con las flechas a los costados.
 class _SelectorMes extends StatelessWidget {
@@ -118,6 +203,9 @@ class _CajaViewState extends ConsumerState<CajaView> {
     };
 
     final escritorio = esEscritorio(context);
+    // En la tablet del mostrador lo primero que se hace en Caja es cobrarle
+    // a la que está enfrente, no revisar el mes.
+    final tablet = esTabletTactil(context);
 
     final vacio = EstadoVacio(
       emoji: _filtro == 'all' ? '💸' : '🔍',
@@ -214,6 +302,10 @@ class _CajaViewState extends ConsumerState<CajaView> {
               child: ListView(
                 padding: padVista(context, sinArriba: escritorio),
                 children: [
+                  if (tablet && puedeEscribir) ...[
+                    const _CobrarAhora(),
+                    const SizedBox(height: 14),
+                  ],
                   if (!escritorio) ...[
                     FadeSlideIn(child: selector),
                     const SizedBox(height: 12),
@@ -521,16 +613,28 @@ Future<void> _mostrarFormulario(
   BuildContext context,
   WidgetRef ref, {
   Transaction? mov,
+  num? monto,
+  String? descripcion,
 }) =>
     showAppSheet<void>(
       context,
-      builder: (_) => _FormularioMovimiento(mov: mov),
+      builder: (_) => _FormularioMovimiento(
+        mov: mov,
+        monto: monto,
+        descripcion: descripcion,
+      ),
     );
 
 class _FormularioMovimiento extends ConsumerStatefulWidget {
-  const _FormularioMovimiento({this.mov});
+  const _FormularioMovimiento({this.mov, this.monto, this.descripcion});
 
   final Transaction? mov;
+
+  /// Con qué llega cargado cuando se abre desde "cobrar el turno de ahora":
+  /// el precio del turno y el nombre de la clienta. Sin esto, cobrar con la
+  /// clienta enfrente es tipear un número que ya está en la pantalla.
+  final num? monto;
+  final String? descripcion;
 
   @override
   ConsumerState<_FormularioMovimiento> createState() => _FormMovState();
@@ -548,9 +652,15 @@ class _FormMovState extends ConsumerState<_FormularioMovimiento> {
     super.initState();
     final m = widget.mov;
     _monto = TextEditingController(
-      text: m == null ? '' : m.monto.toStringAsFixed(0),
+      text: m != null
+          ? m.monto.toStringAsFixed(0)
+          : widget.monto == null
+              ? ''
+              : widget.monto!.toStringAsFixed(0),
     );
-    _descripcion = TextEditingController(text: m?.descripcion ?? '');
+    _descripcion = TextEditingController(
+      text: m?.descripcion ?? widget.descripcion ?? '',
+    );
     _esIngreso = m == null || m.tipo == TxTipo.income;
   }
 

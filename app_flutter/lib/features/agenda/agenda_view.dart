@@ -126,6 +126,7 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
     }.toList();
 
     final escritorio = esEscritorio(context);
+    final tablet = esTabletTactil(context);
 
     final calendario = CalendarioMes(
       mes: _mes,
@@ -175,6 +176,8 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
                 nombrePorId: nombrePorId,
                 nombreProfesional: nombreProfesional,
                 esHoy: !_lejosDeHoy,
+                grande: tablet,
+                dia: _dia,
                 padding: escritorio
                     ? const EdgeInsets.fromLTRB(0, 0, 32, 40)
                     : const EdgeInsets.fromLTRB(16, 0, 16, 96),
@@ -250,7 +253,21 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
                         width: 380,
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.fromLTRB(32, 0, 0, 40),
-                          child: calendario,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              calendario,
+                              // Debajo del mes y no arriba: primero se elige
+                              // el día, y recién entonces importa quién está.
+                              if (tablet && profesionalesDelDia.isNotEmpty) ...[
+                                const SizedBox(height: 18),
+                                _QuienesTrabajan(
+                                  turnos: todos,
+                                  nombrePorId: nombreProfesional,
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 28),
@@ -269,7 +286,10 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
                                       _tituloDia(_dia),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: serif(size: 22, weight: 600),
+                                      style: serif(
+                                        size: tablet ? 26 : 22,
+                                        weight: 600,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -459,7 +479,16 @@ class _Timeline extends StatefulWidget {
     required this.padding,
     required this.esHoy,
     this.nombreProfesional = const {},
+    this.grande = false,
+    this.dia,
   });
+
+  /// La escala de la tablet: tarjetas de 76 y franjas libres tocables. En el
+  /// teléfono no entran, y ahí el hueco se llena con el FAB.
+  final bool grande;
+
+  /// El día que se está mirando. Hace falta para agendar en un hueco.
+  final DateTime? dia;
 
   /// El día que se está mirando es hoy: solo entonces tiene sentido la línea
   /// de "ahora" y arrancar el scroll en el próximo turno.
@@ -516,7 +545,15 @@ class _TimelineState extends State<_Timeline> {
     return m;
   }
 
-  List<int> _horas() => _porHora().keys.toList()..sort();
+  List<int> _horas() {
+    final conTurno = _porHora().keys.toList()..sort();
+    if (!widget.grande || conTurno.isEmpty) return conTurno;
+    // En la tablet la agenda se lee como una jornada, no como una lista: las
+    // horas sin turno entre la primera y la última se muestran igual, y una
+    // más al final, porque el hueco de después del último turno es justo el
+    // que se ofrece cuando la clienta pregunta "¿y más tarde?".
+    return [for (var h = conTurno.first; h <= conTurno.last + 1; h++) h];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -537,7 +574,7 @@ class _TimelineState extends State<_Timeline> {
           return const FinDeLista('No hay más turnos este día');
         }
         final h = horas[i];
-        final delHora = porHora[h]!;
+        final delHora = porHora[h] ?? const <Appointment>[];
         // La franja en curso: la hora de ahora, o la primera que ya pasó si
         // ahora mismo no hay ninguna.
         final esFranjaDeAhora = widget.esHoy && h == ahora.hour;
@@ -601,7 +638,10 @@ class _TimelineState extends State<_Timeline> {
                             nombreCliente: nombrePorId[t.clientId],
                             nombreProfesional:
                                 widget.nombreProfesional[t.professionalId],
+                            grande: widget.grande,
                           ),
+                        if (delHora.isEmpty)
+                          _FranjaLibre(hora: h, dia: widget.dia),
                       ],
                     ),
                   ),
@@ -615,6 +655,126 @@ class _TimelineState extends State<_Timeline> {
   }
 }
 
+/// Quiénes trabajan en el día que se está mirando, con cuántos turnos tiene
+/// cada una.
+///
+/// Sale de los turnos y no de una tabla de horarios: para repartir trabajo lo
+/// que hace falta saber es quién YA tiene, no quién dijo que venía.
+class _QuienesTrabajan extends StatelessWidget {
+  const _QuienesTrabajan({required this.turnos, required this.nombrePorId});
+
+  final List<Appointment> turnos;
+  final Map<String, String> nombrePorId;
+
+  @override
+  Widget build(BuildContext context) {
+    final cuantos = <String, int>{};
+    for (final t in turnos) {
+      if (t.estado == TurnoEstado.cancelled) continue;
+      final nombre = nombrePorId[t.professionalId];
+      if (nombre != null) cuantos[nombre] = (cuantos[nombre] ?? 0) + 1;
+    }
+    if (cuantos.isEmpty) return const SizedBox.shrink();
+    final orden = cuantos.keys.toList()
+      ..sort((a, b) => cuantos[b]!.compareTo(cuantos[a]!));
+
+    return TarjetaMirame(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+      hijo: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const EtiquetaSeccion('QUIÉNES TRABAJAN'),
+          for (final nombre in orden)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  AvatarMirame(nombre: nombre, lado: 34),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      nombre,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: sans(size: 13.5, weight: 600),
+                    ),
+                  ),
+                  Text(
+                    '${cuantos[nombre]} '
+                    '${cuantos[nombre] == 1 ? "turno" : "turnos"}',
+                    style: sans(size: 12, color: MColors.tMuted),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// La hora sin turnos, en la agenda de la tablet: "Libre · tocá para agendar".
+///
+/// En el teléfono el hueco no se muestra —se agenda con el FAB— pero con la
+/// tablet apoyada y la clienta enfrente, lo que se pregunta es "¿a qué hora
+/// tenés?", y la respuesta tiene que ser tocable ahí mismo.
+class _FranjaLibre extends ConsumerWidget {
+  const _FranjaLibre({required this.hora, this.dia});
+
+  final int hora;
+  final DateTime? dia;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirAgenda));
+    final texto = '${hora.toString().padLeft(2, '0')}:00';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: PressableScale(
+        onTap: puedeEscribir
+            ? () => _mostrarFormulario(context, ref, dia: dia, hora: hora)
+            : null,
+        child: DottedBorderBox(
+          child: Row(
+            children: [
+              const Icon(Icons.add_rounded, size: 17, color: MColors.tLight),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  puedeEscribir
+                      ? 'Libre · tocá para agendar a las $texto'
+                      : 'Libre a las $texto',
+                  style: sans(size: 12.5, color: MColors.tMuted),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// El recuadro punteado del hueco libre. Punteado y no lleno: tiene que
+/// leerse como "acá no hay nada", no como una tarjeta más.
+class DottedBorderBox extends StatelessWidget {
+  const DottedBorderBox({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        constraints: const BoxConstraints(minHeight: 52),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+        decoration: BoxDecoration(
+          color: MColors.bg2,
+          border: Border.all(color: MColors.border),
+          borderRadius: BorderRadius.circular(MRadius.lg),
+        ),
+        child: child,
+      );
+}
+
 /// `.tl-ev` — tarjeta del turno, con la **barra lavanda de 3px a la
 /// izquierda**, que es lo que le da el aire de agenda.
 class _EventoTimeline extends ConsumerWidget {
@@ -622,11 +782,13 @@ class _EventoTimeline extends ConsumerWidget {
     required this.turno,
     this.nombreCliente,
     this.nombreProfesional,
+    this.grande = false,
   });
 
   final Appointment turno;
   final String? nombreCliente;
   final String? nombreProfesional;
+  final bool grande;
 
   /// Cambia el estado sin abrir el formulario.
   ///
@@ -655,6 +817,7 @@ class _EventoTimeline extends ConsumerWidget {
       turno: turno,
       nombreCliente: nombreCliente,
       profesional: nombreProfesional,
+      grande: grande,
       onTap: () => _mostrarFormulario(context, ref, turno: turno),
     );
 
@@ -740,17 +903,23 @@ Future<void> _mostrarFormulario(
   WidgetRef ref, {
   Appointment? turno,
   DateTime? dia,
+  int? hora,
 }) =>
     showAppSheet<void>(
       context,
-      builder: (_) => _FormularioTurno(turno: turno, dia: dia),
+      builder: (_) => _FormularioTurno(turno: turno, dia: dia, hora: hora),
     );
 
 class _FormularioTurno extends ConsumerStatefulWidget {
-  const _FormularioTurno({this.turno, this.dia});
+  const _FormularioTurno({this.turno, this.dia, this.hora});
 
   final Appointment? turno;
   final DateTime? dia;
+
+  /// La hora del hueco que se tocó en la agenda de la tablet. Sin esto, tocar
+  /// "Libre a las 18:00" abría el formulario en las 10:00 y había que elegir
+  /// la hora otra vez.
+  final int? hora;
 
   @override
   ConsumerState<_FormularioTurno> createState() => _FormTurnoState();
@@ -779,7 +948,7 @@ class _FormTurnoState extends ConsumerState<_FormularioTurno> {
     _notas = TextEditingController(text: t?.notas ?? '');
     _fecha = t?.fecha ?? widget.dia ?? DateTime.now();
     _hora = t?.hora == null
-        ? const TimeOfDay(hour: 10, minute: 0)
+        ? TimeOfDay(hour: widget.hora ?? 10, minute: 0)
         : TimeOfDay(hour: t!.hora!.hour, minute: t.hora!.minute);
     _clientId = t?.clientId;
     if (t != null) {

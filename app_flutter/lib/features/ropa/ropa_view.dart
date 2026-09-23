@@ -254,6 +254,9 @@ class _RopaViewState extends ConsumerState<RopaView> {
     }).toList();
 
     final escritorio = esEscritorio(context);
+    // La tablet del mostrador: el ancho que sobra se usa para dejar los
+    // filtros siempre a la vista, en vez de esconderlos en un sheet.
+    final tablet = esTabletTactil(context);
     db.Producto? abierto;
     if (_abiertoId != null) {
       for (final p in productos) {
@@ -288,9 +291,13 @@ class _RopaViewState extends ConsumerState<RopaView> {
                     ),
                   ),
                 ),
-          lista: ListView(
-            padding: padVista(context),
-            children: [
+          lista: _conColumnaDeFiltros(
+            tablet,
+            ListView(
+              padding: tablet
+                  ? padVista(context).copyWith(left: 0)
+                  : padVista(context),
+              children: [
               FadeSlideIn(
                 // `Wrap` y no `Row`: el título más los tres atajos no entran
                 // en 390 px, y el que quedaba afuera era "Proveedores". Así
@@ -368,31 +375,34 @@ class _RopaViewState extends ConsumerState<RopaView> {
               // Una sola fila de chips, y lo que no entra va al sheet de
               // filtros. Dos filas de chips comían un tercio de la pantalla
               // antes de ver la primera prenda.
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 60),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: FilaFiltros(
-                        opciones: const [
-                          ('todo', 'Todo'),
-                          ('ropa', 'Ropa'),
-                          ('arbell', 'Arbell'),
-                          ('insumos', 'Insumos'),
-                        ],
-                        activo: _rubro,
-                        onElegir: (v) => setState(() => _rubro = v),
+              // En la tablet los filtros viven en la columna de la
+              // izquierda, así que acá no van.
+              if (!tablet)
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 60),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: FilaFiltros(
+                          opciones: const [
+                            ('todo', 'Todo'),
+                            ('ropa', 'Ropa'),
+                            ('arbell', 'Arbell'),
+                            ('insumos', 'Insumos'),
+                          ],
+                          activo: _rubro,
+                          onElegir: (v) => setState(() => _rubro = v),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 9),
-                    _BotonFiltros(
-                      activos: _filtro == 'todos' ? 0 : 1,
-                      onTap: () => _abrirFiltros(context),
-                    ),
-                  ],
+                      const SizedBox(width: 9),
+                      _BotonFiltros(
+                        activos: _filtro == 'todos' ? 0 : 1,
+                        onTap: () => _abrirFiltros(context),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 14),
+              SizedBox(height: tablet ? 4 : 14),
               if (cargando)
                 const EsqueletoDeLista(
                   filas: 3,
@@ -417,7 +427,17 @@ class _RopaViewState extends ConsumerState<RopaView> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   padding: EdgeInsets.zero,
-                  gridDelegate: escritorio
+                  gridDelegate: tablet
+                      // Cuatro fijas, como las pidió el diseñador: con la
+                      // columna de filtros al costado el ancho ya está
+                      // decidido, y una quinta dejaría la foto muy chica.
+                      ? const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 0.66,
+                        )
+                      : escritorio
                       // Por ancho máximo de tarjeta, no por cantidad: así entran
                       // 4 en una notebook y 6 en un monitor grande sin un caso
                       // especial para cada pantalla.
@@ -457,11 +477,129 @@ class _RopaViewState extends ConsumerState<RopaView> {
                   },
                 ),
             ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  /// En la tablet los filtros van fijos a la izquierda de la grilla: con la
+  /// clienta enfrente, abrir un sheet para cambiar de rubro y volver a
+  /// cerrarlo es el camino largo, y el ancho está.
+  Widget _conColumnaDeFiltros(bool tablet, Widget grilla) {
+    if (!tablet) return grilla;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 210,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(32, 30, 0, 40),
+            child: _ColumnaFiltros(
+              rubro: _rubro,
+              estado: _filtro,
+              onRubro: (v) => setState(() => _rubro = v),
+              onEstado: (v) => setState(() => _filtro = v),
+            ),
+          ),
+        ),
+        const SizedBox(width: 22),
+        Expanded(child: grilla),
+      ],
+    );
+  }
+}
+
+/// La columna de filtros de la tablet. Las mismas opciones del sheet, pero
+/// siempre visibles y en filas de 44, que es lo que pide un dedo.
+class _ColumnaFiltros extends StatelessWidget {
+  const _ColumnaFiltros({
+    required this.rubro,
+    required this.estado,
+    required this.onRubro,
+    required this.onEstado,
+  });
+
+  final String rubro;
+  final String estado;
+  final ValueChanged<String> onRubro;
+  final ValueChanged<String> onEstado;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Filtros', style: serif(size: 20, weight: 600)),
+          const SizedBox(height: 16),
+          const EtiquetaSeccion('RUBRO'),
+          for (final (clave, etiqueta) in const [
+            ('todo', 'Todo'),
+            ('ropa', 'Ropa'),
+            ('arbell', 'Arbell'),
+            ('insumos', 'Insumos'),
+          ])
+            _FilaFiltro(
+              texto: etiqueta,
+              activo: rubro == clave,
+              onTap: () => onRubro(clave),
+            ),
+          const SizedBox(height: 18),
+          const EtiquetaSeccion('ESTADO'),
+          for (final (clave, etiqueta) in const [
+            ('todos', 'Todos'),
+            ('publicados', 'En la tienda'),
+            ('sin_publicar', 'Sin publicar'),
+            ('sin_stock', 'Sin stock'),
+          ])
+            _FilaFiltro(
+              texto: etiqueta,
+              activo: estado == clave,
+              onTap: () => onEstado(clave),
+            ),
+        ],
+      );
+}
+
+/// Una opción de la columna: 44 px de alto, y la activa con el fondo lavanda.
+class _FilaFiltro extends StatelessWidget {
+  const _FilaFiltro({
+    required this.texto,
+    required this.activo,
+    required this.onTap,
+  });
+
+  final String texto;
+  final bool activo;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: PressableScale(
+          onTap: onTap,
+          child: Container(
+            height: 44,
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: activo ? MColors.brandBg : Colors.transparent,
+              border: Border.all(
+                color: activo ? MColors.borderLav : Colors.transparent,
+              ),
+              borderRadius: BorderRadius.circular(MRadius.md),
+            ),
+            child: Text(
+              texto,
+              style: sans(
+                size: 13.5,
+                weight: activo ? 600 : 500,
+                color: activo ? MColors.brandDark : MColors.tSecondary,
+              ),
+            ),
+          ),
+        ),
+      );
 }
 
 /// Detalle de un producto en el panel lateral de escritorio: la foto grande,
