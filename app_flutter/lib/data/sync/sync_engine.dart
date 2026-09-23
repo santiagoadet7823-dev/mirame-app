@@ -9,7 +9,7 @@ import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../local/database.dart';
@@ -502,10 +502,37 @@ final dbProvider = Provider<MirameDb>((ref) {
 final syncEngineProvider =
     Provider<SyncEngine>((ref) => SyncEngine(ref.watch(dbProvider)));
 
+/// Avisa cuando la app vuelve a primer plano y cuando se va.
+///
+/// Se separa en su propia clase porque un `Notifier` de Riverpod no puede
+/// extender `WidgetsBindingObserver`.
+class _CicloDeVida extends WidgetsBindingObserver {
+  _CicloDeVida({required this.alVolver, required this.alIrse});
+
+  final VoidCallback alVolver;
+  final VoidCallback alIrse;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState estado) {
+    if (estado == AppLifecycleState.resumed) alVolver();
+    if (estado == AppLifecycleState.paused) alIrse();
+  }
+}
+
 /// Estado visible del sync, para la barrita de la UI.
 class SyncController extends Notifier<SyncStatus> {
+  /// Cada cuánto se sincroniza **mientras la app está en pantalla**.
+  ///
+  /// Era 3 minutos, y eso se sentía: cargabas una clienta en la compu y en el
+  /// celular tardaba en aparecer sin ninguna razón visible. El costo de bajar a
+  /// 45 segundos es chico porque un pull sin novedades es una consulta por tabla
+  /// con cursor, y **el timer se apaga en segundo plano**, que es donde un
+  /// intervalo corto sí costaría batería.
+  static const cadaCuanto = Duration(seconds: 45);
+
   Timer? _periodico;
   StreamSubscription<List<ConnectivityResult>>? _red;
+  _CicloDeVida? _ciclo;
   String? _tenant;
 
   @override
@@ -513,6 +540,7 @@ class SyncController extends Notifier<SyncStatus> {
     ref.onDispose(() {
       _periodico?.cancel();
       _red?.cancel();
+      if (_ciclo case final c?) WidgetsBinding.instance.removeObserver(c);
     });
     return const SyncStatus();
   }
@@ -520,7 +548,10 @@ class SyncController extends Notifier<SyncStatus> {
   /// Arranca el sync para un salón. Idempotente: llamarlo dos veces con el
   /// mismo salón no duplica timers.
   void arrancar(String tenantId) {
-    if (_tenant == tenantId && _periodico != null) return;
+    // La marca de "ya arranqué" es el observador y no el timer: el timer se
+    // apaga solo cuando la app pasa a segundo plano, así que ahí sería null y
+    // esto volvería a arrancar todo de nuevo.
+    if (_tenant == tenantId && _ciclo != null) return;
     _tenant = tenantId;
     _periodico?.cancel();
     _red?.cancel();
@@ -532,10 +563,36 @@ class SyncController extends Notifier<SyncStatus> {
       if (!r.contains(ConnectivityResult.none)) unawaited(sincronizar());
     });
 
-    // Red de seguridad: `connectivity_plus` avisa que hay interfaz, no que
-    // haya internet. Un wifi de bar sin salida no dispara ningún evento.
+    // **Al volver a la app.** Es el momento en que la persona mira la pantalla
+    // esperando ver lo que cargó en la compu, y antes no pasaba nada: el timer
+    // seguía su ciclo y en el peor caso se esperaban 3 minutos mirando datos
+    // viejos. Apagarlo al irse es la otra mitad: un intervalo corto que corre
+    // con la pantalla bloqueada es batería tirada.
+    if (_ciclo == null) {
+      _ciclo = _CicloDeVida(
+        alVolver: () {
+          unawaited(sincronizar());
+          _arrancarTimer();
+        },
+        alIrse: () {
+          _periodico?.cancel();
+          _periodico = null;
+        },
+      );
+      // Una sola vez: `addObserver` con el mismo objeto dos veces lo deja dos
+      // veces en la lista y cada vuelta a la app dispararía dos sincronizadas.
+      WidgetsBinding.instance.addObserver(_ciclo!);
+    }
+
+    _arrancarTimer();
+  }
+
+  /// Red de seguridad: `connectivity_plus` avisa que hay interfaz, no que haya
+  /// internet. Un wifi de bar sin salida no dispara ningún evento.
+  void _arrancarTimer() {
+    _periodico?.cancel();
     _periodico = Timer.periodic(
-      const Duration(minutes: 3),
+      cadaCuanto,
       (_) => unawaited(sincronizar()),
     );
   }
@@ -543,6 +600,8 @@ class SyncController extends Notifier<SyncStatus> {
   void detener() {
     _periodico?.cancel();
     _red?.cancel();
+    if (_ciclo case final c?) WidgetsBinding.instance.removeObserver(c);
+    _ciclo = null;
     _periodico = null;
     _tenant = null;
     state = const SyncStatus();
