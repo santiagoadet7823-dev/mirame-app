@@ -188,6 +188,38 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
 
     if (conSidebar) {
+      // Mismo ancho, dos aparatos distintos. La tablet del mostrador no tiene
+      // mouse: nada puede depender de pasar el puntero por encima y todo lo
+      // tocable necesita el tamaño de un dedo. Por eso el riel de 92 con la
+      // etiqueta DEBAJO del ícono, y no el sidebar de 248 con la etiqueta al
+      // costado.
+      if (esTactil) {
+        return Scaffold(
+          backgroundColor: MColors.bg,
+          body: SafeArea(
+            child: Row(
+              children: [
+                _RielTablet(
+                  indice: _indice,
+                  onElegir: (i) => setState(() => _indice = i),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      _Header(
+                        titulo: itemsSidebar[_indice].etiqueta,
+                        onAjustes: () => irA(Vistas.ajustes),
+                      ),
+                      Expanded(child: cuerpo),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
       final plegado = _sidebarPlegado ?? ancho < MBreak.sidebarCompleto;
       return Scaffold(
         backgroundColor: MColors.bg,
@@ -791,6 +823,108 @@ class _ItemSidebar extends StatelessWidget {
       child: fila,
     );
   }
+}
+
+/// El riel de la tablet: 92 px, celdas de 74 × 48, etiqueta debajo del
+/// ícono.
+///
+/// Las cinco de siempre arriba y, bajo un separador, las tres que en el
+/// teléfono viven en otro lado (Stats, Tienda, Ajustes). No se pliega: en una
+/// pantalla de 1280 los 92 px no molestan, y un riel que se pliega con el
+/// dedo se pliega solo sin querer.
+class _RielTablet extends StatelessWidget {
+  const _RielTablet({required this.indice, required this.onElegir});
+
+  final int indice;
+  final ValueChanged<int> onElegir;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: MBreak.railTablet,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [MColors.surface, MColors.bg2],
+          ),
+          border: Border(right: BorderSide(color: MColors.border)),
+        ),
+        padding: const EdgeInsets.fromLTRB(9, 16, 9, 12),
+        child: Column(
+          children: [
+            const _LogoRedondo(),
+            const SizedBox(height: 16),
+            for (var i = 0; i < itemsNav.length; i++)
+              _CeldaRiel(
+                item: itemsNav[i],
+                activo: i == indice,
+                onTap: () => onElegir(i),
+              ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Divider(height: 1, color: MColors.border),
+            ),
+            for (var i = itemsNav.length; i < itemsSidebar.length; i++)
+              _CeldaRiel(
+                item: itemsSidebar[i],
+                activo: i == indice,
+                onTap: () => onElegir(i),
+              ),
+          ],
+        ),
+      );
+}
+
+class _CeldaRiel extends StatelessWidget {
+  const _CeldaRiel({
+    required this.item,
+    required this.activo,
+    required this.onTap,
+  });
+
+  final ItemNav item;
+  final bool activo;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: PressableScale(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: MMotion.t1,
+            width: 74,
+            // 48 de alto: el mínimo de Android para algo que se toca.
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(vertical: 7),
+            decoration: BoxDecoration(
+              color: activo ? MColors.brandBg : Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  item.icono,
+                  size: 21,
+                  color: activo ? MColors.brand : MColors.tMuted,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  item.etiqueta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: sans(
+                    size: 10,
+                    weight: activo ? 600 : 500,
+                    color: activo ? MColors.brand : MColors.tMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
 }
 
 /// El FAB de una vista, ya posicionado, o nada.

@@ -14,6 +14,7 @@ Future<void> montarCon(WidgetTester t, double ancho, Widget hijo) async {
 }
 
 void main() {
+  _modoTactil();
   group('modoPara', () {
     // Alto grande: un monitor o una tablet acostada.
     ModoLayout porAncho(double ancho) => modoPara(Size(ancho, 900));
@@ -134,3 +135,52 @@ void main() {
 }
 
 void _nada() {}
+
+void _modoTactil() {
+  group('dedo vs puntero', () {
+    tearDown(() => modoTactilForzado = null);
+
+    testWidgets('la tablet táctil usa riel, no el sidebar de la compu',
+        (t) async {
+      modoTactilForzado = true;
+      t.view.physicalSize = const Size(1280, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.resetPhysicalSize);
+      addTearDown(t.view.resetDevicePixelRatio);
+      await t.pumpWidget(
+        MaterialApp(
+          theme: buildMirameTheme(),
+          home: Builder(
+            builder: (ctx) => Scaffold(
+              body: Text(
+                esTabletTactil(ctx) ? 'riel' : 'sidebar',
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('riel'), findsOneWidget);
+    });
+
+    testWidgets('el mismo ancho con puntero es escritorio', (t) async {
+      modoTactilForzado = false;
+      t.view.physicalSize = const Size(1280, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.resetPhysicalSize);
+      addTearDown(t.view.resetDevicePixelRatio);
+      await t.pumpWidget(
+        MaterialApp(
+          theme: buildMirameTheme(),
+          home: Builder(
+            builder: (ctx) => Scaffold(
+              body: Text(
+                esEscritorioPuntero(ctx) ? 'sidebar' : 'riel',
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('sidebar'), findsOneWidget);
+    });
+  });
+}
