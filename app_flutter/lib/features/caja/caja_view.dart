@@ -202,7 +202,7 @@ class _CajaViewState extends ConsumerState<CajaView> {
       _ => todos,
     };
 
-    final escritorio = esEscritorio(context);
+    final escritorio = esPantallaGrande(context);
     // En la tablet del mostrador lo primero que se hace en Caja es cobrarle
     // a la que está enfrente, no revisar el mes.
     final tablet = esTabletTactil(context);

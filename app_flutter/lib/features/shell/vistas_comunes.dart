@@ -134,7 +134,7 @@ Future<T?> showAppSheet<T>(
   required WidgetBuilder builder,
   bool descartable = true,
 }) {
-  if (!esEscritorio(context)) {
+  if (!esPantallaGrande(context)) {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
@@ -505,7 +505,7 @@ class BarraVista extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!esEscritorio(context)) {
+    if (!esPantallaGrande(context)) {
       return Column(
         children: [
           if (buscador != null)

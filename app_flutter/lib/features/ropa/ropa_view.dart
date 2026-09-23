@@ -253,7 +253,7 @@ class _RopaViewState extends ConsumerState<RopaView> {
       };
     }).toList();
 
-    final escritorio = esEscritorio(context);
+    final escritorio = esPantallaGrande(context);
     // La tablet del mostrador: el ancho que sobra se usa para dejar los
     // filtros siempre a la vista, en vez de esconderlos en un sheet.
     final tablet = esTabletTactil(context);

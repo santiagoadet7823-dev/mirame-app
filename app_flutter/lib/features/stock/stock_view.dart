@@ -54,7 +54,7 @@ class _StockViewState extends ConsumerState<StockView> {
       _ => todos,
     };
     final puedeEscribir = ref.watch(puedeProvider(Permiso.operarNegocio));
-    final escritorio = esEscritorio(context);
+    final escritorio = esPantallaGrande(context);
 
     final vacio = EstadoVacio(
       emoji: _filtro == 'all' ? '📦' : '🔍',

@@ -136,7 +136,7 @@ class StatsView extends ConsumerWidget {
           // ── Los 4 KPI ───────────────────────────────────────────────────
           // `.stat-grid` a 4 columnas en escritorio (el CSS lo dice), 2×2 en
           // el teléfono.
-          if (esEscritorio(context))
+          if (esPantallaGrande(context))
             FadeSlideIn(
               child: Row(
                 children: [
@@ -237,7 +237,7 @@ class StatsView extends ConsumerWidget {
               hijo: SizedBox(
                 // `.bars-wrap { height:90px }`. En escritorio la tarjeta mide
                 // 1000 px de ancho y 90 de alto es una tira: se le da aire.
-                height: esEscritorio(context) ? 160 : 90,
+                height: esPantallaGrande(context) ? 160 : 90,
                 child: CustomPaint(
                   painter: _BarrasPainter(
                     valores: [for (final s in semanas) s.pctAlto],
@@ -258,8 +258,8 @@ class StatsView extends ConsumerWidget {
                 hijo: Row(
                   children: [
                     SizedBox(
-                      width: esEscritorio(context) ? 150 : 108,
-                      height: esEscritorio(context) ? 150 : 108,
+                      width: esPantallaGrande(context) ? 150 : 108,
+                      height: esPantallaGrande(context) ? 150 : 108,
                       child: CustomPaint(
                         painter: _DonutPainter(
                           porciones: [for (final g in gastos) g.pct],

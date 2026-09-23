@@ -183,7 +183,12 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     final ancho = MediaQuery.sizeOf(context).width;
-    final conSidebar = ancho >= MBreak.desktop;
+    // **La misma función que usan las vistas**, no un umbral propio. Cuando el
+    // shell decidía con `ancho >= 900` y las vistas con `esEscritorio` (que
+    // además pide lado corto >= 600) había una franja de aparatos donde salía
+    // el riel de la tablet con las pantallas del teléfono adentro. Si esto
+    // vuelve a ser una comparación suelta, vuelve ese bug.
+    final grande = esPantallaGrande(context);
 
     void irA(int i) => setState(() => _indice = i);
 
@@ -217,7 +222,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       ),
     );
 
-    if (conSidebar) {
+    if (grande) {
       // Mismo ancho, dos aparatos distintos. La tablet del mostrador no tiene
       // mouse: nada puede depender de pasar el puntero por encima y todo lo
       // tocable necesita el tamaño de un dedo. Por eso el riel de 92 con la
@@ -285,10 +290,18 @@ class _AppShellState extends ConsumerState<AppShell> {
         bottom: false,
         child: Center(
           child: ConstrainedBox(
-            // `max-width:430px` centrado desde 600 px — el modo tablet del
-            // original.
+            // `max-width:430px` centrado desde 600 px, **solo en el
+            // navegador**. En el original eso emulaba un teléfono dentro de una
+            // ventana ancha, y ahí tiene sentido.
+            //
+            // En un APK no: en la tablet del mostrador dejaba la app en una
+            // columna de 430 con 211 px vacíos a cada lado, que es literal lo
+            // que se reportó como "sigue siendo la misma app vertical con los
+            // laterales vacíos". Con el dedo, la composición de teléfono ocupa
+            // la pantalla.
             constraints: BoxConstraints(
-              maxWidth: ancho >= MBreak.tablet ? 430 : double.infinity,
+              maxWidth:
+                  !esTactil && ancho >= MBreak.tablet ? 430 : double.infinity,
             ),
             child: Column(
               children: [
@@ -325,12 +338,12 @@ class _Header extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tenant = ref.watch(tenantActivoProvider);
     final puedeVolver = ref.watch(puedeVolverAlPanelProvider);
-    final esEscritorio = titulo != null;
+    final conTitulo = titulo != null;
 
     return AnimatedContainer(
       duration: MMotion.t1,
       width: double.infinity,
-      padding: esEscritorio
+      padding: conTitulo
           ? const EdgeInsets.fromLTRB(32, 16, 32, 16)
           : const EdgeInsets.fromLTRB(18, 12, 18, 10),
       decoration: BoxDecoration(
@@ -342,7 +355,7 @@ class _Header extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          if (esEscritorio)
+          if (conTitulo)
             Expanded(
               child: Text(
                 titulo!,
@@ -879,28 +892,35 @@ class _RielTablet extends StatelessWidget {
           ),
           border: Border(right: BorderSide(color: MColors.border)),
         ),
+        // Scrollea. Las ocho celdas más el logo piden unos 565 px, y una tablet
+        // acostada de 1280×800 que reporta densidad 1,5 tiene **533** de alto
+        // útil: el riel se cortaba 32 px, justo Ajustes, que es la celda desde
+        // la que se arregla cualquier otra cosa. Con pocas celdas no scrollea
+        // nada y se ve igual.
         padding: const EdgeInsets.fromLTRB(9, 16, 9, 12),
-        child: Column(
-          children: [
-            const _LogoRedondo(),
-            const SizedBox(height: 16),
-            for (var i = 0; i < itemsNav.length; i++)
-              _CeldaRiel(
-                item: itemsNav[i],
-                activo: i == indice,
-                onTap: () => onElegir(i),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const _LogoRedondo(),
+              const SizedBox(height: 16),
+              for (var i = 0; i < itemsNav.length; i++)
+                _CeldaRiel(
+                  item: itemsNav[i],
+                  activo: i == indice,
+                  onTap: () => onElegir(i),
+                ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: Divider(height: 1, color: MColors.border),
               ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Divider(height: 1, color: MColors.border),
-            ),
-            for (var i = itemsNav.length; i < itemsSidebar.length; i++)
-              _CeldaRiel(
-                item: itemsSidebar[i],
-                activo: i == indice,
-                onTap: () => onElegir(i),
-              ),
-          ],
+              for (var i = itemsNav.length; i < itemsSidebar.length; i++)
+                _CeldaRiel(
+                  item: itemsSidebar[i],
+                  activo: i == indice,
+                  onTap: () => onElegir(i),
+                ),
+            ],
+          ),
         ),
       );
 }
@@ -967,7 +987,7 @@ Widget? fabVista(
   required bool visible,
   required VoidCallback onTap,
 }) {
-  if (!visible || esEscritorio(context)) return null;
+  if (!visible || esPantallaGrande(context)) return null;
   return Padding(
     // `bottom: 80px + safe` y `right: 18px` del CSS. El Scaffold ya separa
     // 16 del borde, así que acá van 2.

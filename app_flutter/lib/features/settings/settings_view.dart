@@ -11,6 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/notificaciones/push.dart';
 import '../../core/notificaciones/servicio_avisos.dart';
 import '../../core/layout/layout.dart';
+import '../../core/layout/preferencia_pantalla.dart';
+import '../../shared/widgets/piezas.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/shadows.dart';
 import '../../core/theme/tokens.dart';
@@ -58,6 +60,12 @@ class SettingsView extends ConsumerWidget {
                 ],
               ),
             ),
+          const SizedBox(height: 12),
+
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 50),
+            child: const _TarjetaPantalla(),
+          ),
           const SizedBox(height: 12),
 
           // El link de la tienda va ACÁ y no solo dentro de Ropa: es lo que se
@@ -264,6 +272,55 @@ class SettingsView extends ConsumerWidget {
 
   static String _hora(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:'
       '${d.minute.toString().padLeft(2, '0')}';
+}
+
+/// Qué composición usa la app, y qué mide la pantalla.
+///
+/// Existe por un caso concreto: una tablet de 1280×800 que reporta densidad 1,5
+/// entrega 853×533 píxeles lógicos, cae en la composición del teléfono y deja
+/// la app en una columna angosta con los laterales vacíos. El umbral automático
+/// ya cubre ese caso, pero ningún umbral cubre todos los aparatos: con esto se
+/// arregla en el momento, sin esperar otra versión.
+///
+/// Y la línea de medidas está para no tener que adivinar: es el dato que hay
+/// que leer para entender por qué un aparato eligió lo que eligió.
+class _TarjetaPantalla extends ConsumerWidget {
+  const _TarjetaPantalla();
+
+  static const _etiquetas = {
+    ModoPantalla.automatico: 'Automático',
+    ModoPantalla.telefono: 'Teléfono',
+    ModoPantalla.tablet: 'Tablet',
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final elegido = ref.watch(preferenciaPantallaProvider);
+    final medida = MedidaDePantalla.de(context);
+
+    return _Tarjeta(
+      titulo: 'Pantalla',
+      filas: [
+        ('Composición', _etiquetas[elegido]!),
+        ('Este aparato', medida.resumen),
+      ],
+      // Con scroll horizontal: tres opciones con la fuente del sistema
+      // agrandada no entran en el ancho de la tarjeta en un teléfono, y este
+      // es justo el control que no puede quedar cortado.
+      accion: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SelectorDeVista(
+          opciones: _etiquetas.values.toList(),
+          activa: _etiquetas[elegido]!,
+          onElegir: (texto) {
+            final modo =
+                _etiquetas.entries.firstWhere((e) => e.value == texto).key;
+            ref.read(preferenciaPantallaProvider.notifier).elegir(modo);
+          },
+        ),
+      ),
+    );
+  }
 }
 
 class _Tarjeta extends StatelessWidget {

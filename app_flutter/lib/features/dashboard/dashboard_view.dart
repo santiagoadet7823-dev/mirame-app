@@ -183,7 +183,7 @@ class DashboardView extends ConsumerWidget {
         .where((t) => t.estado != 'done' && t.estado != 'cancelled')
         .length;
 
-    final escritorio = esEscritorio(context);
+    final escritorio = esPantallaGrande(context);
     // La tablet del mostrador: mismo reparto que el escritorio, escalas de
     // dedo. Los chips de 44 son para apuntar con el mouse.
     final tablet = esTabletTactil(context);
@@ -229,7 +229,16 @@ class DashboardView extends ConsumerWidget {
     if (escritorio) {
       final movs = ref.watch(movimientosRecientesProvider).value ??
           const <db.Transaction>[];
-      final porSemana = weeklyIncome(movs.map(aTransaction), DateTime.now());
+      final txs = movs.map(aTransaction).toList();
+      final porSemana = weeklyIncome(txs, DateTime.now());
+      // Las dos series que pide la entrega: servicios en lavanda, tienda en
+      // nude. La venta de tienda se registra con `categoria: 'ropa'`
+      // (`ropa_repository.dart`, `registrarVenta`); todo el resto de los
+      // ingresos es trabajo del salón.
+      final porSemanaServicios =
+          weeklyIncome(txs.where((t) => t.categoria != 'ropa'), DateTime.now());
+      final porSemanaTienda =
+          weeklyIncome(txs.where((t) => t.categoria == 'ropa'), DateTime.now());
       final estaSemana = porSemana.isEmpty ? 0 : porSemana.last.total;
       final semanaAnterior =
           porSemana.length < 2 ? 0 : porSemana[porSemana.length - 2].total;
@@ -285,20 +294,27 @@ class DashboardView extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              GridView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.zero,
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 320,
-                  // 124 y no 108: con la etiqueta, el número de 34 y el pie,
-                  // 108 se pasaba por 9 px justo cuando el sistema agranda
-                  // un poco el texto.
-                  mainAxisExtent: 124,
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                ),
-                children: [
+              // Las cuatro en UNA fila, que es lo que pide la entrega del
+              // diseñador, pero por ancho disponible y no por un número fijo:
+              // con `maxCrossAxisExtent: 320` a 1032 px entraban tres y la
+              // cuarta bajaba sola a un segundo renglón. `columnasPara` ya
+              // estaba escrito para esto y no se usaba en ningún lado.
+              LayoutBuilder(
+                builder: (_, c) => GridView(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount:
+                        columnasPara(c.maxWidth, minAncho: 210, max: 4),
+                    // 124 y no 108: con la etiqueta, el número de 34 y el pie,
+                    // 108 se pasaba por 9 px justo cuando el sistema agranda
+                    // un poco el texto.
+                    mainAxisExtent: 124,
+                    crossAxisSpacing: 14,
+                    mainAxisSpacing: 14,
+                  ),
+                  children: [
                   TarjetaKpi(
                     etiqueta: 'Turnos hoy',
                     valor: '${turnos.length}',
@@ -321,38 +337,17 @@ class DashboardView extends ConsumerWidget {
                     variacion: pendientes > 0 ? 'a confirmar' : null,
                     tono: TonoVariacion.atencion,
                   ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              SizedBox(
-                // Alto fijo y generoso: el gráfico necesita aire para que la
-                // curva se lea, y la agenda entra con cuatro turnos.
-                height: 360,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: GraficoDeArea(
-                        serieA: [for (final s in porSemana) s.total],
-                        serieB: const [],
-                        etiquetas: const [],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: AgendaCompacta(
-                        turnos: turnosDom,
-                        nombrePorId: nombrePorIdCliente,
-                        nombreProfesional: nombrePorIdPro,
-                        idProximo: idProximo,
-                        onVerAgenda: () =>
-                            NavegadorShell.ir(context, Vistas.agenda),
-                      ),
-                    ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 18),
+              _GraficoYAgenda(
+                servicios: [for (final s in porSemanaServicios) s.total],
+                tienda: [for (final s in porSemanaTienda) s.total],
+                turnos: turnosDom,
+                nombrePorIdCliente: nombrePorIdCliente,
+                nombrePorIdPro: nombrePorIdPro,
+                idProximo: idProximo,
               ),
               // Los retoques y los insumos bajo el mínimo existían solo en el
               // teléfono: en la pantalla grande sobraba lugar y justo faltaban
@@ -799,4 +794,79 @@ class _FilaRecordatorio extends StatelessWidget {
       ),
     );
   }
+}
+
+/// El gráfico y la agenda del día, uno al lado del otro **si entran**.
+///
+/// La entrega los pide 3/5 y 2/5, y a 1280 es exactamente eso. Pero el reparto
+/// fijo se rompía en las pantallas grandes más chicas: en la tablet del
+/// mostrador (853 px lógicos) el panel de la agenda quedaba en 133 px de ancho,
+/// las filas se envolvían y la columna desbordaba 67 px hacia abajo, clipeados
+/// sin avisar. Por debajo de 860 px de ancho van apilados, que es la misma
+/// información sin recortar nada.
+class _GraficoYAgenda extends StatelessWidget {
+  const _GraficoYAgenda({
+    required this.servicios,
+    required this.tienda,
+    required this.turnos,
+    required this.nombrePorIdCliente,
+    required this.nombrePorIdPro,
+    required this.idProximo,
+  });
+
+  final List<num> servicios;
+  final List<num> tienda;
+  final List<Appointment> turnos;
+  final Map<String, String> nombrePorIdCliente;
+  final Map<String, String> nombrePorIdPro;
+  final String? idProximo;
+
+  /// Debajo de esto, el panel de la agenda queda más angosto que sus propias
+  /// filas y no hay reparto que lo salve.
+  static const _minimoParaDosColumnas = 860.0;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (_, c) {
+          final grafico = GraficoDeArea(
+            serieA: servicios,
+            serieB: tienda,
+            etiquetas: const [],
+          );
+          final agenda = AgendaCompacta(
+            turnos: turnos,
+            nombrePorId: nombrePorIdCliente,
+            nombreProfesional: nombrePorIdPro,
+            idProximo: idProximo,
+            onVerAgenda: () => NavegadorShell.ir(context, Vistas.agenda),
+          );
+
+          if (c.maxWidth < _minimoParaDosColumnas) {
+            // Los dos con alto propio: `AgendaCompacta` reparte su alto con un
+            // `Expanded`, así que adentro de una columna que scrollea —alto sin
+            // tope— no sabría entre cuánto repartir.
+            return Column(
+              children: [
+                SizedBox(height: 300, child: grafico),
+                const SizedBox(height: 16),
+                SizedBox(height: 320, child: agenda),
+              ],
+            );
+          }
+
+          return SizedBox(
+            // Alto fijo y generoso: el gráfico necesita aire para que la curva
+            // se lea, y la agenda entra con cuatro turnos.
+            height: 360,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 3, child: grafico),
+                const SizedBox(width: 16),
+                Expanded(flex: 2, child: agenda),
+              ],
+            ),
+          );
+        },
+      );
 }

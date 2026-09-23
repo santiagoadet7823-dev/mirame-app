@@ -230,11 +230,20 @@ abstract final class MType {
 
 /// Breakpoints. El CSS define tres modos y hay que replicar los tres.
 abstract final class MBreak {
-  /// A partir de acá el contenido se centra con ancho máximo.
+  /// A partir de acá, **en el navegador**, el contenido se centra a 430: es el
+  /// `#app { max-width: 430px }` del original, que emulaba un teléfono en una
+  /// ventana ancha. En un APK no se aplica nunca — en una tablet dejaba la app
+  /// vertical con franjas vacías a los costados.
   static const tablet = 600.0;
 
-  /// A partir de acá aparece el sidebar y los modales pasan a ser diálogos.
-  static const desktop = 900.0;
+  /// Los dos umbrales de "pantalla grande": riel o sidebar en vez de barra
+  /// inferior, maestro-detalle, diálogos en vez de sheets.
+  ///
+  /// Van juntos y los decide `modoPara`, que explica por qué son 520/840 y no
+  /// los 600/900 de `sw600dp`: `MediaQuery.size` son píxeles lógicos y las
+  /// tablets baratas inflan la densidad.
+  static const ladoCortoGrande = 520.0;
+  static const anchoGrande = 840.0;
 
   /// `#app { max-width: 430px }` en >= 600px.
   static const contentMaxWidth = 430.0;
@@ -245,6 +254,11 @@ abstract final class MBreak {
   /// `max-width: 1040px` del contenido en modo desktop.
   static const desktopContentMaxWidth = 1040.0;
 
+  /// El mismo tope, pero con el dedo. En la tablet de 1280 el riel ya se llevó
+  /// 92 px: toparlo en 1040 dejaba 74 px vacíos a cada lado, que es justo el
+  /// síntoma que hay que sacar. 1188 es lo que queda de una tablet de 1280.
+  static const lecturaTactilMaxWidth = 1188.0;
+
   /// Ancho máximo de los modales.
   static const sheetMaxWidth = 560.0;
 
@@ -253,9 +267,9 @@ abstract final class MBreak {
   /// medio monitor vacío, pero sin tope a 2500 px no se lee de punta a punta.
   static const tablaMaxWidth = 1360.0;
 
-  /// Desde acá el sidebar va completo (ícono + texto). Entre `desktop` y esto
-  /// se achica a un rail de íconos: en una notebook de 1024 los 248 px del
-  /// sidebar le sacan un cuarto de pantalla al contenido.
+  /// Desde acá el sidebar va completo (ícono + texto). Entre `anchoGrande` y
+  /// esto se achica a un rail de íconos: en una notebook de 1024 los 248 px
+  /// del sidebar le sacan un cuarto de pantalla al contenido.
   static const sidebarCompleto = 1200.0;
 
   /// Ancho del rail de íconos en escritorio (puntero).

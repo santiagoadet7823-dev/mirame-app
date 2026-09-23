@@ -19,29 +19,80 @@ void main() {
     // Alto grande: un monitor o una tablet acostada.
     ModoLayout porAncho(double ancho) => modoPara(Size(ancho, 900));
 
-    test('tres modos, dos umbrales', () {
+    test('dos modos, un umbral de ancho', () {
       expect(porAncho(390), ModoLayout.movil);
-      expect(porAncho(599), ModoLayout.movil);
-      expect(porAncho(600), ModoLayout.tablet);
-      expect(porAncho(899), ModoLayout.tablet);
-      expect(porAncho(900), ModoLayout.escritorio);
-      expect(porAncho(2560), ModoLayout.escritorio);
+      expect(porAncho(839), ModoLayout.movil);
+      expect(porAncho(840), ModoLayout.grande);
+      expect(porAncho(2560), ModoLayout.grande);
     });
 
-    test('un celular acostado NO es escritorio', () {
+    test('un celular acostado NO es pantalla grande', () {
       // Pixel 7 horizontal: 915 de ancho, pero el lado corto son 412.
-      expect(modoPara(const Size(915, 412)), ModoLayout.tablet);
-      // iPhone 14 Pro Max horizontal.
-      expect(modoPara(const Size(932, 430)), ModoLayout.tablet);
+      expect(modoPara(const Size(915, 412)), ModoLayout.movil);
+      // iPhone 14 Pro Max horizontal, el lado corto más grande que hay: 430.
+      expect(modoPara(const Size(932, 430)), ModoLayout.movil);
       // Y parado, móvil de toda la vida.
       expect(modoPara(const Size(412, 915)), ModoLayout.movil);
     });
 
-    test('una tablet acostada sí es escritorio', () {
-      // 1280 × 800: la del mostrador.
-      expect(modoPara(const Size(1280, 800)), ModoLayout.escritorio);
-      // La misma parada: vuelve al layout de celular, sin diseño aparte.
-      expect(modoPara(const Size(800, 1280)), ModoLayout.tablet);
+    test('una tablet acostada sí, incluso mintiendo la densidad', () {
+      // 1280 × 800 con densidad 1: la del folleto.
+      expect(modoPara(const Size(1280, 800)), ModoLayout.grande);
+
+      // **El caso que motivó todo esto.** La tablet del mostrador es de
+      // 1280 × 800 pero reporta densidad 1,5, así que entrega 853 × 533
+      // lógicos. Con los umbrales viejos (900 de ancho, 600 de lado corto)
+      // caía en la composición del teléfono y apagaba de un saque las seis
+      // composiciones de tablet, que quedaban escritas y sin ejecutarse.
+      expect(modoPara(const Size(853, 533)), ModoLayout.grande);
+
+      // Y una de 1024 × 600 con densidad 1,33, que es el otro tamaño barato.
+      expect(modoPara(const Size(1024, 600)), ModoLayout.grande);
+
+      // La misma tablet parada: vuelve al layout de celular, sin diseño
+      // aparte. Lo pide el brief.
+      expect(modoPara(const Size(800, 1280)), ModoLayout.movil);
+      expect(modoPara(const Size(533, 853)), ModoLayout.movil);
+    });
+  });
+
+  group('la preferencia de Ajustes le gana al tamaño', () {
+    // Ningún umbral acierta con todos los aparatos. Esta es la salida de
+    // emergencia: si una tablet rara igual cae en el layout del teléfono, se
+    // fuerza a mano y se arregla en el momento.
+    Future<String> modoCon(
+      WidgetTester t,
+      ModoPantalla elegido,
+      double ancho,
+    ) async {
+      late String visto;
+      await montarCon(
+        t,
+        ancho,
+        PantallaPreferida(
+          modo: elegido,
+          child: Builder(
+            builder: (ctx) {
+              visto = esPantallaGrande(ctx) ? 'grande' : 'movil';
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      return visto;
+    }
+
+    testWidgets('forzar Tablet en un tamaño de teléfono', (t) async {
+      expect(await modoCon(t, ModoPantalla.tablet, 390), 'grande');
+    });
+
+    testWidgets('forzar Teléfono en un tamaño grande', (t) async {
+      expect(await modoCon(t, ModoPantalla.telefono, 1280), 'movil');
+    });
+
+    testWidgets('en automático manda el tamaño', (t) async {
+      expect(await modoCon(t, ModoPantalla.automatico, 390), 'movil');
+      expect(await modoCon(t, ModoPantalla.automatico, 1280), 'grande');
     });
   });
 

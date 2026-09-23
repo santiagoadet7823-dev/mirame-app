@@ -125,7 +125,7 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
         if (nombreProfesional[t.professionalId] case final n?) n,
     }.toList();
 
-    final escritorio = esEscritorio(context);
+    final escritorio = esPantallaGrande(context);
     final tablet = esTabletTactil(context);
 
     final calendario = CalendarioMes(

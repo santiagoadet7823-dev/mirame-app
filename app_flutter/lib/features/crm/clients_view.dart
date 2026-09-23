@@ -97,7 +97,7 @@ class _ClientsViewState extends ConsumerState<ClientsView> {
     // Mientras la base abre, la lista viene vacía: eso no es "sin clientas".
     final cargando = asincronas.isLoading && !asincronas.hasValue;
     final todas = asincronas.value ?? const <Client>[];
-    final escritorio = esEscritorio(context);
+    final escritorio = esPantallaGrande(context);
     final busqueda = _busqueda.trim().toLowerCase();
     final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirAgenda));
     final resumen = ref.watch(resumenClientesProvider).value ??

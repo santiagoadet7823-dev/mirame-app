@@ -31,7 +31,7 @@ class MaestroDetalle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!esEscritorio(context)) return lista;
+    if (!esPantallaGrande(context)) return lista;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
