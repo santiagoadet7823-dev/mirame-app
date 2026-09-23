@@ -188,9 +188,17 @@ Falta un segundo eje: **dedo o puntero**. En Flutter se resuelve con la platafor
 Y al girar la tablet a vertical (menos de 900 px de ancho) vuelve sola al layout de celular con la
 barra de abajo — que es lo que ya hace hoy, sin diseño aparte. ✅ Coincide con la entrega.
 
-**Caja en tablet abre en "cobrar el turno de ahora"** ✅ aprobado: cuando la tablet está en el
-mostrador y hay un turno en curso, Caja arranca en el cobro de ese turno en vez de la lista del
-mes.
+**Construido en la 1.21.0.** Las cinco filas de la tabla de arriba están: riel de 92, filas de 64
+(las decide `TablaMirame`, no cada vista), tarjeta de turno de 76 con avatar de 46 y chips de 58.
+Además, adentro de cada vista: Clientas en tarjetas + ficha al lado, Tienda con la columna de
+filtros fija y grilla de 4, Agenda con "Quiénes trabajan" y los huecos tocables, Inicio con
+retoques y alertas. Lo que NO entró son los filtros de proveedor y orden de la columna de Tienda:
+no existen en la app, ni en el sheet del teléfono ni en la base.
+
+**Caja en tablet abre en "cobrar el turno de ahora"** ✅ aprobado y construido en la 1.21.0. La
+lista del mes sigue debajo: arriba aparece el turno de hoy más cercano a esta hora, con el monto y
+el nombre de la clienta ya cargados. Reemplazar la vista entera era peor — el cierre de caja y los
+gastos del día también se hacen desde ahí.
 
 ---
 

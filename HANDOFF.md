@@ -1176,3 +1176,44 @@ cuatro KPI, gráfico de área y agenda compacta.
 **Falta**: Tanda D (lo de §7 que depende de estas pantallas: CTA que se esconde, degradé del
 carrusel), Tanda E (widget de Android en Kotlin, fotos de clienta) y servir el APK desde Supabase
 Storage, que sigue esperando el secret `SUPABASE_SERVICE_ROLE_KEY`.
+
+### 2026-09-23 — 1.21.0: la PWA destrabada y la tablet horizontal de verdad
+
+Dos cosas que aparecieron probando la 1.20.0 (`bcca7d3`, `9476c8d`, más el bump).
+
+**La PWA se sentía trabada adentro del salón** mientras el APK iba fluido. La asimetría era el
+layout de escritorio, y el problema de fondo uno solo: el árbol nunca llegaba a reposo, así que el
+hilo de UI quedaba ocupado y los clics entraban tarde. Cinco causas, todas reales:
+
+- Los providers sin repositorio devolvían `const Stream.empty()`. Un stream que cierra sin emitir
+  deja el `AsyncValue` en `isLoading` **para siempre**: los esqueletos no se iban nunca. Ahora
+  emiten el vacío, que es lo que de verdad hay.
+- Cada barra de esqueleto creaba su propio `AnimationController` —seis filas eran dieciocho
+  relojes—. Ahora hay uno por grupo (`LatidoEsqueleto`) y laten sincronizados.
+- El `IndexedStack` del shell monta **las ocho vistas a la vez**, así que eso latía también en las
+  que nadie miraba. `TickerMode` apagado fuera de la vista activa.
+- Clientas y Agenda hacían `Focus(autofocus: true)` las dos al mismo tiempo y se sacaban el foco
+  entre ellas en cada frame. Ahora solo la vista activa lo pide (`NavegadorShell.esLaVista`).
+- `FadeSlideIn` resolvía el delay con un `Future.delayed`, que corre igual en una vista invisible.
+  El delay pasó a ser un tramo quieto de la curva, que se congela con la vista.
+- `_PintorDeArea.shouldRepaint` comparaba identidad de listas que se recrean en cada build:
+  siempre `true`. Compara contenido.
+
+Al dejar de animar en cero salieron a la luz tres overflows que la opacidad tapaba (Ajustes,
+Tienda y el cartel de demora del splash): esas filas de botones pasaron a `Wrap`.
+
+El test que lo fija es `test/features/shell_en_reposo_test.dart`: monta el shell completo con las
+ocho vistas y exige `pumpAndSettle`. Antes se colgaba en los tres tamaños.
+
+**La tablet horizontal no estaba trabajada**: lo único distinto era el riel del shell. Las vistas
+preguntaban `esEscritorio` —cierto también acostada— y recibían la composición de puntero. Ahora
+preguntan `esTabletTactil`: Clientas en tarjetas + ficha al lado, Tienda con la columna de filtros
+fija y grilla de 4, Agenda con "Quiénes trabajan" y los huecos como "Libre · tocá para agendar",
+Inicio con chips de 58 más retoques y alertas de insumos, Caja con "el turno de ahora" cargado, y
+las filas de cualquier `TablaMirame` a 64 px —lo decide la tabla, no cada vista—.
+
+`tablet_horizontal_test.dart` fija la diferencia entre dedo y puntero a 1280 px, que miden igual.
+
+**Falta**: los filtros de proveedor y orden de la columna de Tienda (hoy no existen en la app),
+la Tanda E (widget de Android en Kotlin, fotos de clienta) y servir el APK desde Supabase Storage,
+que sigue esperando el secret `SUPABASE_SERVICE_ROLE_KEY`.
