@@ -28,8 +28,14 @@ const _kModoPantalla = 'mirame.modo_pantalla';
 /// en automático y reacomodarse enseguida; es preferible a bloquear el arranque
 /// esperando el disco.
 class PreferenciaPantalla extends Notifier<ModoPantalla> {
+  /// Para no escribir el estado después de que el provider se descartó: leer el
+  /// disco es asíncrono y escribir en un notifier muerto tira.
+  var _vivo = true;
+
   @override
   ModoPantalla build() {
+    _vivo = true;
+    ref.onDispose(() => _vivo = false);
     _leer();
     return ModoPantalla.automatico;
   }
@@ -37,12 +43,14 @@ class PreferenciaPantalla extends Notifier<ModoPantalla> {
   Future<void> _leer() async {
     final p = await SharedPreferences.getInstance();
     final guardado = p.getString(_kModoPantalla);
-    if (guardado == null) return;
-    final modo = ModoPantalla.values.where((m) => m.name == guardado).firstOrNull;
+    if (guardado == null || !_vivo) return;
+    final modo =
+        ModoPantalla.values.where((m) => m.name == guardado).firstOrNull;
     if (modo != null) state = modo;
   }
 
   Future<void> elegir(ModoPantalla modo) async {
+    if (!_vivo) return;
     state = modo;
     final p = await SharedPreferences.getInstance();
     await p.setString(_kModoPantalla, modo.name);
