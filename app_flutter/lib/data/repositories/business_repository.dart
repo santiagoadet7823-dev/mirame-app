@@ -104,6 +104,16 @@ class BusinessRepository {
             ]))
           .watch();
 
+  /// Lo que pagó una clienta: sale de los movimientos de caja que quedaron
+  /// atados a ella (`client_id`), que es como se cargan los cobros de turno.
+  Stream<List<Transaction>> verMovimientosDeCliente(String clienteId) =>
+      (_db.select(_db.transactions)
+            ..where((t) => t.tenantId.equals(_tenantId))
+            ..where((t) => t.deletedAt.isNull())
+            ..where((t) => t.clientId.equals(clienteId))
+            ..orderBy([(t) => OrderingTerm.desc(t.fecha)]))
+          .watch();
+
   Stream<List<Transaction>> verMovimientosEntre(
     DateTime desde,
     DateTime hasta,
