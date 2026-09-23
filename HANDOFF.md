@@ -1137,3 +1137,42 @@ mira el **lado corto** (< 600 = teléfono), el mismo criterio que el `sw600dp` d
 **Ojo con la tablet acostada:** hoy le toca el layout de *escritorio*, que es de puntero (hover,
 atajo `/`, filas de tabla finas). La versión de dedo —riel de 92 px, toques de 44, tarjetas más
 grandes— es la Tanda A del análisis y todavía no está.
+
+### 2026-09-23 — 1.20.0: la segunda vuelta de diseño, construida
+
+Tandas A, B y C del `14-ANALISIS-ENTREGA-UIUX.md`, en cinco commits
+(`99ad9e6`, `76c0933`, `e43dcf5`, `32b18fd`, más el bump).
+
+**Piezas compartidas** — `app_flutter/lib/shared/widgets/piezas.dart`: `TarjetaTurno` (una
+sola para Inicio, Agenda y escritorio; completa y compacta, cuatro estados), `ChipIcono` +
+`BarraDeAcciones`, `TiraSemanal`, `SelectorDeVista`, `PilaDeAvatares`, `TabsMirame`, `CtaFijo`,
+`AvatarMirame`.
+
+**Modo táctil** — `layout.dart` suma `esTactil` / `esTabletTactil` / `esEscritorioPuntero`. Una
+tablet acostada mide 1280, lo mismo que la PWA en la compu, pero no se usa igual: allá hay hover
+y atajo `/`, acá dedos. El riel de 92 px (celda 74 × 48, etiqueta bajo el ícono) reemplaza al
+sidebar de 248 cuando la pantalla grande es táctil.
+
+**Pantallas**: Inicio con cinco chips-ícono en vez de seis tarjetas con emoji y los retoques
+arriba de las alertas; Agenda en tira semanal con interruptor Semana/Mes, resumen del día y
+cabecera fija; **ficha de clienta como pantalla completa** (banda, cuatro acciones, tabs
+Historial / Notas / Pagos) en vez de sheet arrastrable; Tienda con una fila de chips y botón de
+filtros con contador; profesionales en grilla con la carga del día; Inicio de escritorio con
+cuatro KPI, gráfico de área y agenda compacta.
+
+**Decisiones tomadas al construir, para revisar:**
+- **`kHeroEnBrand`** (`dashboard_view.dart`): la KPI hero quedó en violeta con texto blanco,
+  como la diseñó el diseñador. Está detrás de una constante porque el brief decía "se queda
+  igual": poner `false` la devuelve al gradiente claro sin tocar nada más.
+- **Sin tab Fotos** en la ficha: no hay tabla de fotos de clienta (sería migración + bucket +
+  consentimiento). Quedaron Historial, Notas y Pagos; Pagos salió con `Transactions.client_id`,
+  que ya existía, más `verMovimientosDeCliente` en el repositorio.
+- **La familia `sky` del diseñador no entró entera**: `skyBg` y `skyBorder` ya existían a un pelo
+  de distancia. Se reutilizan y solo se agregó `sky700` (el tono de texto, que faltaba de verdad),
+  más `nude700` y `widgetSurface`.
+- **La grilla que el diseñador llamó "Equipo" se aplicó a Profesionales**: en la app, Equipo son
+  las cuentas con permisos y esto es quién atiende. Son dos pantallas distintas.
+
+**Falta**: Tanda D (lo de §7 que depende de estas pantallas: CTA que se esconde, degradé del
+carrusel), Tanda E (widget de Android en Kotlin, fotos de clienta) y servir el APK desde Supabase
+Storage, que sigue esperando el secret `SUPABASE_SERVICE_ROLE_KEY`.
