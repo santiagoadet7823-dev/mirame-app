@@ -23,9 +23,11 @@ import '../../domain/rules/formatting.dart';
 import '../../domain/rules/period.dart';
 import '../auth/session_controller.dart';
 import '../dashboard/dashboard_view.dart';
+import '../settings/catalogo.dart';
 import 'calendario.dart';
 import '../shell/app_shell.dart';
 import '../../shared/widgets/comportamiento.dart';
+import '../../shared/widgets/piezas.dart';
 import '../shell/vistas_comunes.dart';
 
 /// Turnos del día que se está mirando.
@@ -65,6 +67,11 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
   DateTime _dia = DateTime.now();
   late DateTime _mes = DateTime(_dia.year, _dia.month, 1);
   String _filtro = 'all';
+
+  /// La vista arranca en semana. El mes entero ocupaba media pantalla para
+  /// contestar "¿qué hay hoy?", que se contesta con una fila de siete días;
+  /// el calendario completo sigue estando, a un toque del interruptor.
+  String _vista = 'Semana';
 
   /// El día elegido no es hoy. Mientras sea cierto aparece el botón "Hoy":
   /// tres toques de mes adelante y volver se hacía deslizando a ciegas.
@@ -107,6 +114,16 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
     final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirAgenda));
 
     final nombrePorId = {for (final c in clientes) c.id: c.nombre};
+
+    // Quiénes trabajan en el día que se está mirando. Sale de los turnos, no
+    // de una tabla de horarios: lo que importa es quién TIENE trabajo.
+    final profesionales =
+        ref.watch(profesionalesProvider).value ?? const <db.Professional>[];
+    final nombreProfesional = {for (final p in profesionales) p.id: p.nombre};
+    final profesionalesDelDia = <String>{
+      for (final t in todos)
+        if (nombreProfesional[t.professionalId] case final n?) n,
+    }.toList();
 
     final escritorio = esEscritorio(context);
 
@@ -156,6 +173,7 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
             : _Timeline(
                 turnos: turnos,
                 nombrePorId: nombrePorId,
+                nombreProfesional: nombreProfesional,
                 esHoy: !_lejosDeHoy,
                 padding: escritorio
                     ? const EdgeInsets.fromLTRB(0, 0, 32, 40)
@@ -293,20 +311,57 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
               const SizedBox.shrink(),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Column(
-              children: [
-                calendario,
-                filtros,
-                const SizedBox(height: 14),
-              ],
-            ),
+      body: ListaConEncabezado(
+        // La cabecera queda FIJA: sin esto, para ver un turno de las 18:00
+        // había que perder de vista qué día se estaba mirando.
+        encabezado: (_, hayArriba) => AnimatedContainer(
+          duration: MMotion.t1,
+          decoration: BoxDecoration(
+            color: MColors.bg,
+            boxShadow: sombraEncabezado(hayArriba),
           ),
-          Expanded(child: TirarParaRefrescar(child: lista)),
-        ],
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      nombreMes(_mes),
+                      style: serif(size: 22, weight: 600),
+                    ),
+                  ),
+                  SelectorDeVista(
+                    opciones: const ['Semana', 'Mes'],
+                    activa: _vista,
+                    onElegir: (v) => setState(() => _vista = v),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (_vista == 'Semana')
+                TiraSemanal(
+                  diaElegido: _dia,
+                  diasConTurno: diasConTurno,
+                  onElegirDia: (d) => setState(() {
+                    _dia = d;
+                    _mes = DateTime(d.year, d.month, 1);
+                  }),
+                )
+              else
+                calendario,
+              const SizedBox(height: 12),
+              _ResumenDelDia(
+                dia: _dia,
+                turnos: todos,
+                profesionales: profesionalesDelDia,
+              ),
+              const SizedBox(height: 12),
+              filtros,
+            ],
+          ),
+        ),
+        lista: TirarParaRefrescar(child: lista),
       ),
     );
   }
@@ -326,6 +381,71 @@ class _AgendaViewState extends ConsumerState<AgendaView> {
   }
 }
 
+/// "Martes 22 · 4 turnos · $53.000" con los avatares de quiénes trabajan.
+///
+/// Es la línea que contesta la pregunta del día sin leer la lista entera, y
+/// queda fija arriba mientras los turnos pasan por debajo.
+class _ResumenDelDia extends StatelessWidget {
+  const _ResumenDelDia({
+    required this.dia,
+    required this.turnos,
+    required this.profesionales,
+  });
+
+  final DateTime dia;
+  final List<Appointment> turnos;
+  final List<String> profesionales;
+
+  @override
+  Widget build(BuildContext context) {
+    final vivos =
+        turnos.where((t) => t.estado != TurnoEstado.cancelled).toList();
+    final plata = vivos.fold<num>(0, (a, t) => a + t.precio);
+    final n = vivos.length;
+    return TarjetaMirame(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+      hijo: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${_tituloCorto(dia)} · '
+                  '${n == 0 ? "sin turnos" : "$n ${n == 1 ? "turno" : "turnos"}"}',
+                  style: sans(size: 13.5, weight: 600),
+                ),
+                if (plata > 0) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    formatMoney(plata),
+                    style: serif(size: 20, weight: 600),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          PilaDeAvatares(nombres: profesionales),
+        ],
+      ),
+    );
+  }
+
+  static String _tituloCorto(DateTime d) {
+    const dias = [
+      'Domingo',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+    ];
+    return '${dias[d.weekday % 7]} ${d.day}';
+  }
+}
+
 /// `.timeline` del original: los turnos se agrupan por HORA, con la hora en
 /// una columna angosta a la izquierda y una línea vertical que la separa.
 ///
@@ -337,6 +457,7 @@ class _Timeline extends StatefulWidget {
     required this.nombrePorId,
     required this.padding,
     required this.esHoy,
+    this.nombreProfesional = const {},
   });
 
   /// El día que se está mirando es hoy: solo entonces tiene sentido la línea
@@ -345,6 +466,7 @@ class _Timeline extends StatefulWidget {
 
   final List<Appointment> turnos;
   final Map<String, String> nombrePorId;
+  final Map<String, String> nombreProfesional;
   final EdgeInsets padding;
 
   @override
@@ -476,6 +598,8 @@ class _TimelineState extends State<_Timeline> {
                           _EventoTimeline(
                             turno: t,
                             nombreCliente: nombrePorId[t.clientId],
+                            nombreProfesional:
+                                widget.nombreProfesional[t.professionalId],
                           ),
                       ],
                     ),
@@ -493,10 +617,15 @@ class _TimelineState extends State<_Timeline> {
 /// `.tl-ev` — tarjeta del turno, con la **barra lavanda de 3px a la
 /// izquierda**, que es lo que le da el aire de agenda.
 class _EventoTimeline extends ConsumerWidget {
-  const _EventoTimeline({required this.turno, this.nombreCliente});
+  const _EventoTimeline({
+    required this.turno,
+    this.nombreCliente,
+    this.nombreProfesional,
+  });
 
   final Appointment turno;
   final String? nombreCliente;
+  final String? nombreProfesional;
 
   /// Cambia el estado sin abrir el formulario.
   ///
@@ -521,62 +650,11 @@ class _EventoTimeline extends ConsumerWidget {
     final hecho = turno.estado == TurnoEstado.done;
     final puedeEscribir = ref.watch(puedeProvider(Permiso.escribirAgenda));
 
-    final tarjeta = Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: PressableScale(
-        onTap: () => _mostrarFormulario(context, ref, turno: turno),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: MColors.surface,
-            border: Border(
-              top: const BorderSide(color: MColors.border),
-              right: const BorderSide(color: MColors.border),
-              bottom: const BorderSide(color: MColors.border),
-              left: BorderSide(
-                color: cancelado ? MColors.tLight : MColors.brand,
-                width: 3,
-              ),
-            ),
-            borderRadius: BorderRadius.circular(MRadius.md),
-            boxShadow: MShadow.xs,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      nombreCliente ?? 'Clienta',
-                      style: sans(size: 13, weight: 600).copyWith(
-                        decoration:
-                            cancelado ? TextDecoration.lineThrough : null,
-                        color: cancelado ? MColors.tMuted : null,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  BadgeEstado(textoDesdeEstado(turno.estado)),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(
-                // `.tl-ev-info` — servicios · hora · profesional · precio.
-                [
-                  turno.hora?.toString(),
-                  if (turno.precio > 0) formatMoney(turno.precio),
-                  if (turno.notas?.isNotEmpty ?? false) turno.notas,
-                ].whereType<String>().join(' · '),
-                style: sans(size: 11, color: MColors.tSecondary),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
+    final tarjeta = TarjetaTurno(
+      turno: turno,
+      nombreCliente: nombreCliente,
+      profesional: nombreProfesional,
+      onTap: () => _mostrarFormulario(context, ref, turno: turno),
     );
 
     // Las dos cosas que más se hacen en el día —marcar hecho y cancelar—

@@ -12,6 +12,7 @@
 /// para cada uno.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import '../theme/tokens.dart';
@@ -37,6 +38,39 @@ ModoLayout modoPara(Size tamano) {
 
 ModoLayout modoDe(BuildContext context) =>
     modoPara(MediaQuery.sizeOf(context));
+
+/// Forzar el modo de entrada en los tests. En la app siempre es null.
+@visibleForTesting
+bool? modoTactilForzado;
+
+/// Se maneja con el dedo, no con un mouse.
+///
+/// Es un eje APARTE del tamaño, y hace falta: una tablet acostada mide 1280,
+/// lo mismo que la PWA en la compu del salón, pero no se usan igual. El
+/// escritorio tiene hover, atajo `/` y puede con filas finas de 52 px; la
+/// tablet no tiene puntero, así que nada puede depender de pasar el mouse por
+/// encima y todo lo tocable necesita 44 px.
+///
+/// Se decide por plataforma y no por el tamaño: en la web siempre hay
+/// puntero (aunque sea una tablet con el navegador), y en un APK nunca.
+bool get esTactil {
+  if (modoTactilForzado != null) return modoTactilForzado!;
+  if (kIsWeb) return false;
+  return defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+}
+
+/// Pantalla grande manejada con el dedo: la tablet del mostrador.
+bool esTabletTactil(BuildContext context) =>
+    esTactil && modoDe(context) == ModoLayout.escritorio;
+
+/// Pantalla grande con puntero: la PWA en la compu.
+bool esEscritorioPuntero(BuildContext context) =>
+    !esTactil && modoDe(context) == ModoLayout.escritorio;
+
+/// Alto mínimo de lo que se toca. Android pide 48 y el diseñador bajó a 44
+/// en la tablet, donde la mano está apoyada y apunta mejor.
+double toqueMinimo(BuildContext context) => esTactil ? 48 : 36;
 
 bool esEscritorio(BuildContext context) =>
     modoDe(context) == ModoLayout.escritorio;

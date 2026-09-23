@@ -35,9 +35,9 @@ import '../../domain/rules/formatting.dart';
 import '../../domain/entities/entities.dart';
 import '../../domain/rules/reminders.dart';
 import '../../domain/rules/stock.dart';
-import '../ropa/mi_tienda.dart';
 import '../shell/app_shell.dart';
 import '../../shared/widgets/comportamiento.dart';
+import '../../shared/widgets/piezas.dart';
 import '../shell/vistas_comunes.dart';
 import '../stock/stock_view.dart';
 
@@ -101,6 +101,15 @@ final movimientosDeLaSemanaProvider =
       domingo, domingo.add(const Duration(days: 6)));
 });
 
+/// La KPI hero en violeta sólido con texto blanco, como la diseñó la segunda
+/// vuelta. En `false` vuelve al gradiente claro con texto oscuro de siempre.
+///
+/// Está como interruptor y no decidido a fuego porque es **el elemento más
+/// reconocible de la app**: el brief de la segunda vuelta decía "se queda
+/// igual" y el diseñador la cambió igual. Se construyen las dos para poder
+/// mirarlas en el teléfono y recién ahí decidir.
+const kHeroEnBrand = true;
+
 class DashboardView extends ConsumerWidget {
   const DashboardView({super.key});
 
@@ -150,54 +159,39 @@ class DashboardView extends ConsumerWidget {
 
     final escritorio = esEscritorio(context);
 
-    final acciones = [
-      _AccionRapida(
-        emoji: '📅',
-        titulo: 'Nuevo Turno',
-        detalle: 'Agendar cita',
-        fondo: MColors.lav50,
-        borde: MColors.borderLav,
+    // Cinco acciones en círculos tintados, no seis tarjetas con emoji: el
+    // emoji lo dibuja cada sistema a su manera y a 22 px un 📅 de Samsung no
+    // se parece a uno de Xiaomi.
+    final acciones = <ChipIcono>[
+      ChipIcono(
+        icono: Icons.calendar_today_outlined,
+        etiqueta: 'Turno',
+        tinte: TinteChip.lavanda,
         onTap: () => NavegadorShell.ir(context, Vistas.agenda),
       ),
-      _AccionRapida(
-        emoji: '🌸',
-        titulo: 'Nueva Clienta',
-        detalle: 'Registrar',
-        fondo: MColors.nude100,
-        borde: MColors.nude300,
+      ChipIcono(
+        icono: Icons.person_add_alt_1_outlined,
+        etiqueta: 'Clienta',
+        tinte: TinteChip.nude,
         onTap: () => NavegadorShell.ir(context, Vistas.clientas),
       ),
-      _AccionRapida(
-        emoji: '💰',
-        titulo: 'Registrar Pago',
-        detalle: 'Caja',
-        fondo: MColors.successBg,
-        borde: MColors.successBorder,
+      ChipIcono(
+        icono: Icons.attach_money_rounded,
+        etiqueta: 'Pago',
+        tinte: TinteChip.exito,
         onTap: () => NavegadorShell.ir(context, Vistas.caja),
       ),
-      _AccionRapida(
-        emoji: '📊',
-        titulo: 'Estadísticas',
-        detalle: 'Ver análisis',
-        fondo: MColors.skyBg,
-        borde: MColors.skyBorder,
-        onTap: () => NavegadorShell.ir(context, Vistas.stats),
-      ),
-      _AccionRapida(
-        emoji: '🛍️',
-        titulo: 'Tienda',
-        detalle: 'Catálogo y ventas',
-        fondo: MColors.nude100,
-        borde: MColors.nude300,
+      ChipIcono(
+        icono: Icons.shopping_bag_outlined,
+        etiqueta: 'Venta',
+        tinte: TinteChip.aviso,
         onTap: () => NavegadorShell.ir(context, Vistas.ropa),
       ),
-      _AccionRapida(
-        emoji: '🔗',
-        titulo: 'Compartir',
-        detalle: 'El link de la tienda',
-        fondo: MColors.lav50,
-        borde: MColors.borderLav,
-        onTap: () => mostrarMiTienda(context),
+      ChipIcono(
+        icono: Icons.insert_chart_outlined_rounded,
+        etiqueta: 'Stats',
+        tinte: TinteChip.cielo,
+        onTap: () => NavegadorShell.ir(context, Vistas.stats),
       ),
     ];
 
@@ -270,46 +264,34 @@ class DashboardView extends ConsumerWidget {
                 child: _FilaTurno(turno: turnos[i]),
               ),
 
-          // 4 · Acciones rápidas — `.qa-grid`
+          // 4 · Acciones rápidas — una fila de cinco círculos.
+          //
+          // Entran los cinco en 390 px, así que no scrollea: una fila de
+          // acciones que se desliza esconde la mitad de lo que ofrece.
           FadeSlideIn(
             delay: const Duration(milliseconds: 190),
-            child: const EtiquetaSeccion('ACCIONES RÁPIDAS'),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 18, bottom: 4),
+              child: BarraDeAcciones(
+                acciones: acciones,
+                lado: escritorio ? 48 : 56,
+              ),
+            ),
           ),
-          if (escritorio)
-            // `.qa-grid` a 4 columnas en escritorio, pero por ancho de tarjeta
-            // y no por cantidad fija: a 1040 entran cuatro, en una ventana
-            // angosta tres, y nunca dos tarjetas de medio metro.
-            FadeSlideIn(
-              delay: const Duration(milliseconds: 220),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.zero,
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 260,
-                  mainAxisExtent: _AccionRapida.alto,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                ),
-                itemCount: acciones.length,
-                itemBuilder: (_, i) => acciones[i],
-              ),
-            )
-          else
-            for (var i = 0; i < acciones.length; i += 2) ...[
-              if (i > 0) const SizedBox(height: 10),
-              FadeSlideIn(
-                delay: Duration(milliseconds: 220 + i * 15),
-                child: Row(
-                  children: [
-                    Expanded(child: acciones[i]),
-                    const SizedBox(width: 10),
-                    Expanded(child: acciones[i + 1]),
-                  ],
-                ),
-              ),
-            ],
 
+          // 6 · Recordatorios de retoque — `#rem-wrap`, que en el original
+          // está oculto salvo que haya algo que recordar.
+          if (recordatorios.isNotEmpty) ...[
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 320),
+              child: const EtiquetaSeccion('RECORDATORIOS RETOQUE ✂️'),
+            ),
+            for (final r in recordatorios)
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 340),
+                child: _FilaRecordatorio(recordatorio: r),
+              ),
+          ],
           // 5 · Alertas de stock
           if (alertas.isNotEmpty) ...[
             FadeSlideIn(
@@ -327,19 +309,6 @@ class DashboardView extends ConsumerWidget {
               ),
           ],
 
-          // 6 · Recordatorios de retoque — `#rem-wrap`, que en el original
-          // está oculto salvo que haya algo que recordar.
-          if (recordatorios.isNotEmpty) ...[
-            FadeSlideIn(
-              delay: const Duration(milliseconds: 320),
-              child: const EtiquetaSeccion('RECORDATORIOS RETOQUE ✂️'),
-            ),
-            for (final r in recordatorios)
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 340),
-                child: _FilaRecordatorio(recordatorio: r),
-              ),
-          ],
         ],
       ),
     );
@@ -363,14 +332,28 @@ class _KpiHero extends StatelessWidget {
   final num ingresoMes;
   final int pendientes;
 
+  /// Sobre el violeta el texto es blanco; sobre el crema, el de siempre.
+  Color get _tinta => kHeroEnBrand ? MColors.tWhite : MColors.tPrimary;
+  Color get _tintaSuave =>
+      kHeroEnBrand ? MColors.tWhite.withValues(alpha: 0.72) : MColors.tMuted;
+
   @override
   Widget build(BuildContext context) => Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 18),
         decoration: BoxDecoration(
-          gradient: MGradient.kpiHero,
-          border: Border.all(color: MColors.borderLav),
+          gradient: kHeroEnBrand
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [MColors.brand, MColors.lav600],
+                )
+              : MGradient.kpiHero,
+          border: Border.all(
+            color: kHeroEnBrand ? Colors.transparent : MColors.borderLav,
+          ),
           borderRadius: BorderRadius.circular(MRadius.xl),
+          boxShadow: kHeroEnBrand ? MShadow.brand : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,20 +366,21 @@ class _KpiHero extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('TURNOS HOY', style: MText.etiquetaHero),
+                      Text(
+                        'TURNOS HOY',
+                        style: MText.etiquetaHero.copyWith(color: _tintaSuave),
+                      ),
                       const SizedBox(height: 6),
                       Text(
                         '$turnosHoy',
-                        style: serif(size: 42, weight: 600).copyWith(
-                          height: 1,
-                          letterSpacing: -1,
-                        ),
+                        style: serif(size: 42, weight: 600, color: _tinta)
+                            .copyWith(height: 1, letterSpacing: -1),
                       ),
                       if (ingresoHoy > 0) ...[
                         const SizedBox(height: 5),
                         Text(
                           '${formatMoney(ingresoHoy)} agendado',
-                          style: sans(size: 12, color: MColors.tMuted),
+                          style: sans(size: 12, color: _tintaSuave),
                         ),
                       ],
                     ],
@@ -405,11 +389,15 @@ class _KpiHero extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('ESTA SEMANA', style: MText.etiquetaHeroChica),
+                    Text(
+                      'ESTA SEMANA',
+                      style:
+                          MText.etiquetaHeroChica.copyWith(color: _tintaSuave),
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       formatMoney(ingresoSemana),
-                      style: serif(size: 22, weight: 600),
+                      style: serif(size: 22, weight: 600, color: _tinta),
                     ),
                   ],
                 ),
@@ -515,71 +503,6 @@ class _FilaTurno extends StatelessWidget {
                 formatMoney(turno.precio),
                 style: sans(size: 12, color: MColors.tMuted),
               ),
-          ],
-        ),
-      );
-}
-
-/// `.qa-card` — ícono de 40 con su fondo de color, título y descripción.
-class _AccionRapida extends StatelessWidget {
-  const _AccionRapida({
-    required this.emoji,
-    required this.titulo,
-    required this.detalle,
-    required this.fondo,
-    required this.borde,
-    required this.onTap,
-  });
-
-  final String emoji;
-  final String titulo;
-  final String detalle;
-  final Color fondo;
-  final Color borde;
-  final VoidCallback onTap;
-
-  /// Alto de la tarjeta: 18 + 40 + 18 de padding e ícono, más el borde. La
-  /// grilla de escritorio lo necesita fijo para no adivinar con un aspecto.
-  static const alto = 78.0;
-
-  @override
-  Widget build(BuildContext context) => TarjetaMirame(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        onTap: onTap,
-        hijo: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: fondo,
-                border: Border.all(color: borde),
-                borderRadius: BorderRadius.circular(MRadius.sm),
-              ),
-              child: Text(emoji, style: const TextStyle(fontSize: 19)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    titulo,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: sans(size: 13, weight: 600),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    detalle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: sans(size: 11, color: MColors.tMuted),
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       );

@@ -102,6 +102,26 @@ abstract final class MColors {
 
   /// Overlay de los modales: `rgba(10,8,6,0.5)`.
   static const scrim = Color(0x800A0806);
+
+  // ── Agregados de la segunda vuelta de diseño ───────────────────────────
+  //
+  // El diseñador propuso una familia *sky* entera (`#eff6ff`, `#bfdbfe`,
+  // `#1d4ed8`) para que la quinta acción de la fila de chips no repita el
+  // lavanda del turno. Los dos primeros ya existían con otro nombre y a un
+  // pelo de distancia (`skyBg #f0f9ff`, `skyBorder #bae6fd`): se reutilizan
+  // esos. Dos azules casi iguales en la misma pantalla es peor que uno.
+  //
+  // Lo que sí faltaba es el tono de TEXTO sobre ese fondo.
+  static const sky700 = Color(0xFF1D4ED8);
+
+  /// Texto nude sobre `nude100`. El `nude500` (#d4897a) que usábamos **no
+  /// llega a 4,5:1** de contraste: esto es una corrección de accesibilidad,
+  /// no un gusto.
+  static const nude700 = Color(0xFFB8654F);
+
+  /// La tarjeta del widget de Android sobre el fondo de pantalla: blanco al
+  /// 82 %, para que funcione con cualquier foto detrás.
+  static const widgetSurface = Color(0xD1FFFFFF);
 }
 
 /// Series de datos. El orden importa: el índice determina el color, así que
@@ -238,6 +258,11 @@ abstract final class MBreak {
   /// sidebar le sacan un cuarto de pantalla al contenido.
   static const sidebarCompleto = 1200.0;
 
-  /// Ancho del rail de íconos.
+  /// Ancho del rail de íconos en escritorio (puntero).
   static const railWidth = 72.0;
+
+  /// El riel de la tablet: más ancho que el de escritorio porque acá la
+  /// celda tiene que aguantar un dedo (74 × 48) y lleva la etiqueta debajo
+  /// del ícono, no al costado.
+  static const railTablet = 92.0;
 }
