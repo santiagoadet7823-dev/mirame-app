@@ -13,6 +13,9 @@ import '../../data/local/database.dart' as db;
 import '../../data/repositories/business_repository.dart';
 import '../../domain/rules/formatting.dart';
 import '../dashboard/dashboard_view.dart';
+import '../../core/theme/motion.dart';
+import '../../shared/widgets/piezas.dart';
+import '../shell/app_shell.dart';
 import '../shell/vistas_comunes.dart';
 
 final profesionalesProvider =
@@ -92,11 +95,13 @@ class _FormServicio extends ConsumerStatefulWidget {
 class _FormServicioState extends ConsumerState<_FormServicio> {
   late final _nombre = TextEditingController(text: widget.servicio?.nombre);
   late final _precio = TextEditingController(
-      text: widget.servicio == null ? '' : _sinCeroSuelto(widget.servicio!.precio));
-  late final _duracion = TextEditingController(
-      text: '${widget.servicio?.duracionMin ?? 60}');
-  late final _retoque =
-      TextEditingController(text: widget.servicio?.retoqueDias?.toString() ?? '');
+      text: widget.servicio == null
+          ? ''
+          : _sinCeroSuelto(widget.servicio!.precio));
+  late final _duracion =
+      TextEditingController(text: '${widget.servicio?.duracionMin ?? 60}');
+  late final _retoque = TextEditingController(
+      text: widget.servicio?.retoqueDias?.toString() ?? '');
   late final _notas = TextEditingController(text: widget.servicio?.notas);
 
   var _guardando = false;
@@ -197,6 +202,15 @@ class _ListaProfesionales extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pros = ref.watch(profesionalesProvider).value ?? const [];
+    // La carga del día sale de los turnos, no de una tabla de horarios: lo
+    // que hace falta saber para repartir trabajo es quién YA tiene.
+    final turnosHoy = ref.watch(turnosDeHoyProvider).value ?? const [];
+    final cuantos = <String, int>{};
+    for (final t in turnosHoy) {
+      if (t.estado == 'cancelled') continue;
+      final id = t.professionalId;
+      if (id != null) cuantos[id] = (cuantos[id] ?? 0) + 1;
+    }
 
     return _Envoltorio(
       titulo: 'Profesionales',
@@ -205,22 +219,104 @@ class _ListaProfesionales extends ConsumerWidget {
       emojiVacio: '👩',
       textoVacio: 'Todavía no cargaste ninguna profesional',
       hijos: [
-        for (final p in pros)
-          _Fila(
-            titulo: p.nombre,
-            detalle: p.telefono ?? 'Sin teléfono',
-            onTap: () => _editarProfesional(context, ref, p),
-            onBorrar: () => _confirmarBorrado(
-              context,
-              ref,
-              tabla: 'professionals',
-              id: p.id,
-              nombre: p.nombre,
-            ),
+        // Grilla y no lista: con la foto y la carga del día a la vista se
+        // reparte el trabajo de un vistazo, que es para lo que se abre esta
+        // pantalla.
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 200,
+            mainAxisExtent: 186,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
           ),
+          itemCount: pros.length,
+          itemBuilder: (_, i) => _TarjetaProfesional(
+            pro: pros[i],
+            turnosHoy: cuantos[pros[i].id] ?? 0,
+            onTap: () => _editarProfesional(context, ref, pros[i]),
+            onAgenda: () {
+              Navigator.of(context).pop();
+              NavegadorShell.ir(context, Vistas.agenda);
+            },
+          ),
+        ),
       ],
     );
   }
+}
+
+/// Tarjeta de profesional: avatar, nombre, teléfono, carga de hoy y el atajo
+/// a la agenda.
+class _TarjetaProfesional extends StatelessWidget {
+  const _TarjetaProfesional({
+    required this.pro,
+    required this.turnosHoy,
+    required this.onTap,
+    required this.onAgenda,
+  });
+
+  final db.Professional pro;
+  final int turnosHoy;
+  final VoidCallback onTap;
+  final VoidCallback onAgenda;
+
+  @override
+  Widget build(BuildContext context) => TarjetaMirame(
+        padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+        onTap: onTap,
+        hijo: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AvatarMirame(nombre: pro.nombre, lado: 60),
+            const SizedBox(height: 10),
+            Text(
+              pro.nombre,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: sans(size: 14, weight: 600),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              pro.telefono?.isNotEmpty ?? false
+                  ? pro.telefono!
+                  : 'Sin teléfono',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: sans(size: 11.5, color: MColors.tMuted),
+            ),
+            const SizedBox(height: 8),
+            Pildora(
+              texto: turnosHoy == 0
+                  ? 'Libre hoy'
+                  : '$turnosHoy ${turnosHoy == 1 ? "turno" : "turnos"} hoy',
+              fondo: turnosHoy == 0 ? MColors.bg2 : MColors.successBg,
+              color: turnosHoy == 0 ? MColors.tSecondary : MColors.successText,
+              borde: turnosHoy == 0 ? MColors.border : MColors.successBorder,
+            ),
+            const Spacer(),
+            PressableScale(
+              onTap: onAgenda,
+              child: Container(
+                width: double.infinity,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: MColors.bg2,
+                  border: Border.all(color: MColors.border),
+                  borderRadius: BorderRadius.circular(MRadius.full),
+                ),
+                child: Text(
+                  'Ver agenda',
+                  style: sans(size: 12, weight: 600, color: MColors.tSecondary),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 Future<void> _editarProfesional(
@@ -385,8 +481,7 @@ class _Envoltorio extends StatelessWidget {
                     onTap: onNuevo,
                     child: Text(
                       '+ Agregar',
-                      style:
-                          sans(size: 13, weight: 600, color: MColors.brand),
+                      style: sans(size: 13, weight: 600, color: MColors.brand),
                     ),
                   ),
                 ],

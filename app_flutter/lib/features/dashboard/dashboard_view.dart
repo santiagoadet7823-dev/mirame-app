@@ -31,13 +31,17 @@ import '../../core/theme/typography.dart';
 import '../../data/local/database.dart' as db;
 import '../../data/local/mappers.dart';
 import '../../data/repositories/business_repository.dart';
+import '../../domain/rules/finance.dart';
 import '../../domain/rules/formatting.dart';
 import '../../domain/entities/entities.dart';
 import '../../domain/rules/reminders.dart';
 import '../../domain/rules/stock.dart';
+import '../settings/catalogo.dart';
 import '../shell/app_shell.dart';
 import '../../shared/widgets/comportamiento.dart';
 import '../../shared/widgets/piezas.dart';
+import 'inicio_escritorio.dart';
+import '../stats/stats_view.dart';
 import '../shell/vistas_comunes.dart';
 import '../stock/stock_view.dart';
 
@@ -153,6 +157,28 @@ class DashboardView extends ConsumerWidget {
     final delMes = ingresosDe(mes);
     final deLaSemana = ingresosDe(semana);
     final deHoy = turnos.fold<num>(0, (a, t) => a + t.precio);
+    // Las filas de Drift; la tarjeta compartida habla el modelo del dominio.
+    final turnosDom = turnos.map(aAppointment).toList();
+    final nombrePorIdCliente = {for (final c in clientes) c.id: c.nombre};
+    final nombrePorIdPro = {
+      for (final p in ref.watch(profesionalesProvider).value ??
+          const <db.Professional>[])
+        p.id: p.nombre,
+    };
+
+    // El próximo turno del día: el primero que todavía no pasó.
+    final ahora = DateTime.now();
+    final minutosAhora = ahora.hour * 60 + ahora.minute;
+    String? idProximo;
+    for (final t in turnosDom) {
+      final h = t.hora;
+      if (t.estado == TurnoEstado.cancelled || h == null) continue;
+      if (h.totalMinutes >= minutosAhora) {
+        idProximo = t.id;
+        break;
+      }
+    }
+
     final pendientes = turnos
         .where((t) => t.estado != 'done' && t.estado != 'cancelled')
         .length;
@@ -194,6 +220,142 @@ class DashboardView extends ConsumerWidget {
         onTap: () => NavegadorShell.ir(context, Vistas.stats),
       ),
     ];
+
+    // En escritorio el Inicio se arma distinto: la hero estirada a mil
+    // píxeles mostraba cuatro números y dejaba la agenda vacía al lado.
+    if (escritorio) {
+      final movs = ref.watch(movimientosRecientesProvider).value ??
+          const <db.Transaction>[];
+      final porSemana = weeklyIncome(movs.map(aTransaction), DateTime.now());
+      final estaSemana = porSemana.isEmpty ? 0 : porSemana.last.total;
+      final semanaAnterior =
+          porSemana.length < 2 ? 0 : porSemana[porSemana.length - 2].total;
+      final (varSemana, tonoSemana) =
+          variacionTexto(estaSemana, semanaAnterior);
+
+      return ContenidoEscritorio.tabla(
+        // Scrollea: en una ventana baja —una notebook de 768, el navegador
+        // con la barra de favoritos— un Column rígido recorta el gráfico en
+        // vez de dejar bajar.
+        child: SingleChildScrollView(
+          padding: padVista(context),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          greeting(DateTime.now()),
+                          style: serif(size: 30, weight: 500),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            formatDateShort(DateTime.now()),
+                            if (turnos.isNotEmpty)
+                              '${turnos.length} '
+                                  '${turnos.length == 1 ? "turno" : "turnos"}',
+                          ].join(' · '),
+                          style: sans(size: 13, color: MColors.tMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Las mismas acciones del teléfono, más chicas: acá
+                  // "Nuevo turno" ya vive en la barra de arriba. Con ancho
+                  // fijo porque la barra reparte a sus hijos y adentro de
+                  // una fila no sabría entre cuánto repartir.
+                  SizedBox(
+                    width: 64.0 * (acciones.length - 1),
+                    child: BarraDeAcciones(
+                      lado: 44,
+                      acciones: acciones.sublist(1),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              GridView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 320,
+                  // 124 y no 108: con la etiqueta, el número de 34 y el pie,
+                  // 108 se pasaba por 9 px justo cuando el sistema agranda
+                  // un poco el texto.
+                  mainAxisExtent: 124,
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 14,
+                ),
+                children: [
+                  TarjetaKpi(
+                    etiqueta: 'Turnos hoy',
+                    valor: '${turnos.length}',
+                    pie: deHoy > 0 ? '${formatMoney(deHoy)} agendado' : null,
+                  ),
+                  TarjetaKpi(
+                    etiqueta: 'Esta semana',
+                    valor: formatMoney(deLaSemana),
+                    variacion: varSemana.isEmpty ? null : varSemana,
+                    tono: tonoSemana,
+                  ),
+                  TarjetaKpi(
+                    etiqueta: 'Este mes',
+                    valor: formatMoney(delMes),
+                    pie: '${clientes.length} clientas',
+                  ),
+                  TarjetaKpi(
+                    etiqueta: 'Pendientes',
+                    valor: '$pendientes',
+                    variacion: pendientes > 0 ? 'a confirmar' : null,
+                    tono: TonoVariacion.atencion,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                // Alto fijo y generoso: el gráfico necesita aire para que la
+                // curva se lea, y la agenda entra con cuatro turnos.
+                height: 360,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: GraficoDeArea(
+                        serieA: [for (final s in porSemana) s.total],
+                        serieB: const [],
+                        etiquetas: const [],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
+                      child: AgendaCompacta(
+                        turnos: turnosDom,
+                        nombrePorId: nombrePorIdCliente,
+                        nombreProfesional: nombrePorIdPro,
+                        idProximo: idProximo,
+                        onVerAgenda: () =>
+                            NavegadorShell.ir(context, Vistas.agenda),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return ContenidoEscritorio.lectura(
       child: ListView(
@@ -261,7 +423,13 @@ class DashboardView extends ConsumerWidget {
             for (var i = 0; i < turnos.length; i++)
               FadeSlideIn(
                 delay: Duration(milliseconds: 150 + (i < 8 ? i : 8) * 35),
-                child: _FilaTurno(turno: turnos[i]),
+                child: TarjetaTurno(
+                  turno: turnosDom[i],
+                  nombreCliente: nombrePorIdCliente[turnosDom[i].clientId],
+                  profesional: nombrePorIdPro[turnosDom[i].professionalId],
+                  destacada: turnosDom[i].id == idProximo,
+                  onTap: () => NavegadorShell.ir(context, Vistas.agenda),
+                ),
               ),
 
           // 4 · Acciones rápidas — una fila de cinco círculos.
@@ -308,7 +476,6 @@ class DashboardView extends ConsumerWidget {
                 child: _FilaAlertaStock(item: s),
               ),
           ],
-
         ],
       ),
     );
@@ -465,45 +632,6 @@ class _KpiMini extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      );
-}
-
-class _FilaTurno extends StatelessWidget {
-  const _FilaTurno({required this.turno});
-
-  final db.Appointment turno;
-
-  @override
-  Widget build(BuildContext context) => TarjetaMirame(
-        margenInferior: 8,
-        hijo: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: MColors.brandBg,
-                borderRadius: BorderRadius.circular(MRadius.sm),
-              ),
-              child: Text(
-                turno.hora,
-                style: sans(size: 13, weight: 600, color: MColors.brandDark),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                turno.notas?.isNotEmpty == true ? turno.notas! : 'Turno',
-                style: sans(size: 14, weight: 500),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (turno.precio > 0)
-              Text(
-                formatMoney(turno.precio),
-                style: sans(size: 12, color: MColors.tMuted),
-              ),
-          ],
         ),
       );
 }

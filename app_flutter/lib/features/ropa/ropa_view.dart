@@ -19,6 +19,8 @@ import '../../data/local/database.dart' as db;
 import '../../data/repositories/ropa_repository.dart';
 import '../../domain/rules/access.dart';
 import '../../domain/rules/formatting.dart';
+import '../../shared/widgets/comportamiento.dart';
+import '../../shared/widgets/piezas.dart';
 import '../../shared/widgets/panel_lateral.dart';
 import '../auth/session_controller.dart';
 import '../shell/app_shell.dart';
@@ -105,9 +107,125 @@ class _RopaViewState extends ConsumerState<RopaView> {
     super.dispose();
   }
 
+  /// Sheet de filtros. El CTA cuenta el resultado ANTES de aplicar: elegir a
+  /// ciegas y descubrir que no quedó nada es el camino largo.
+  Future<void> _abrirFiltros(BuildContext context) async {
+    var elegido = _filtro;
+    final r = await showAppSheet<String>(
+      context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => Container(
+          decoration: const BoxDecoration(
+            color: MColors.bg,
+            borderRadius:
+                BorderRadius.vertical(top: Radius.circular(MRadius.xl)),
+          ),
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ManijaSheet(),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child:
+                          Text('Filtros', style: serif(size: 22, weight: 600)),
+                    ),
+                    PressableScale(
+                      onTap: () => setSheet(() => elegido = 'todos'),
+                      child: Text(
+                        'Limpiar',
+                        style: sans(
+                            size: 12.5, weight: 600, color: MColors.brandDark),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const EtiquetaSeccion('ESTADO'),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  children: [
+                    for (final (clave, etiqueta) in const [
+                      ('todos', 'Todos'),
+                      ('publicados', 'En la tienda'),
+                      ('sin_publicar', 'Sin publicar'),
+                      ('sin_stock', 'Sin stock'),
+                    ])
+                      PressableScale(
+                        onTap: () => setSheet(() => elegido = clave),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 9),
+                          decoration: BoxDecoration(
+                            color: elegido == clave
+                                ? MColors.brandBg
+                                : MColors.surface,
+                            border: Border.all(
+                              color: elegido == clave
+                                  ? MColors.borderLav
+                                  : MColors.border,
+                            ),
+                            borderRadius: BorderRadius.circular(MRadius.full),
+                          ),
+                          child: Text(
+                            etiqueta,
+                            style: sans(
+                              size: 12.5,
+                              weight: elegido == clave ? 600 : 500,
+                              color: elegido == clave
+                                  ? MColors.brandDark
+                                  : MColors.tSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                CtaFijo(
+                  texto: 'Ver ${_cuantosCon(elegido)} '
+                      '${_cuantosCon(elegido) == 1 ? "artículo" : "artículos"}',
+                  conDegrade: false,
+                  onTap: () => Navigator.of(ctx).pop(elegido),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (r != null && mounted) setState(() => _filtro = r);
+  }
+
+  /// Cuántos quedarían con ese estado, sin tocar el filtro todavía.
+  int _cuantosCon(String estado) {
+    final productos = ref.read(productosProvider).value ?? const [];
+    final variantes = ref.read(variantesProvider).value ?? const {};
+    final stock = ref.read(stockRopaProvider).value ?? const {};
+    int stockDe(String id) =>
+        (variantes[id] ?? const []).fold(0, (a, v) => a + (stock[v.id] ?? 0));
+    return productos.where((p) {
+      if (_rubro != 'todo' && p.rubro != _rubro) return false;
+      return switch (estado) {
+        'publicados' => p.publicado,
+        'sin_publicar' => !p.publicado,
+        'sin_stock' => stockDe(p.id) <= 0,
+        _ => true,
+      };
+    }).length;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final productos = ref.watch(productosProvider).value ?? const [];
+    final asincronos = ref.watch(productosProvider);
+    final cargando = asincronos.isLoading && !asincronos.hasValue;
+    final productos = asincronos.value ?? const [];
     final variantes = ref.watch(variantesProvider).value ?? const {};
     final stock = ref.watch(stockRopaProvider).value ?? const {};
     final portadas = ref.watch(portadasProvider).value ?? const {};
@@ -238,37 +356,42 @@ class _RopaViewState extends ConsumerState<RopaView> {
                 ),
               ),
               const SizedBox(height: 6),
-              // El rubro primero y el estado despues: se piensa "quiero ver la
-              // ropa" antes que "quiero ver lo que no publique".
+              // Una sola fila de chips, y lo que no entra va al sheet de
+              // filtros. Dos filas de chips comían un tercio de la pantalla
+              // antes de ver la primera prenda.
               FadeSlideIn(
                 delay: const Duration(milliseconds: 60),
-                child: FilaFiltros(
-                  opciones: const [
-                    ('todo', 'Todo'),
-                    ('ropa', '👗 Ropa'),
-                    ('arbell', '💄 Arbell'),
-                    ('insumos', '🧴 Insumos'),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: FilaFiltros(
+                        opciones: const [
+                          ('todo', 'Todo'),
+                          ('ropa', 'Ropa'),
+                          ('arbell', 'Arbell'),
+                          ('insumos', 'Insumos'),
+                        ],
+                        activo: _rubro,
+                        onElegir: (v) => setState(() => _rubro = v),
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    _BotonFiltros(
+                      activos: _filtro == 'todos' ? 0 : 1,
+                      onTap: () => _abrirFiltros(context),
+                    ),
                   ],
-                  activo: _rubro,
-                  onElegir: (v) => setState(() => _rubro = v),
-                ),
-              ),
-              const SizedBox(height: 6),
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 70),
-                child: FilaFiltros(
-                  opciones: const [
-                    ('todos', 'Todos'),
-                    ('publicados', 'En la tienda'),
-                    ('sin_publicar', 'Sin publicar'),
-                    ('sin_stock', 'Sin stock'),
-                  ],
-                  activo: _filtro,
-                  onElegir: (f) => setState(() => _filtro = f),
                 ),
               ),
               const SizedBox(height: 14),
-              if (visibles.isEmpty)
+              if (cargando)
+                const EsqueletoDeLista(
+                  filas: 3,
+                  alto: 92,
+                  padding: EdgeInsets.zero,
+                  desplazable: false,
+                )
+              else if (visibles.isEmpty)
                 EstadoVacio(
                   emoji: '👗',
                   titulo: productos.isEmpty
@@ -497,6 +620,59 @@ class _PanelProducto extends ConsumerWidget {
 
 extension on String {
   String ifEmpty(String otro) => isEmpty ? otro : this;
+}
+
+/// El botón cuadrado que abre los filtros, con el contador de los activos.
+///
+/// El contador es lo que evita el clásico "no aparece nada y no sé por qué":
+/// un filtro puesto hace media hora sigue filtrando y nada lo recuerda.
+class _BotonFiltros extends StatelessWidget {
+  const _BotonFiltros({required this.activos, required this.onTap});
+
+  final int activos;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => PressableScale(
+        onTap: onTap,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: MColors.brand,
+                borderRadius: BorderRadius.circular(MRadius.md),
+                boxShadow: MShadow.brand,
+              ),
+              child: const Icon(Icons.tune_rounded,
+                  size: 19, color: MColors.tWhite),
+            ),
+            if (activos > 0)
+              Positioned(
+                top: -3,
+                right: -3,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 17),
+                  height: 17,
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: MColors.nude500,
+                    borderRadius: BorderRadius.circular(MRadius.full),
+                    border: Border.all(color: MColors.surface, width: 2),
+                  ),
+                  child: Text(
+                    '$activos',
+                    style: sans(size: 9.5, weight: 700, color: MColors.tWhite),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
 }
 
 /// El + ofrece las dos cosas que se hacen acá. Vender va primero porque pasa
